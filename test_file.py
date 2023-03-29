@@ -3,10 +3,10 @@ from models import init_model
 import torch
 
 if __name__ == "__main__":
-    t_loaders, v_loaders, te_loader = load_dataset("cifar10",5,32,42)
-    resnet18 = init_model("resnet18",10)
+    t_loaders, v_loaders, te_loader = load_dataset("cifar10", 5, 32, 42)
+    resnet18 = init_model("resnet18", 10)
 
-    print(len(t_loaders))
+    print(len(t_loaders[0]))
     print(len(v_loaders))
     print("---")
     print(len(t_loaders[0].dataset))
@@ -16,8 +16,13 @@ if __name__ == "__main__":
 
     i = 0
     resnet18.eval()
-    for (images,labels) in te_loader:
-        if(i==5):
+    for (images, labels) in t_loaders[1]:
+        if(i == 5):
             break
-        print(f'Prediction : {torch.argmax(resnet18.forward(images[0].unsqueeze(0)))}, Label : {labels[0]}')
-        i+=1
+        # print(f'One hot true label : {torch.nn.functional.one_hot(labels[0],10)}')
+        pred = resnet18.forward(images)
+        true_value = labels
+        print(f'Prediction : {torch.argmax(pred[0])}, Label : {true_value[0]}')
+        print(
+            f'Loss : {torch.nn.functional.cross_entropy(input=pred,target=true_value,reduction="sum")}')
+        i += 1
