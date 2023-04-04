@@ -1,14 +1,18 @@
 import torch
 import torch.nn as nn
-from torchvision.models import ResNet
 from torch.utils.data import DataLoader
-from typing import Dict
+from typing import Dict, List
+import numpy as np
+from models import init_model, set_parameters
 
 
-def test_model(model: ResNet, test_loader: DataLoader, DEVICE: torch.device) -> Dict[str, float]:
+def test_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], test_loader: DataLoader, DEVICE: torch.device) -> Dict[str, float]:
+    model = init_model(model_name, model_n_classes)
+    set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="sum")
     correct, total, loss = 0, 0, 0.0
     model.eval()
+    model.to(DEVICE)
     with torch.no_grad():
         for images, labels in test_loader:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
@@ -19,4 +23,5 @@ def test_model(model: ResNet, test_loader: DataLoader, DEVICE: torch.device) -> 
             correct += (predicted == labels).sum().item()
     loss /= len(test_loader.dataset)
     accuracy = correct/total
+    del model
     return {'test_loss': loss, 'test_acc': accuracy}
