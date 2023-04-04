@@ -23,5 +23,6 @@ def test_model(model_name: str, model_n_classes: int, parameters: List[np.ndarra
             correct += (predicted == labels).sum().item()
     loss /= len(test_loader.dataset)
     accuracy = correct/total
+    model.to(torch.device("cpu"))
     del model
     return {'test_loss': loss, 'test_acc': accuracy}

@@ -1,4 +1,5 @@
 import flwr as fl
+from flwr.server import strategy
 from client import FlowerClient
 from models import init_model, get_parameters
 import torch
@@ -42,15 +43,19 @@ if __name__ == "__main__":
     def initialise_parameters() -> List[np.ndarray]:
         new_model = init_model(MODEL_NAME, NUM_CLASSES)
         parameters = get_parameters(new_model)
-        return parameters
-
+        new_model.to(torch.device("cpu"))
+        del new_model
+        return fl.common.ndarrays_to_parameters(parameters)
+    
+    init_params = initialise_parameters()
+    
     fl.simulation.start_simulation(
         client_fn=client_fn,
         num_clients=NUM_CLIENTS,
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-        strategy=fl.server.strategy.FedAvg(
+        strategy=strategy.FedAvg(
             on_fit_config_fn=fit_config,
-            initial_parameters=initialise_parameters()
+            initial_parameters=init_params
         ),
         ray_init_args=ray_init_args,
         client_resources=client_resources,
