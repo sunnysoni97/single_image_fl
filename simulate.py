@@ -8,6 +8,7 @@ from typing import Dict
 
 if __name__ == "__main__":
     NUM_CLIENTS = 2
+    NUM_ROUNDS = 2
     train_loaders, val_loaders, test_loader = load_dataset(
         "cifar10", NUM_CLIENTS, 8, 42)
     DEVICE = torch.device(
@@ -34,12 +35,10 @@ if __name__ == "__main__":
     if (DEVICE.type == "cuda"):
         client_resources = {"num_gpus": 1}
 
-    fl.server.strategy.FedAvg()
-
     fl.simulation.start_simulation(
         client_fn=client_fn,
         num_clients=NUM_CLIENTS,
-        config=fl.server.ServerConfig(num_rounds=10),
+        config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         strategy=fl.server.strategy.FedAvg(
             on_fit_config_fn=fit_config
         ),
