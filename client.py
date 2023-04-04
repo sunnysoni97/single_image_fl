@@ -47,8 +47,8 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
     new_parameters = get_parameters(model)
     train_res = {'train_loss': np.mean(
         total_epoch_loss), 'train_acc': np.mean(total_epoch_acc)}
-    model.to(torch.device("cpu"))
     del model
+    torch.cuda.empty_cache()
     return (new_parameters, train_res)
 
 

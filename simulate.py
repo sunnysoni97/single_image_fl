@@ -43,12 +43,12 @@ if __name__ == "__main__":
     def initialise_parameters() -> List[np.ndarray]:
         new_model = init_model(MODEL_NAME, NUM_CLASSES)
         parameters = get_parameters(new_model)
-        new_model.to(torch.device("cpu"))
         del new_model
+        torch.cuda.empty_cache()
         return fl.common.ndarrays_to_parameters(parameters)
-    
+
     init_params = initialise_parameters()
-    
+
     fl.simulation.start_simulation(
         client_fn=client_fn,
         num_clients=NUM_CLIENTS,
@@ -60,4 +60,3 @@ if __name__ == "__main__":
         ray_init_args=ray_init_args,
         client_resources=client_resources,
     )
-
