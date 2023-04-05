@@ -7,8 +7,6 @@ import numpy as np
 import flwr as fl
 from models import get_parameters, set_parameters, init_model
 from common import test_model
-import GPUtil
-import gc
 
 # function for training a model
 
