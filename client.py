@@ -1,4 +1,4 @@
-from torchvision.models import ResNet
+from torchvision.models import ResNet, resnet18
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
@@ -7,6 +7,8 @@ import numpy as np
 import flwr as fl
 from models import get_parameters, set_parameters, init_model
 from common import test_model
+import GPUtil
+import gc
 
 # function for training a model
 
@@ -34,21 +36,19 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
             optimizer.step()
             optimizer.zero_grad()
 
-            epoch_loss += loss
+            epoch_loss += loss.item()
             total += labels.size(0)
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
 
         epoch_loss /= len(train_loader.dataset)
         epoch_acc = correct/total
-        total_epoch_loss.append(epoch_loss.item())
+        total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
         print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
     new_parameters = get_parameters(model)
     train_res = {'train_loss': np.mean(
         total_epoch_loss), 'train_acc': np.mean(total_epoch_acc)}
-    del model
-    torch.cuda.empty_cache()
     return (new_parameters, train_res)
 
 
