@@ -12,8 +12,8 @@ import gc
 if __name__ == "__main__":
     gc.enable()
 
-    NUM_CLIENTS = 2
-    NUM_ROUNDS = 10
+    NUM_CLIENTS = 10
+    NUM_ROUNDS = 20
     MODEL_NAME = "resnet18"
     NUM_CLASSES = 10
     DEVICE = torch.device(
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     client_resources = None
     ray_init_args = None
     if (DEVICE.type == "cuda"):
-        client_resources = {"num_gpus": 0.5}
+        client_resources = {"num_gpus": 0.25}
         ray_init_args = {"num_gpus": 1}
 
     def initialise_parameters() -> List[np.ndarray]:
