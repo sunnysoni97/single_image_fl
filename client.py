@@ -74,6 +74,7 @@ class FlowerClient(fl.client.NumPyClient):
         new_params, train_res = train_model(
             self.model_name, self.model_n_classes, self.parameters, self.train_loader, config, self.device)
         self.set_parameters(new_params)
+        torch.cuda.empty_cache()
         return (self.get_parameters(config), len(self.train_loader), train_res)
 
     def evaluate(self, parameters, config) -> Tuple[float, int, Dict[str, float]]:
@@ -81,4 +82,5 @@ class FlowerClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
         val_res = test_model(self.model_name, self.model_n_classes,
                              self.parameters, self.val_loader, self.device)
+        torch.cuda.empty_cache()
         return (val_res['test_loss'], len(self.val_loader), {"accuracy": val_res['test_acc']})
