@@ -8,6 +8,7 @@ from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
 from strategy import common_functions, fed_avg_fn
 from torch.utils.data import DataLoader
+import random
 
 parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 
@@ -23,6 +24,7 @@ parser.add_argument("--client_cpus", type=int, default=2)
 parser.add_argument("--client_gpus", type=float, default=0.5)
 
 parser.add_argument("--seed", type=int, default=None)
+parser.add_argument("--cuda_deterministic", type=bool, default=False)
 
 
 if __name__ == "__main__":
@@ -43,6 +45,7 @@ if __name__ == "__main__":
     CLIENT_CPUS = args.client_cpus
     CLIENT_GPUS = args.client_gpus
     SEED = args.seed
+    CUDA_DETERMINISTIC = args.cuda_deterministic
 
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -50,6 +53,17 @@ if __name__ == "__main__":
         NUM_CLASSES = 100
     else:
         raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
+
+    # seeding everything
+
+    random.seed(SEED)
+    np.random.seed(SEED)
+    torch.manual_seed(SEED)
+    torch.cuda.manual_seed(SEED)
+
+    if(CUDA_DETERMINISTIC):
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
 
     train_data_path, test_set = download_dataset(DATA_DIR, DATASET_NAME)
     kwargs_test_loader = {"num_workers": CLIENT_CPUS,
