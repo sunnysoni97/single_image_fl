@@ -3,29 +3,61 @@ from flwr.server import strategy
 from client import FlowerClient
 from models import init_model, get_parameters
 import torch
-from data_loader import load_dataset
 from typing import Dict, List
 import numpy as np
-import gc
+import argparse
+from data_loader_scripts.download import download_dataset
+from data_loader_scripts.partition import do_fl_partitioning
+
+parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
+
+parser.add_argument("--num_clients", type=int, default=10)
+parser.add_argument("--num_rounds", type=int, default=10)
+
+parser.add_argument("--dataset_name", type=str, default="cifar10")
+parser.add_argument("--data_dir", type=str, default="./data")
+parser.add_argument("--partition_alpha", type=float, default=1000.0)
+parser.add_argument("--partition_val_ratio", type=float, default=0.1)
+
+parser.add_argument("--client_cpus", type=int, default=2)
+parser.add_argument("--client_gpus", type=float, default=0.5)
+
+parser.add_argument("--seed", type=int, default=None)
 
 
 if __name__ == "__main__":
-    gc.enable()
 
-    NUM_CLIENTS = 10
-    NUM_ROUNDS = 15
     MODEL_NAME = "resnet18"
-    NUM_CLASSES = 10
+    BATCH_SIZE = 32
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    train_loaders, val_loaders, test_loader = load_dataset(
-        "cifar10", NUM_CLIENTS, 8, 42)
+    args = parser.parse_args()
+
+    NUM_CLIENTS = args.num_clients
+    NUM_ROUNDS = args.num_rounds
+    DATASET_NAME = args.dataset_name
+    DATA_DIR = args.data_dir
+    PARTITION_ALPHA = args.partition_alpha
+    PARTITION_VAL_RATIO = args.partition_val_ratio
+    CLIENT_CPUS = args.client_cpus
+    CLIENT_GPUS = args.client_gpus
+    SEED = args.seed
+
+    if(DATASET_NAME == "cifar10"):
+        NUM_CLASSES = 10
+    elif(DATASET_NAME == "cifar100"):
+        NUM_CLASSES = 100
+    else:
+        raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
+
+    train_data_path, test_loader = download_dataset(DATA_DIR, DATASET_NAME)
+
+    fed_dir = do_fl_partitioning(
+        train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
 
     def client_fn(cid) -> FlowerClient:
-        train_loader = train_loaders[int(cid)]
-        val_loader = test_loader
-        return FlowerClient(cid, MODEL_NAME, NUM_CLASSES, train_loader, val_loader, DEVICE)
+        return FlowerClient(cid, MODEL_NAME, NUM_CLASSES, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
 
     def fit_config(server_round: int) -> Dict[str, float]:
         config = {
@@ -35,11 +67,9 @@ if __name__ == "__main__":
         }
         return config
 
-    client_resources = None
-    ray_init_args = None
+    client_resources = {"num_cpus": CLIENT_CPUS}
     if (DEVICE.type == "cuda"):
-        client_resources = {"num_gpus": 0.5}
-        ray_init_args = {"num_gpus": 1}
+        client_resources["num_gpus"] = CLIENT_GPUS
 
     def initialise_parameters() -> List[np.ndarray]:
         new_model = init_model(MODEL_NAME, NUM_CLASSES)
@@ -85,6 +115,5 @@ if __name__ == "__main__":
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         ),
-        ray_init_args=ray_init_args,
         client_resources=client_resources,
     )

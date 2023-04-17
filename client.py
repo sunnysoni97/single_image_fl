@@ -1,4 +1,3 @@
-from torchvision.models import ResNet, resnet18
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch
@@ -7,6 +6,8 @@ import numpy as np
 import flwr as fl
 from models import get_parameters, set_parameters, init_model
 from common import test_model
+from pathlib import Path
+from data_loader_scripts.create_dataloader import create_dataloader
 
 # function for training a model
 
@@ -51,13 +52,15 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, cid: str, model_name: str, model_n_classes: int, train_loader: DataLoader, val_loader: DataLoader, device: torch.device) -> None:
+    def __init__(self, cid: str, model_name: str, model_n_classes: int, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device) -> None:
         self.cid = cid
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.device = device
         self.model_name = model_name
         self.model_n_classes = model_n_classes
+        self.dataset_name = dataset_name
+        self.fed_dir = fed_dir
+        self.batch_size = batch_size
+        self.num_cpu_workers = num_cpu_workers
+        self.device = device
         self.parameters = None
 
     def get_parameters(self, config) -> List[np.ndarray]:
@@ -71,16 +74,18 @@ class FlowerClient(fl.client.NumPyClient):
     def fit(self, parameters, config) -> Tuple[List[np.ndarray], int, Dict[str, float]]:
         print(f'Fitting Client {self.cid}')
         self.set_parameters(parameters)
+        train_loader = create_dataloader(
+            self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
         new_params, train_res = train_model(
-            self.model_name, self.model_n_classes, self.parameters, self.train_loader, config, self.device)
+            self.model_name, self.model_n_classes, self.parameters, train_loader, config, self.device)
         self.set_parameters(new_params)
-        torch.cuda.empty_cache()
-        return (self.get_parameters(config), len(self.train_loader), train_res)
+        return (self.get_parameters(config), len(train_loader), train_res)
 
     def evaluate(self, parameters, config) -> Tuple[float, int, Dict[str, float]]:
         print(f'Evaluating Client {self.cid}')
         self.set_parameters(parameters)
+        val_loader = create_dataloader(
+            self.dataset_name, self.fed_dir, self.cid, False, self.batch_size, self.num_cpu_workers)
         val_res = test_model(self.model_name, self.model_n_classes,
-                             self.parameters, self.val_loader, self.device)
-        torch.cuda.empty_cache()
-        return (val_res['test_loss'], len(self.val_loader), {"accuracy": val_res['test_acc']})
+                             self.parameters, val_loader, self.device)
+        return (val_res['test_loss'], len(val_loader), {"accuracy": val_res['test_acc']})
