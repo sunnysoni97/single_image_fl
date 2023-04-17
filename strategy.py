@@ -7,6 +7,7 @@ from typing import Dict, Tuple
 from torch.utils.data import DataLoader
 import torch
 from common import test_model
+import numpy as np
 
 
 class common_functions:
@@ -52,8 +53,11 @@ class fed_avg_fn:
     @staticmethod
     def get_fit_config_fn():
         def on_fit_config_fn(server_round: int) -> Dict[str, float]:
+            xp = [x for x in range(1,26)]
+            yp = np.linspace(1e-3,1e-5,25)
+            lr = np.interp(server_round, xp=xp, fp=yp)
             config = {
-                'lr': 1e-3,
+                'lr': lr,
                 'epochs': 1,
                 'momentum': 0.9,
                 'round': server_round
