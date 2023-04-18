@@ -53,9 +53,22 @@ class fed_avg_fn:
     @staticmethod
     def get_fit_config_fn():
         def on_fit_config_fn(server_round: int) -> Dict[str, float]:
-            xp = [x for x in range(1,26)]
-            yp = np.linspace(1e-3,1e-5,25)
-            lr = np.interp(server_round, xp=xp, fp=yp)
+
+            if(server_round < 16):
+                lr = 1e-3
+            elif(server_round < 21):
+                lr = 1e-4
+            else:
+                lr = 1e-5
+
+            # adaptive lr
+            # end_round = 20
+            # low = -5
+            # high = -2
+            # xp = [x for x in range(1,end_round+1)]
+            # yp = np.logspace(high,low,end_round)
+            # lr = np.interp(server_round, xp=xp, fp=yp)
+
             config = {
                 'lr': lr,
                 'epochs': 1,
