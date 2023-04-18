@@ -1,14 +1,18 @@
 import flwr as fl
 from flwr.server import strategy
-from client import FlowerClient
 import torch
 import numpy as np
 import argparse
-from data_loader_scripts.download import download_dataset
-from data_loader_scripts.partition import do_fl_partitioning
-from strategy import common_functions, fed_avg_fn
 from torch.utils.data import DataLoader
 import random
+
+from data_loader_scripts.download import download_dataset
+from data_loader_scripts.partition import do_fl_partitioning
+
+from strategy.common import common_functions
+from strategy.fed_avg import fed_avg_fn
+
+import client.fed_avg
 
 parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 
@@ -56,10 +60,12 @@ if __name__ == "__main__":
 
     # seeding everything
 
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed(SEED)
+    if(SEED is not None):
+
+        random.seed(SEED)
+        np.random.seed(SEED)
+        torch.manual_seed(SEED)
+        torch.cuda.manual_seed(SEED)
 
     if(CUDA_DETERMINISTIC):
         torch.backends.cudnn.benchmark = False
@@ -74,8 +80,8 @@ if __name__ == "__main__":
     fed_dir = do_fl_partitioning(
         train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
 
-    def client_fn(cid) -> FlowerClient:
-        return FlowerClient(cid, MODEL_NAME, NUM_CLASSES, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
+    def client_fn(cid) -> client.fed_avg.FlowerClient:
+        return client.fed_avg.FlowerClient(cid, MODEL_NAME, NUM_CLASSES, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
 
     client_resources = {"num_cpus": CLIENT_CPUS}
     if (DEVICE.type == "cuda"):
