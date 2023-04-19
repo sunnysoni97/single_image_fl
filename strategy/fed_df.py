@@ -12,10 +12,14 @@ from flwr.common import (
 )
 
 from typing import Optional, Tuple, List, Union, Dict
-from flwr.server.strategy import Strategy, aggregate
+from flwr.server.strategy import Strategy
+from flwr.server.strategy.aggregate import aggregate, weighted_loss_avg
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
+
 from models import init_model, get_parameters, set_parameters
+from fed_df_data_loader.common import make_data_loader
+from common import test_model
 
 from flwr.common.logger import log
 from logging import WARNING
@@ -23,13 +27,17 @@ from logging import WARNING
 from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 
 
 class FedDF_strategy(Strategy):
     def __init__(self,
-                 distillation_dataloader:DataLoader,
-                 model_type:str,
-                 model_n_classes:int,
+                 distillation_dataloader: DataLoader,
+                 evaluation_dataloader: DataLoader,
+                 model_type: str,
+                 model_n_classes: int,
+                 device: torch.device,
                  fraction_fit: float = 1.0,
                  fraction_evaluate: float = 1.0,
                  min_fit_clients: int = 2,
@@ -40,17 +48,19 @@ class FedDF_strategy(Strategy):
                  evaluate_metrics_aggregation_fn=None,
                  on_fit_config_fn_client=None,
                  on_fit_config_fn_server=None,
-                 
+                 evaluate_fn=None,
+                 logger_fn=None,
                  ) -> None:
         super().__init__()
 
-        # DataLoader for distillation set
+        # DataLoader for distillation set and evaluation set
         self.distillation_dataloader = distillation_dataloader
+        self.evaluation_dataloader = evaluation_dataloader
 
         # Neural Net specifications
         self.model_type = model_type
         self.model_n_classes = model_n_classes
-        
+
         # fraction of participating clients
         self.min_available_clients = min_available_clients
         self.fraction_fit = fraction_fit
@@ -68,6 +78,19 @@ class FedDF_strategy(Strategy):
         # configuration function for clients/server for training round
         self.on_fit_config_fn_client = on_fit_config_fn_client
         self.on_fit_config_fn_server = on_fit_config_fn_server
+
+        # server side evaluation fn
+        self.evaluate_fn = evaluate_fn
+
+        # logger fn
+        self.logger_fn = logger_fn
+
+        # cpu/gpu selection
+        self.device = device
+
+    def __repr__(self) -> str:
+        rep = f'FedDF'
+        return rep
 
     # FUNCTIONS FOR SAMPLING CLIENTS FOR FIT AND EVALUATE (SAME AS FED AVG)
 
@@ -131,70 +154,110 @@ class FedDF_strategy(Strategy):
     def aggregate_fit(self, server_round: int, results: List[Tuple[ClientProxy, FitRes]], failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]]) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         if not results:
             return None, {}
-        
-        config = {
-            "epochs": 1,
-            "lr": 0.001,
-            "momentum": 0.9,
-            "temperature": 1,
-        }
-        
+
+        config = {}
+
         if(self.on_fit_config_fn_server is not None):
             config = self.on_fit_config_fn_server(server_round)
 
         logits_results = [
-            (bytes_to_ndarray(fit_res.metrics['preds']),fit_res.num_examples)
+            (bytes_to_ndarray(fit_res.metrics['preds']), fit_res.num_examples)
             for _, fit_res in results
         ]
-        
-        logits_aggregated = aggregate(logits_results)
-        
-        #Distilling student model using Average Logits
 
-        parameters_aggregated = fed_df_fn.fuse_models(global_parameters=results[0][1]['global_parameters'],preds=logits_results,config=config, dataloader=self.distillation_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes)
-        
+        logits_aggregated = aggregate(logits_results)
+
+        # Distilling student model using Average Logits
+
+        parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=results[0][1]['global_parameters'], preds=logits_aggregated,
+                                                                   config=config, dataloader=self.distillation_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes, DEVICE=self.device)
+
         # Aggregate custom metrics if aggregation fn was provided
 
         metrics_aggregated = {}
         if self.fit_metrics_aggregation_fn:
-            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+            fit_metrics = [(res.num_examples, res.metrics)
+                           for _, res in results]
             metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        return parameters_aggregated, metrics_aggregated
+        if(self.logger_fn is not None):
+            self.logger_fn(server_round, metrics_aggregated, "fit", "client")
+            self.logger_fn(server_round, fusion_metrics, "fit", "server")
+
+        parameters_aggregated = ndarrays_to_parameters(parameters_aggregated)
+        return parameters_aggregated, {}
 
     def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        return super().aggregate_evaluate(server_round, results, failures)
+        if not results:
+            return None, {}
+
+        # Aggregate loss
+        loss_aggregated = weighted_loss_avg(
+            [
+                (evaluate_res.num_examples, evaluate_res.loss)
+                for _, evaluate_res in results
+            ]
+        )
+
+        # Aggregate custom metrics if aggregation fn was provided
+        metrics_aggregated = {}
+        if self.evaluate_metrics_aggregation_fn:
+            eval_metrics = [(res.num_examples, res.metrics)
+                            for _, res in results]
+            metrics_aggregated = self.evaluate_metrics_aggregation_fn(
+                eval_metrics)
+        elif server_round == 1:  # Only log this warning once
+            log(WARNING, "No evaluate_metrics_aggregation_fn provided")
+
+        if(self.logger_fn is not None):
+            self.logger_fn(server_round, metrics_aggregated,
+                           "evaluate", "client")
+
+        return loss_aggregated, metrics_aggregated
 
     def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
-        return super().evaluate(server_round, parameters)
+        """Evaluate model parameters using an evaluation function."""
+        if self.evaluate_fn is None:
+            # No evaluation function provided
+            return None
+        parameters_ndarrays = parameters_to_ndarrays(parameters)
+        eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
+                                    n_classes=self.model_n_classes, test_loader=self.evaluation_dataloader, device=self.device)
+        if eval_res is None:
+            return None
+        loss, metrics = eval_res
+        if(self.logger_fn is not None):
+            self.logger_fn(server_round, metrics, "evaluate", "server")
+        return loss, metrics
 
-
-# IMPLEMENT THISSSSSSSS
-
-class fed_df_fn:
     @staticmethod
-    def fuse_models(global_parameters: Parameters, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, model_type:str, model_n_classes:int, DEVICE: torch.device) -> Parameters:
-        
-        raise NotImplementedError()
+    def __fuse_models(global_parameters: Parameters, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
+
         net = init_model(model_name=model_type, n_classes=model_n_classes)
         set_parameters(net, global_parameters)
         criterion = nn.KLDivLoss(reduction='sum')
         temperature = config['temperature']
-        optimizer = torch.optim.SGD(params=net.parameters(),lr=config['lr'],momentum=config['momentum'])
+        optimizer = torch.optim.SGD(params=net.parameters(
+        ), lr=config['lr'], momentum=config['momentum'])
         net.train()
         net.to(DEVICE)
 
         total_epoch_loss = []
         total_epoch_acc = []
 
+        train_loader = make_data_loader(
+            dataloader, preds=preds, batch_size=dataloader.batch_size, n_workers=dataloader.num_workers)
+
         for epoch in range(config['epochs']):
             correct, total, epoch_loss = 0, 0, 0.0
 
             for images, labels in dataloader:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                outputs = model(images)
+                outputs = net(images)
+                outputs = F.log_softmax(outputs/temperature, dim=1)
+                labels = F.softmax(outputs/temperature, dim=1)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
@@ -202,19 +265,50 @@ class fed_df_fn:
 
                 epoch_loss += loss.item()
                 total += labels.size(0)
-                correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+                correct += (torch.max(outputs.data, 1)
+                            [1] == labels).sum().item()
 
             epoch_loss /= len(train_loader.dataset)
             epoch_acc = correct/total
             total_epoch_loss.append(epoch_loss)
             total_epoch_acc.append(epoch_acc)
-            print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
+            print(
+                f'Server epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
-        new_parameters = get_parameters(model)
+        new_parameters = get_parameters(net)
         train_res = {'train_loss': np.mean(
             total_epoch_loss), 'train_acc': np.mean(total_epoch_acc)}
         return (new_parameters, train_res)
-        
-        
 
-        return
+
+# callback functions for fed df
+
+class fed_df_fn:
+    @staticmethod
+    def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
+        lr = 1e-3
+        config = {
+            'lr': lr,
+            'epochs': 1,
+            'momentum': 0.9
+        }
+        return config
+
+    @staticmethod
+    def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
+        lr = 1e-3
+        config = {
+            "epochs": 1,
+            "lr": lr,
+            "momentum": 0.9,
+            "temperature": 1,
+        }
+        return config
+
+    @staticmethod
+    def evaluate_fn(model_params: NDArray, model_name: str, n_classes: int, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
+        test_res = test_model(model_name, n_classes,
+                              model_params, test_loader, device)
+        test_loss = test_res['test_loss']
+        test_acc = test_res['test_acc']
+        return test_loss, {'server_test_acc': test_acc}
