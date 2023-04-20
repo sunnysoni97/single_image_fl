@@ -161,15 +161,17 @@ class FedDF_strategy(Strategy):
             config = self.on_fit_config_fn_server(server_round)
 
         logits_results = [
-            (bytes_to_ndarray(fit_res.metrics['preds']), fit_res.num_examples)
+            (bytes_to_ndarray(
+                fit_res.metrics['preds']), fit_res.metrics['preds_number'])
             for _, fit_res in results
         ]
 
-        logits_aggregated = aggregate(logits_results)
+        logits_aggregated = np.array(aggregate(logits_results))
 
         # Distilling student model using Average Logits
 
-        parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=results[0][1]['global_parameters'], preds=logits_aggregated,
+        old_parameters = parameters_to_ndarrays(results[0][1].parameters)
+        parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
                                                                    config=config, dataloader=self.distillation_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes, DEVICE=self.device)
 
         # Aggregate custom metrics if aggregation fn was provided
@@ -233,7 +235,7 @@ class FedDF_strategy(Strategy):
         return loss, metrics
 
     @staticmethod
-    def __fuse_models(global_parameters: Parameters, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
+    def __fuse_models(global_parameters: NDArray, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
 
         net = init_model(model_name=model_type, n_classes=model_n_classes)
         set_parameters(net, global_parameters)
@@ -253,11 +255,11 @@ class FedDF_strategy(Strategy):
         for epoch in range(config['epochs']):
             correct, total, epoch_loss = 0, 0, 0.0
 
-            for images, labels in dataloader:
+            for images, labels in train_loader:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
                 outputs = net(images)
                 outputs = F.log_softmax(outputs/temperature, dim=1)
-                labels = F.softmax(outputs/temperature, dim=1)
+                labels = F.softmax(labels/temperature, dim=1)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
@@ -266,7 +268,7 @@ class FedDF_strategy(Strategy):
                 epoch_loss += loss.item()
                 total += labels.size(0)
                 correct += (torch.max(outputs.data, 1)
-                            [1] == labels).sum().item()
+                            [1] == torch.max(labels.data, 1)[1]).sum().item()
 
             epoch_loss /= len(train_loader.dataset)
             epoch_acc = correct/total
