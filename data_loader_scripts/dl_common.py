@@ -26,8 +26,6 @@ XY = Tuple[np.ndarray, np.ndarray]
 XYList = List[XY]
 PartitionedDataset = Tuple[XYList, XYList]
 
-np.random.seed(2020)
-
 
 def float_to_int(i: float) -> int:
     """Return float as int but raise if decimal is dropped."""
@@ -420,6 +418,9 @@ def create_lda_partitions(
             for each dataset and the dirichlet probability density functions.
     """
     # pylint: disable=too-many-arguments,too-many-locals
+
+    if(seed is not None):
+        np.random.seed(seed)
 
     x, y = dataset
     x, y = shuffle(x, y)
