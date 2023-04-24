@@ -14,6 +14,9 @@ import time
 from PIL import ImageFilter
 import random
 
+import json
+import shutil
+
 class GaussianBlur(object):
     """Gaussian blur augmentation from SimCLR https://arxiv.org/abs/2002.05709"""
 
@@ -89,11 +92,11 @@ class MonoDataset(torch.utils.data.Dataset):
 
         scale = (1./scale[0], 1./scale[1])
         if randinterp and not debug:
-            resizedcrop = tfs.RandomApply([MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=1),
-                                           MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=2),
-                                           MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=3)])
+            resizedcrop = tfs.RandomApply([MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=tfs.InterpolationMode.LANCZOS),
+                                           MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=tfs.InterpolationMode.BILINEAR),
+                                           MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=tfs.InterpolationMode.BICUBIC)])
         else:
-            resizedcrop = MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=3)
+            resizedcrop = MyRandomResizedCrop(int(math.sqrt(2) * crop_size), scale=scale, interpolation=tfs.InterpolationMode.BICUBIC)
         self.length = length # run out after one IN-1k epoch
         self.crop_size = crop_size
 
@@ -105,9 +108,9 @@ class MonoDataset(torch.utils.data.Dataset):
         if scale[0] > 0 :
             tfslist.append(resizedcrop)
         if shear != 0:
-            tfslist.append(tfs.RandomAffine(degrees, translate=None, scale=None, shear=shear, resample=Image.BILINEAR, fillcolor=0))
+            tfslist.append(tfs.RandomAffine(degrees, translate=None, scale=None, shear=shear, interpolation=tfs.InterpolationMode.BILINEAR, fill=0))
         elif degrees != 0:
-            tfslist.append(tfs.RandomRotation(degrees=degrees, resample=Image.BILINEAR))
+            tfslist.append(tfs.RandomRotation(degrees=degrees, interpolation=tfs.InterpolationMode.BILINEAR))
 
         if vflip:
             tfslist.append(tfs.RandomVerticalFlip(p=0.5))
@@ -124,7 +127,7 @@ class MonoDataset(torch.utils.data.Dataset):
         if mean != [0, 0, 0]:
             tfslist.append(normalize)
         self.transforms = tfs.Compose(tfslist)
-        print("transforms:", tfslist)
+        # print("transforms:", tfslist)
 
     def __len__(self):
         return self.length
@@ -157,7 +160,7 @@ def make_(thred):
                                        cropfirst=args.cropfirst, length=args.img_per_thread,
                                        )
     count = thred*args.img_per_thread
-    print(f"{len(data_loader.dataset) + (args.img_per_thread % args.batch_size)}images per thread")
+    # print(f"{len(data_loader.dataset) + (args.img_per_thread % args.batch_size)}images per thread")
     for patches in data_loader:
         count += len(patches)
         save_batch_imgs(patches, count, path)
@@ -175,8 +178,8 @@ def get_parser():
     # Generation settings
     parser.add_argument('--img_size', default=32, type=int, help='Size of generated images (default:256)')
     parser.add_argument('--batch_size', default=32, type=int, help='Batchsize for generation (default:32)')
-    parser.add_argument('--num_imgs', default=50000, type=int, help='Number of images to be generated (default: 1281167)')
-    parser.add_argument('--threads', default=20, type=int, help='how many CPU threads to use for generation (default: 20)')
+    parser.add_argument('--num_imgs', default=10000, type=int, help='Number of images to be generated (default: 1281167)')
+    parser.add_argument('--threads', default=12, type=int, help='how many CPU threads to use for generation (default: 20)')
 
     # Flipping
     parser.add_argument('--vflip', action='store_true', help='use vflip? (default: False)')
@@ -196,8 +199,8 @@ def get_parser():
 
     # storing etc.
     parser.add_argument('--debug', default=False)
-    parser.add_argument('--imgpath', default="images/ameyoko.jpg", type=str)
-    parser.add_argument('--targetpath', default="./out", type=str)
+    parser.add_argument('--imgpath', default="static/single_images/ameyoko.jpg", type=str)
+    parser.add_argument('--targetpath', default="./data", type=str)
     return parser
 
 
@@ -211,10 +214,16 @@ if __name__ == "__main__":
         args.num_imgs = 64
         args.threads = 2
 
-    path = args.targetpath + str(args.img_size) + "_single" + args.imgpath.split('/')[-1].split('.')[0]
-    path += f"_init{args.initcrop}_deg{args.deg}_scale{args.scale[0]}_{args.scale[1]}"
-    path += f"_shear{args.shear}_randinterp_{args.randinterp}_vflip{args.vflip}_cropfirst{args.cropfirst}_new_{args.num_imgs}"
-    path += '/train/dummy'
+    path = args.targetpath + "/single_img_crops/"
+    os.makedirs(path, exist_ok=True)
+    
+    json_obj = json.dumps(args.__dict__,indent=2,sort_keys=True)
+    with open(path+"metadata.json",'w') as f:
+        f.write(json_obj)
+    
+    path += 'crops'
+    if(os.path.exists(path)):
+        shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)
     args.img_per_thread = args.num_imgs//args.threads
 
