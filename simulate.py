@@ -9,6 +9,7 @@ import random
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
 from fed_df_data_loader.split_standard import split_standard
+from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 
 from strategy.common import common_functions
 from strategy.fed_avg import fed_avg_fn
@@ -35,6 +36,8 @@ parser.add_argument("--client_gpus", type=float, default=0.5)
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=bool, default=False)
 
+parser.add_argument("--use_crops", type=bool, default=False)
+
 
 if __name__ == "__main__":
 
@@ -57,6 +60,7 @@ if __name__ == "__main__":
     CLIENT_GPUS = args.client_gpus
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
+    USE_CROPS = args.use_crops
 
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -92,10 +96,14 @@ if __name__ == "__main__":
             return client.fed_avg.FlowerClient(cid, MODEL_NAME, NUM_CLASSES, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
 
     elif(FED_STRATEGY == "feddf"):
-        test_loader_partitions = split_standard(
-            dataloader=test_loader, batch_size=BATCH_SIZE, n_workers=CLIENT_CPUS)
-        test_loader = test_loader_partitions[0]
-        distill_dataloader = test_loader_partitions[1]
+        if(USE_CROPS):
+            distill_dataloader = get_distill_imgloader(
+                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=BATCH_SIZE, num_workers=CLIENT_CPUS)
+        else:
+            test_loader_partitions = split_standard(
+                dataloader=test_loader, batch_size=BATCH_SIZE, n_workers=CLIENT_CPUS)
+            test_loader = test_loader_partitions[0]
+            distill_dataloader = test_loader_partitions[1]
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
             return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, model_n_classes=NUM_CLASSES, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader)

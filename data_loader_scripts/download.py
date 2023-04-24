@@ -28,6 +28,18 @@ def cifar100_transforms():
         ]
     )
 
+# Returns appropriate transforms
+
+
+def get_transforms(dataset_name: str = "cifar10"):
+    if(dataset_name == "cifar10"):
+        transformF = cifar10_transforms()
+    elif(dataset_name == "cifar100"):
+        transformF = cifar100_transforms()
+    else:
+        raise ValueError(f'{dataset_name} not implemented yet!')
+    return transformF
+
 # Downloads complete training dataset on the disk, returns path of combined training data file and test set in the memory
 
 
@@ -36,12 +48,12 @@ def download_dataset(data_storage_path="./data", dataset_name="cifar10"):
     if(dataset_name == "cifar10"):
         train_set = CIFAR10(root=data_storage_path, train=True, download=True)
         test_set = CIFAR10(root=data_storage_path, train=False,
-                           transform=cifar10_transforms())
+                           transform=get_transforms(dataset_name))
 
     elif(dataset_name == "cifar100"):
         train_set = CIFAR100(root=data_storage_path, train=True, download=True)
         test_set = CIFAR100(root=data_storage_path,
-                            train=False, transform=cifar100_transforms())
+                            train=False, transform=get_transforms(dataset_name))
     else:
         raise ValueError("This dataset is not implemented yet!")
 

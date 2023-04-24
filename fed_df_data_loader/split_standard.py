@@ -28,7 +28,7 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
         imgs = all_imgs[indices]
         new_dataset = DistillDataset(None, data=imgs, targets=labels)
         new_dataloader = DataLoader(
-            new_dataset, batch_size=batch_size, num_workers=n_workers, shuffle=False)
+            new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=True, shuffle=False)
         dataloader_list.append(new_dataloader)
 
     return dataloader_list

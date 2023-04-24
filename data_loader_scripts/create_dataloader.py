@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 from pathlib import Path
 import numpy as np
-from data_loader_scripts.download import cifar10_transforms, cifar100_transforms
+from data_loader_scripts.download import get_transforms
 from torch.utils.data import DataLoader
 
 
@@ -60,14 +60,7 @@ class TorchVision_FL(VisionDataset):
 def get_dataset(dataset_name: str, path_to_data: Path, cid: str, partition: str):
     # generate path to cid's data
     path_to_data = path_to_data / cid / (partition + ".pt")
-    if(dataset_name == "cifar10"):
-        transformF = cifar10_transforms()
-    elif(dataset_name == "cifar100"):
-        transformF = cifar100_transforms()
-    else:
-        raise ValueError(
-            f"Can't get this dataset : {dataset_name} not defined yet!")
-
+    transformF = get_transforms(dataset_name)
     return TorchVision_FL(path_to_data, transform=transformF)
 
 
