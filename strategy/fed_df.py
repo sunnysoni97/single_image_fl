@@ -8,7 +8,8 @@ from flwr.common import (
     ndarrays_to_parameters,
     parameters_to_ndarrays,
     bytes_to_ndarray,
-    NDArray
+    NDArray,
+    NDArrays
 )
 
 from typing import Optional, Tuple, List, Union, Dict
@@ -162,6 +163,8 @@ class FedDF_strategy(Strategy):
         if(self.on_fit_config_fn_server is not None):
             config = self.on_fit_config_fn_server(server_round)
 
+        # Aggregating logits using averaging
+
         logits_results = [
             (bytes_to_ndarray(
                 fit_res.metrics['preds']), fit_res.metrics['preds_number'])
@@ -170,9 +173,17 @@ class FedDF_strategy(Strategy):
 
         logits_aggregated = np.array(aggregate(logits_results))
 
+        # Aggregating new parameters for warm start using averaging
+
+        weights_results = [
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+            for _, fit_res in results
+        ]
+        old_parameters = aggregate(weights_results)
+
         # Distilling student model using Average Logits
 
-        old_parameters = parameters_to_ndarrays(results[0][1].parameters)
+        # old_parameters = parameters_to_ndarrays(results[0][1].parameters)
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
                                                                    config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes, DEVICE=self.device)
 
@@ -237,7 +248,7 @@ class FedDF_strategy(Strategy):
         return loss, metrics
 
     @staticmethod
-    def __fuse_models(global_parameters: NDArray, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
+    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
 
         print("Performing server side distillation training...")
         net = init_model(model_name=model_type, n_classes=model_n_classes)
