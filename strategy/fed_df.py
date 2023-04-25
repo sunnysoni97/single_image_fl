@@ -35,6 +35,7 @@ class FedDF_strategy(Strategy):
     def __init__(self,
                  distillation_dataloader: DataLoader,
                  evaluation_dataloader: DataLoader,
+                 val_dataloader: DataLoader,
                  model_type: str,
                  model_n_classes: int,
                  device: torch.device,
@@ -53,9 +54,10 @@ class FedDF_strategy(Strategy):
                  ) -> None:
         super().__init__()
 
-        # DataLoader for distillation set and evaluation set
+        # DataLoader for distillation, valuation and evaluation set
         self.distillation_dataloader = distillation_dataloader
         self.evaluation_dataloader = evaluation_dataloader
+        self.val_dataloader = val_dataloader
 
         # Neural Net specifications
         self.model_type = model_type
