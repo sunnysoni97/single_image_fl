@@ -31,6 +31,6 @@ def make_data_loader(img_dataloader: DataLoader, preds: NDArray, batch_size: int
     all_imgs = torch.cat(all_imgs, dim=0)
     new_dataset = DistillDataset(None, data=all_imgs, targets=preds_tensor)
     new_data_loader = DataLoader(
-        new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=True, shuffle=False)
+        new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=True, shuffle=True)
 
     return new_data_loader
