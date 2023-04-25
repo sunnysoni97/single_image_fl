@@ -244,8 +244,9 @@ class FedDF_strategy(Strategy):
         set_parameters(net, global_parameters)
         criterion = nn.KLDivLoss(reduction='sum')
         temperature = config['temperature']
-        optimizer = torch.optim.SGD(params=net.parameters(
-        ), lr=config['lr'], momentum=config['momentum'])
+        optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
+        # optimizer = torch.optim.SGD(params=net.parameters(
+        # ), lr=config['lr'], momentum=config['momentum'])
         net.train()
         net.to(DEVICE)
 
@@ -315,11 +316,11 @@ class FedDF_strategy(Strategy):
 class fed_df_fn:
     @staticmethod
     def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
-        lr = 1e-3
+        lr = 1e-1
         config = {
             'lr': lr,
             'epochs': 1,
-            'momentum': 0.9
+            # 'momentum': 0.9
         }
         return config
 
@@ -330,7 +331,7 @@ class fed_df_fn:
             "steps": 1e2,
             "early_stopping_steps": 5e1,
             "lr": lr,
-            "momentum": 0.9,
+            # "momentum": 0.9,
             "temperature": 1,
         }
         return config
