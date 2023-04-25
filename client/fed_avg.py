@@ -37,7 +37,8 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
             epoch_loss += loss.item()
             total += labels.size(0)
-            correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+            correct += (torch.max(outputs.detach(), 1)
+                        [1] == labels).sum().item()
 
         epoch_loss /= len(train_loader.dataset)
         epoch_acc = correct/total

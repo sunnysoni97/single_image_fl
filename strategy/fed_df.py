@@ -247,6 +247,8 @@ class FedDF_strategy(Strategy):
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
         # optimizer = torch.optim.SGD(params=net.parameters(
         # ), lr=config['lr'], momentum=config['momentum'])
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=config['steps'])
         net.train()
         net.to(DEVICE)
 
@@ -272,6 +274,7 @@ class FedDF_strategy(Strategy):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+                scheduler.step()
 
                 total = 0
                 correct = 0

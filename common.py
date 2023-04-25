@@ -18,7 +18,7 @@ def test_model(model_name: str, model_n_classes: int, parameters: List[np.ndarra
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             outputs = model(images)
             loss += criterion(outputs, labels).item()
-            _, predicted = torch.max(outputs.data, 1)
+            _, predicted = torch.max(outputs.detach(), 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     loss /= len(test_loader.dataset)
