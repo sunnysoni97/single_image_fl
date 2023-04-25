@@ -1,11 +1,18 @@
-from flwr.server.strategy.aggregate import aggregate
-import numpy as np
+from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 
 if __name__ == "__main__":
-    no_preds = 3
-    preds = np.random.rand(no_preds,10)
-    preds2 = np.random.rand(no_preds,10)
-    preds_list = [(preds,no_preds),(preds2,no_preds)]
-    aggregated_preds = aggregate(preds_list)
-    aggregated_preds = np.array(aggregated_preds)
-    print(aggregated_preds)
+    path = "./data/single_img_crops/crops"
+    dl = get_distill_imgloader(path)
+
+    i=0
+    for img,labels in dl:
+        if(i<5):
+            print(img[0].shape)
+            print(labels[0])
+        i+=1
+
+    print(f'Total batches : {i}')
+    
+    
+    
+
