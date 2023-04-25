@@ -58,7 +58,8 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
-        print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
+        if((epoch+1) % 10 == 0):
+            print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
     new_parameters = get_parameters(model)
 
