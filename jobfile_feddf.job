@@ -21,6 +21,7 @@ STRATEGY=feddf
 NUM_ROUNDS=30
 CLIENT_GPUS=0.1
 SEED=42
+VAL_RATIO=0.05
 USE_CROPS=True
 
 echo "---------"
@@ -28,6 +29,7 @@ echo "Number of crops : $NO_IMGS"
 echo "Strategy : $STRATEGY"
 echo "Communication Rounds : $NUM_ROUNDS"
 echo "Seed : $SEED"
+echo "Val Ratio : $VAL_RATIO"
 
 echo "---------"
 echo "Generating crops for FedDF"
@@ -37,4 +39,4 @@ srun python make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS
 echo "---------"
 echo "Simulating FedDF training using crops"
 
-srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS
+srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO

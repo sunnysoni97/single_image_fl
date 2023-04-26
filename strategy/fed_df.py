@@ -309,7 +309,7 @@ class FedDF_strategy(Strategy):
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
-                if(cur_step % 500 == 0):
+                if(cur_step % 100 == 0):
                     print(f"step {cur_step}, val_acc : {step_val_acc}")
 
         print(f'Distillation training stopped at step number : {cur_step}')
@@ -333,7 +333,7 @@ class fed_df_fn:
         lr = 1e-1
         config = {
             'lr': lr,
-            'epochs': 40,
+            'epochs': 20,
             # 'momentum': 0.9
         }
         return config
@@ -342,8 +342,8 @@ class fed_df_fn:
     def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
         lr = 1e-3
         config = {
-            "steps": 1e4,
-            "early_stopping_steps": 1e3,
+            "steps": 1e3,
+            "early_stopping_steps": 5e2,
             "lr": lr,
             # "momentum": 0.9,
             "temperature": 1,
