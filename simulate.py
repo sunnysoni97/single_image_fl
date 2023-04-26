@@ -37,6 +37,10 @@ parser.add_argument("--client_cpus", type=int, default=2)
 parser.add_argument("--client_gpus", type=float, default=0.5)
 parser.add_argument("--server_cpus", type=int, default=4)
 
+parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--local_epochs", type=int, default=20)
+parser.add_argument("--server_steps", type=int, default=1e3)
+
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=bool, default=False)
 
@@ -46,7 +50,7 @@ parser.add_argument("--use_crops", type=bool, default=False)
 if __name__ == "__main__":
 
     MODEL_NAME = "resnet18"
-    BATCH_SIZE = 32
+
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -67,6 +71,10 @@ if __name__ == "__main__":
     CLIENT_CPUS = args.client_cpus
     CLIENT_GPUS = args.client_gpus
     SERVER_CPUS = args.server_cpus
+
+    BATCH_SIZE = args.batch_size
+    LOCAL_EPOCHS = args.local_epochs
+    SERVER_STEPS = args.server_steps
 
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
@@ -167,8 +175,10 @@ if __name__ == "__main__":
                     MODEL_NAME, NUM_CLASSES),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
-                on_fit_config_fn_client=fed_df_fn.on_fit_config_fn_client,
-                on_fit_config_fn_server=fed_df_fn.on_fit_config_fn_server,
+                on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
+                    LOCAL_EPOCHS),
+                on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
+                    SERVER_STEPS),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,

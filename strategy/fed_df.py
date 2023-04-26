@@ -12,7 +12,7 @@ from flwr.common import (
     NDArrays
 )
 
-from typing import Optional, Tuple, List, Union, Dict
+from typing import Optional, Tuple, List, Union, Dict, Callable
 from flwr.server.strategy import Strategy
 from flwr.server.strategy.aggregate import aggregate, weighted_loss_avg
 from flwr.server.client_manager import ClientManager
@@ -329,26 +329,30 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
-        lr = 1e-1
-        config = {
-            'lr': lr,
-            'epochs': 20,
-            # 'momentum': 0.9
-        }
-        return config
+    def get_on_fit_config_fn_client(client_epochs: int) -> Callable:
+        def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
+            lr = 1e-1
+            config = {
+                'lr': lr,
+                'epochs': client_epochs,
+                # 'momentum': 0.9
+            }
+            return config
+        return on_fit_config_fn_client
 
     @staticmethod
-    def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
-        lr = 1e-3
-        config = {
-            "steps": 1e3,
-            "early_stopping_steps": 5e2,
-            "lr": lr,
-            # "momentum": 0.9,
-            "temperature": 1,
-        }
-        return config
+    def get_on_fit_config_fn_server(distill_steps: int) -> Callable:
+        def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
+            lr = 1e-3
+            config = {
+                "steps": distill_steps,
+                "early_stopping_steps": 5e2,
+                "lr": lr,
+                # "momentum": 0.9,
+                "temperature": 1,
+            }
+            return config
+        return on_fit_config_fn_server
 
     @staticmethod
     def evaluate_fn(model_params: NDArray, model_name: str, n_classes: int, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
