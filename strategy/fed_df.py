@@ -272,9 +272,13 @@ class FedDF_strategy(Strategy):
         total_step_acc = []
         total_step_loss = []
 
-        while(cur_step < config['steps'] and plateau_step < config['early_stopping_steps']):
+        log_interval = 100
+        val_interval = log_interval / \
+            5 if config["use_early_stopping"] else log_interval
+
+        while(cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
             for images, labels in train_loader:
-                if(cur_step == config['steps'] or plateau_step == config['early_stopping_steps']):
+                if(cur_step == config['steps'] or (plateau_step == config['early_stopping_steps'] and config["use_early_stopping"])):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
@@ -289,7 +293,7 @@ class FedDF_strategy(Strategy):
 
                 plateau_step += 1
 
-                if((cur_step+1) % 20 == 0):
+                if((cur_step+1) % val_interval == 0):
                     total = 0
                     correct = 0
                     net.eval()
@@ -309,7 +313,7 @@ class FedDF_strategy(Strategy):
                         best_val_acc = step_val_acc
 
                     total_step_acc.append(step_val_acc)
-                    
+
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
@@ -345,12 +349,13 @@ class fed_df_fn:
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, early_stop_steps: int) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             lr = 1e-3
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,
+                "use_early_stopping": use_early_stopping,
                 "lr": lr,
                 # "momentum": 0.9,
                 "temperature": 1,

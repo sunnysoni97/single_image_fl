@@ -18,15 +18,16 @@ source activate single_image_fl
 
 NO_IMGS=1000
 STRATEGY=feddf
-NUM_ROUNDS=30
+NUM_ROUNDS=3
 CLIENT_GPUS=0.1
 SEED=42
-VAL_RATIO=0.05
+VAL_RATIO=0.1
 USE_CROPS=True
-BATCH_SIZE=512
+BATCH_SIZE=1024
 LOCAL_EPOCHS=80
-DISTILL_STEPS=10000
+DISTILL_STEPS=500
 EARLY_STEPS=1000
+USE_EARLY_STOPPING=False
 
 echo "---------"
 echo "Number of crops : $NO_IMGS"
@@ -47,4 +48,4 @@ srun python make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS
 echo "---------"
 echo "Simulating FedDF training using crops"
 
-srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS
+srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING
