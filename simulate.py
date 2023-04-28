@@ -8,6 +8,7 @@ import random
 
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
+from data_loader_scripts.create_dataloader import combine_val_loaders
 from fed_df_data_loader.split_standard import split_standard
 from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 
@@ -22,16 +23,24 @@ parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 
 parser.add_argument("--fed_strategy", type=str, default="fedavg")
 
-parser.add_argument("--num_clients", type=int, default=10)
+parser.add_argument("--num_clients", type=int, default=20)
 parser.add_argument("--num_rounds", type=int, default=10)
+parser.add_argument("--fraction_fit", type=float, default=0.4)
+parser.add_argument("--fraction_evaluate", type=float, default=0.0)
 
 parser.add_argument("--dataset_name", type=str, default="cifar10")
 parser.add_argument("--data_dir", type=str, default="./data")
-parser.add_argument("--partition_alpha", type=float, default=1000.0)
+parser.add_argument("--partition_alpha", type=float, default=100.0)
 parser.add_argument("--partition_val_ratio", type=float, default=0.1)
 
 parser.add_argument("--client_cpus", type=int, default=2)
 parser.add_argument("--client_gpus", type=float, default=0.5)
+parser.add_argument("--server_cpus", type=int, default=4)
+
+parser.add_argument("--batch_size", type=int, default=32)
+parser.add_argument("--local_epochs", type=int, default=20)
+parser.add_argument("--server_steps", type=int, default=1e3)
+parser.add_argument("--server_early_steps", type=int, default=5e2)
 
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=bool, default=False)
@@ -42,7 +51,7 @@ parser.add_argument("--use_crops", type=bool, default=False)
 if __name__ == "__main__":
 
     MODEL_NAME = "resnet18"
-    BATCH_SIZE = 32
+
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -52,14 +61,26 @@ if __name__ == "__main__":
 
     NUM_CLIENTS = args.num_clients
     NUM_ROUNDS = args.num_rounds
+    FRACTION_FIT = args.fraction_fit
+    FRACTION_EVALUATE = args.fraction_evaluate
+
     DATASET_NAME = args.dataset_name
     DATA_DIR = args.data_dir
     PARTITION_ALPHA = args.partition_alpha
     PARTITION_VAL_RATIO = args.partition_val_ratio
+
     CLIENT_CPUS = args.client_cpus
     CLIENT_GPUS = args.client_gpus
+    SERVER_CPUS = args.server_cpus
+
+    BATCH_SIZE = args.batch_size
+    LOCAL_EPOCHS = args.local_epochs
+    SERVER_STEPS = args.server_steps
+    SERVER_EARLY_STEPS = args.server_early_steps
+
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
+
     USE_CROPS = args.use_crops
 
     if(DATASET_NAME == "cifar10"):
@@ -105,6 +126,9 @@ if __name__ == "__main__":
             test_loader = test_loader_partitions[0]
             distill_dataloader = test_loader_partitions[1]
 
+        val_dataloader = combine_val_loaders(
+            dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
+
         def client_fn(cid) -> client.fed_df.FlowerClient:
             return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, model_n_classes=NUM_CLASSES, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader)
 
@@ -141,8 +165,11 @@ if __name__ == "__main__":
             num_clients=NUM_CLIENTS,
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=FedDF_strategy(
+                fraction_fit=FRACTION_FIT,
+                fraction_evaluate=FRACTION_EVALUATE,
                 distillation_dataloader=distill_dataloader,
                 evaluation_dataloader=test_loader,
+                val_dataloader=val_dataloader,
                 model_type=MODEL_NAME,
                 model_n_classes=NUM_CLASSES,
                 device=DEVICE,
@@ -150,8 +177,10 @@ if __name__ == "__main__":
                     MODEL_NAME, NUM_CLASSES),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
-                on_fit_config_fn_client=fed_df_fn.on_fit_config_fn_client,
-                on_fit_config_fn_server=fed_df_fn.on_fit_config_fn_server,
+                on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
+                    LOCAL_EPOCHS),
+                on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
+                    SERVER_STEPS, SERVER_EARLY_STEPS),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,

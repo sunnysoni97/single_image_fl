@@ -20,17 +20,18 @@ import torch
 import torch.nn as nn
 from pathlib import Path
 
-from models import init_model, set_parameters
+from models import init_model, set_parameters, get_parameters
 from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
 
 
-def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device) -> Tuple[List[np.ndarray], Dict[str, float]]:
+def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
     model = init_model(model_name, model_n_classes)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="sum")
-    optimizer = torch.optim.SGD(params=model.parameters(
-    ), lr=config['lr'], momentum=config['momentum'])
+    optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
+    # optimizer = torch.optim.SGD(params=model.parameters(
+    # ), lr=config['lr'], momentum=config['momentum'])
     model.train()
     model.to(DEVICE)
 
@@ -50,14 +51,19 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
             epoch_loss += loss.item()
             total += labels.size(0)
-            correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+            correct += (torch.max(outputs.detach(), 1)
+                        [1] == labels).sum().item()
 
         epoch_loss /= len(train_loader.dataset)
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
-        print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
+        if((epoch+1) % 5 == 0):
+            print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
+    new_parameters = get_parameters(model)
+
+    model.eval()
     with torch.no_grad():
         distill_preds = []
         for images, _ in distill_loader:
@@ -69,7 +75,8 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
     train_res = {'train_loss': np.mean(
         total_epoch_loss), 'train_acc': np.mean(total_epoch_acc)}
-    return (distill_preds, train_res)
+
+    return (new_parameters, distill_preds, train_res)
 
 
 class FlowerClient(fl.client.Client):
@@ -104,9 +111,10 @@ class FlowerClient(fl.client.Client):
         self.set_parameters(parameters)
         train_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
-        distill_preds, train_res = train_model(
+        new_parameters, distill_preds, train_res = train_model(
             model_name=self.model_name, model_n_classes=self.model_n_classes, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device)
 
+        self.set_parameters(new_parameters)
         train_res['preds'] = ndarray_to_bytes(distill_preds)
         train_res['preds_number'] = len(self.distill_dataloader.dataset)
 
@@ -114,7 +122,7 @@ class FlowerClient(fl.client.Client):
         status = Status(code=Code.OK, message="Success")
         return FitRes(
             status=status,
-            parameters=ndarrays_to_parameters(parameters),
+            parameters=ndarrays_to_parameters(new_parameters),
             num_examples=len(train_loader),
             metrics=train_res,
         )

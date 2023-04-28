@@ -73,5 +73,29 @@ def create_dataloader(
     dataset = get_dataset(dataset_name, Path(path_to_data), cid, partition)
 
     # we use as number of workers all the cpu cores assigned to this actor
-    kwargs = {"num_workers": workers, "pin_memory": True, "drop_last": False}
+    shuffle_var = True if is_train else False
+    kwargs = {"num_workers": workers, "pin_memory": True,
+              "drop_last": False, "shuffle": shuffle_var}
     return DataLoader(dataset, batch_size=batch_size, **kwargs)
+
+
+def combine_val_loaders(dataset_name: str, path_to_data: str, n_clients: int, batch_size: int, workers: int):
+    cid_list = [x for x in range(n_clients)]
+    path_lists = [path_to_data / str(x) / "val.pt" for x in cid_list]
+    val_data = []
+    val_targets = []
+    for path in path_lists:
+        cur_data, cur_targets = torch.load(path)
+        val_data.append(cur_data)
+        val_targets.append(cur_targets)
+
+    val_data = np.concatenate(val_data, axis=0)
+    val_targets = np.concatenate(val_targets, axis=0)
+
+    transformF = get_transforms(dataset_name=dataset_name)
+    dataset = TorchVision_FL(
+        data=val_data, targets=val_targets, transform=transformF)
+
+    kwargs = {"num_workers": workers, "batch_size": batch_size,
+              "pin_memory": True, "drop_last": False}
+    return DataLoader(dataset, **kwargs)
