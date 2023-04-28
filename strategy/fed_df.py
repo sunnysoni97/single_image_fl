@@ -287,25 +287,29 @@ class FedDF_strategy(Strategy):
                 optimizer.zero_grad()
                 scheduler.step()
 
-                total = 0
-                correct = 0
-                net.eval()
-                with torch.no_grad():
-                    for images2, labels2 in val_dataloader:
-                        images2, labels2 = images2.to(
-                            DEVICE), labels2.to(DEVICE)
-                        outputs2 = net(images2)
-                        total += labels2.size(0)
-                        correct += (torch.max(outputs2.detach(), 1)
-                                    [1] == labels2.detach()).sum().item()
-                net.train()
-                step_val_acc = correct/total
                 plateau_step += 1
-                if(step_val_acc >= best_val_acc+1e-2):
-                    plateau_step = 0
-                    best_val_acc = step_val_acc
 
-                total_step_acc.append(step_val_acc)
+                if((cur_step+1) % 20 == 0):
+                    total = 0
+                    correct = 0
+                    net.eval()
+                    with torch.no_grad():
+                        for images2, labels2 in val_dataloader:
+                            images2, labels2 = images2.to(
+                                DEVICE), labels2.to(DEVICE)
+                            outputs2 = net(images2)
+                            total += labels2.size(0)
+                            correct += (torch.max(outputs2.detach(), 1)
+                                        [1] == labels2.detach()).sum().item()
+                    net.train()
+                    step_val_acc = correct/total
+
+                    if(step_val_acc >= best_val_acc+1e-2):
+                        plateau_step = 0
+                        best_val_acc = step_val_acc
+
+                    total_step_acc.append(step_val_acc)
+                    
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
