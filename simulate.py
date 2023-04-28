@@ -9,7 +9,7 @@ import random
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
 from data_loader_scripts.create_dataloader import combine_val_loaders
-from fed_df_data_loader.split_standard import split_standard
+from fed_df_data_loader.split_standard import create_std_distill_loader
 from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 
 from strategy.common import common_functions
@@ -47,6 +47,7 @@ parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=bool, default=False)
 
 parser.add_argument("--use_crops", type=bool, default=False)
+parser.add_argument("--num_distill_images", type=int, default=1000)
 
 
 if __name__ == "__main__":
@@ -84,6 +85,7 @@ if __name__ == "__main__":
     CUDA_DETERMINISTIC = args.cuda_deterministic
 
     USE_CROPS = args.use_crops
+    NUM_DISTILL_IMAGES = args.num_distill_images
 
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -123,10 +125,9 @@ if __name__ == "__main__":
             distill_dataloader = get_distill_imgloader(
                 f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=BATCH_SIZE, num_workers=CLIENT_CPUS)
         else:
-            test_loader_partitions = split_standard(
-                dataloader=test_loader, batch_size=BATCH_SIZE, n_workers=CLIENT_CPUS)
-            test_loader = test_loader_partitions[0]
-            distill_dataloader = test_loader_partitions[1]
+            distill_dataset_name = 'cifar100'
+            distill_dataloader = create_std_distill_loader(
+                dataset_name=distill_dataset_name, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
 
         val_dataloader = combine_val_loaders(
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
