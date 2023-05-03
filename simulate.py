@@ -42,6 +42,7 @@ parser.add_argument("--local_epochs", type=int, default=20)
 parser.add_argument("--server_steps", type=int, default=1e3)
 parser.add_argument("--server_early_steps", type=int, default=5e2)
 parser.add_argument("--use_early_stopping", type=bool, default=True)
+parser.add_argument("--use_adaptive_lr", type=bool, default=True)
 
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=bool, default=False)
@@ -80,6 +81,7 @@ if __name__ == "__main__":
     SERVER_STEPS = args.server_steps
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
+    USE_ADAPTIVE_LR = args.use_adaptive_lr
 
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
@@ -127,7 +129,7 @@ if __name__ == "__main__":
         else:
             distill_dataset_name = 'cifar100'
             distill_dataloader = create_std_distill_loader(
-                dataset_name=distill_dataset_name, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
+                dataset_name=distill_dataset_name, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=100.0)
 
         val_dataloader = combine_val_loaders(
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
@@ -183,7 +185,7 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     LOCAL_EPOCHS),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    SERVER_STEPS, USE_EARLY_STOPPING, SERVER_EARLY_STEPS),
+                    SERVER_STEPS, USE_EARLY_STOPPING, SERVER_EARLY_STEPS, USE_ADAPTIVE_LR),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,

@@ -256,10 +256,9 @@ class FedDF_strategy(Strategy):
         criterion = nn.KLDivLoss(reduction='sum')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
-        # optimizer = torch.optim.SGD(params=net.parameters(
-        # ), lr=config['lr'], momentum=config['momentum'])
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=optimizer, T_max=config['steps'])
+        if(config['use_adaptive_lr']):
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer=optimizer, T_max=config['steps'])
         net.train()
         net.to(DEVICE)
 
@@ -289,7 +288,8 @@ class FedDF_strategy(Strategy):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step()
+                if(config['use_adaptive_lr']):
+                    scheduler.step()
 
                 plateau_step += 1
 
@@ -343,21 +343,20 @@ class fed_df_fn:
             config = {
                 'lr': lr,
                 'epochs': client_epochs,
-                # 'momentum': 0.9
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             lr = 1e-3
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,
                 "use_early_stopping": use_early_stopping,
+                "use_adaptive_lr": use_adaptive_lr,
                 "lr": lr,
-                # "momentum": 0.9,
                 "temperature": 1,
             }
             return config
