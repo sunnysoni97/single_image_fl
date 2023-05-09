@@ -4,8 +4,8 @@ from data_loader_scripts.dl_common import create_lda_partitions
 import torch
 import numpy as np
 from fed_df_data_loader.common import DistillDataset
-from torchvision.datasets import CIFAR100
-from data_loader_scripts.download import cifar10_transforms
+from torchvision.datasets import CIFAR100, CIFAR10
+from data_loader_scripts.download import cifar10_transforms, cifar100_transforms
 from pathlib import Path
 
 
@@ -37,10 +37,19 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
     return dataloader_list
 
 
-def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: int, alpha: float = 100.0, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> DataLoader:
-    if(dataset_name == "cifar100"):
+def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: int, transforms_name: str = "cifar10", alpha: float = 100.0, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> DataLoader:
+    if(transforms_name == "cifar10"):
         transform = cifar10_transforms()
+    elif(transforms_name == "cifar100"):
+        transform = cifar100_transforms()
+    else:
+        raise ValueError("Transforms not implemented yet!")
+
+    if(dataset_name == "cifar100"):
         full_dataset = CIFAR100(
+            root=storage_path, train=True, transform=transform, download=True)
+    elif(dataset_name == "cifar10"):
+        full_dataset = CIFAR10(
             root=storage_path, train=True, transform=transform, download=True)
     else:
         raise ValueError("Dataset not implemented yet!")
