@@ -253,7 +253,7 @@ class FedDF_strategy(Strategy):
         print("Performing server side distillation training...")
         net = init_model(model_name=model_type, n_classes=model_n_classes)
         set_parameters(net, global_parameters)
-        criterion = nn.KLDivLoss(reduction='sum')
+        criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
         if(config['use_adaptive_lr']):
