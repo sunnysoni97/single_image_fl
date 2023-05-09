@@ -47,6 +47,7 @@ if __name__ == "__main__":
 
     BATCH_SIZE = args.batch_size
     LOCAL_EPOCHS = args.local_epochs
+    LOCAL_LR = args.local_lr
     SERVER_STEPS = args.server_steps
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
@@ -158,7 +159,7 @@ if __name__ == "__main__":
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
-                    LOCAL_EPOCHS),
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
                     SERVER_STEPS, USE_EARLY_STOPPING, SERVER_EARLY_STEPS, USE_ADAPTIVE_LR),
                 evaluate_fn=fed_df_fn.evaluate_fn

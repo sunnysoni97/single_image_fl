@@ -337,11 +337,10 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1) -> Callable:
         def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
-            lr = 1e-1
             config = {
-                'lr': lr,
+                'lr': client_lr,
                 'epochs': client_epochs,
             }
             return config
