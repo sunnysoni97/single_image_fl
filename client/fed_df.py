@@ -30,8 +30,6 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="sum")
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
-    # optimizer = torch.optim.SGD(params=model.parameters(
-    # ), lr=config['lr'], momentum=config['momentum'])
     model.train()
     model.to(DEVICE)
 

@@ -43,3 +43,15 @@ def set_parameters(model: ResNet, parameters: List[np.ndarray]):
         else:
             state_dict[k] = torch.Tensor(v)
     model.load_state_dict(state_dict, strict=True)
+
+
+# DEBUG FUNCTIONS
+
+def print_bn_values(model:ResNet,n_outputs:int=4):
+    i=0
+    for name,values in model.named_parameters():
+        if(name.find("bn")>-1 and i<n_outputs):
+            print(name)
+            print(values)
+            i+=1
+
