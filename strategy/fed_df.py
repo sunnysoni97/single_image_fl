@@ -347,15 +347,14 @@ class fed_df_fn:
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
-            lr = 1e-3
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,
                 "use_early_stopping": use_early_stopping,
                 "use_adaptive_lr": use_adaptive_lr,
-                "lr": lr,
+                "lr": server_lr,
                 "temperature": 1,
             }
             return config

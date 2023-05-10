@@ -46,8 +46,11 @@ if __name__ == "__main__":
     SERVER_CPUS = args.server_cpus
 
     BATCH_SIZE = args.batch_size
+
     LOCAL_EPOCHS = args.local_epochs
     LOCAL_LR = args.local_lr
+
+    SERVER_LR = args.server_lr
     SERVER_STEPS = args.server_steps
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
@@ -161,7 +164,7 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    SERVER_STEPS, USE_EARLY_STOPPING, SERVER_EARLY_STEPS, USE_ADAPTIVE_LR),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,
