@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=1:30:00
+#SBATCH --time=1:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks 1
@@ -16,4 +16,27 @@ module load Anaconda3/2022.05
 
 source activate single_image_fl
 
-srun python simulate.py --fed_strategy fedavg --num_clients 10 --num_rounds 30 --client_cpus 2 --client_gpus 0.1 --seed 42 --data_dir $TMPDIR/
+STRATEGY=fedavg
+NUM_ROUNDS=2
+CLIENT_GPUS=0.1
+SEED=42
+VAL_RATIO=0.1
+BATCH_SIZE=1024
+LOCAL_EPOCHS=80
+USE_ADAPTIVE_LR=False
+LOCAL_LR=0.005
+
+echo "---------"
+echo "Strategy : $STRATEGY"
+echo "Communication Rounds : $NUM_ROUNDS"
+echo "Seed : $SEED"
+echo "Val Ratio : $VAL_RATIO"
+echo "Batch Size : $BATCH_SIZE"
+echo "Local Epochs : $LOCAL_EPOCHS"
+echo "Use Adaptive LR : $USE_ADAPTIVE_LR"
+echo "Local LR : $LOCAL_LR"
+
+echo "---------"
+echo "Simulating FedAvg training"
+
+srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --batch_size $BATCH_SIZE --use_adaptive_lr $USE_ADAPTIVE_LR --local_lr $LOCAL_LR 

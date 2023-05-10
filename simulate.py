@@ -130,14 +130,17 @@ if __name__ == "__main__":
             num_clients=NUM_CLIENTS,
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=strategy.FedAvg(
-                on_fit_config_fn=fed_avg_fn.get_fit_config_fn(),
+                on_fit_config_fn=fed_avg_fn.get_fit_config_fn(
+                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS),
                 on_evaluate_config_fn=fed_avg_fn.get_eval_config_fn(),
                 initial_parameters=common_functions.initialise_parameters(
                     MODEL_NAME, NUM_CLASSES),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 evaluate_fn=fed_avg_fn.get_evaluate_fn(
-                    MODEL_NAME, NUM_CLASSES, test_loader, DEVICE)
+                    MODEL_NAME, NUM_CLASSES, test_loader, DEVICE),
+                fraction_fit=FRACTION_FIT,
+                fraction_evaluate=FRACTION_EVALUATE
             ),
             client_resources=client_resources,
         )
