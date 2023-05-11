@@ -70,6 +70,8 @@ if __name__ == "__main__":
     DISTILL_DATASET = args.distill_dataset
     NUM_DISTILL_IMAGES = args.num_distill_images
 
+    WARM_START = args.warm_start
+
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
     elif(DATASET_NAME == "cifar100"):
@@ -174,7 +176,7 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,

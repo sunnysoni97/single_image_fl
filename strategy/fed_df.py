@@ -74,6 +74,9 @@ class FedDF_strategy(Strategy):
         # initial parameters
         self.initial_parameters = initial_parameters
 
+        # last round parameters
+        self.last_parameters = initial_parameters
+
         # metrics aggregation functions
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
@@ -159,9 +162,11 @@ class FedDF_strategy(Strategy):
             return None, {}
 
         config = {}
+        warm_start = False
 
         if(self.on_fit_config_fn_server is not None):
             config = self.on_fit_config_fn_server(server_round)
+            warm_start = config['warm_start']
 
         # Aggregating logits using averaging
 
@@ -175,15 +180,18 @@ class FedDF_strategy(Strategy):
 
         # Aggregating new parameters for warm start using averaging
 
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-            for _, fit_res in results
-        ]
-        old_parameters = aggregate(weights_results)
+        if (warm_start):
+            weights_results = [
+                (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
+                for _, fit_res in results
+            ]
+            old_parameters = aggregate(weights_results)
+
+        else:
+            old_parameters = parameters_to_ndarrays(self.last_parameters)
 
         # Distilling student model using Average Logits
 
-        # old_parameters = parameters_to_ndarrays(results[0][1].parameters)
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
                                                                    config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes, DEVICE=self.device)
 
@@ -202,6 +210,10 @@ class FedDF_strategy(Strategy):
             self.logger_fn(server_round, fusion_metrics, "fit", "server")
 
         parameters_aggregated = ndarrays_to_parameters(parameters_aggregated)
+
+        # storing the parameters in the server for next round of fusion
+        self.last_parameters = parameters_aggregated
+
         return parameters_aggregated, {}
 
     def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
@@ -347,7 +359,7 @@ class fed_df_fn:
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
@@ -356,6 +368,7 @@ class fed_df_fn:
                 "use_adaptive_lr": use_adaptive_lr,
                 "lr": server_lr,
                 "temperature": 1,
+                "warm_start": warm_start,
             }
             return config
         return on_fit_config_fn_server
