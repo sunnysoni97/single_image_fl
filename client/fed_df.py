@@ -28,7 +28,7 @@ from common import test_model
 def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
     model = init_model(model_name, model_n_classes)
     set_parameters(model, parameters)
-    criterion = nn.CrossEntropyLoss(reduction="sum")
+    criterion = nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
     model.train()
     model.to(DEVICE)
@@ -52,7 +52,6 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
             correct += (torch.max(outputs.detach(), 1)
                         [1] == labels).sum().item()
 
-        epoch_loss /= len(train_loader.dataset)
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
