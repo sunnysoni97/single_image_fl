@@ -4,9 +4,12 @@ from data_loader_scripts.dl_common import create_lda_partitions
 import torch
 import numpy as np
 from fed_df_data_loader.common import DistillDataset
+from torchvision.datasets import CIFAR100, CIFAR10
+from data_loader_scripts.download import cifar10_transforms, cifar100_transforms
+from pathlib import Path
 
 
-def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 1000, batch_size: int = 32, n_workers: int = 0) -> List[DataLoader]:
+def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 1000, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> List[DataLoader]:
     img_batches, label_batches = [], []
     for imgs, labels in dataloader:
         img_batches.append(imgs)
@@ -18,7 +21,7 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
     dataset = [X, all_labels]
 
     partitions = create_lda_partitions(
-        dataset, num_partitions=n_splits, concentration=alpha, accept_imbalanced=True)
+        dataset, num_partitions=n_splits, concentration=alpha, accept_imbalanced=True, seed=seed)
 
     dataloader_list = []
 
@@ -32,3 +35,49 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
         dataloader_list.append(new_dataloader)
 
     return dataloader_list
+
+
+def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: int, transforms_name: str = "cifar10", alpha: float = 100.0, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> DataLoader:
+    if(transforms_name == "cifar10"):
+        transform = cifar10_transforms()
+    elif(transforms_name == "cifar100"):
+        transform = cifar100_transforms()
+    else:
+        raise ValueError("Transforms not implemented yet!")
+
+    if(dataset_name == "cifar100"):
+        full_dataset = CIFAR100(
+            root=storage_path, train=True, transform=transform, download=True)
+    elif(dataset_name == "cifar10"):
+        full_dataset = CIFAR10(
+            root=storage_path, train=True, transform=transform, download=True)
+    else:
+        raise ValueError("Dataset not implemented yet!")
+
+    temp_dataloader = DataLoader(
+        full_dataset, batch_size=1024, num_workers=n_workers, shuffle=False)
+
+    Y = []
+    for _, labels in temp_dataloader:
+        Y.append(labels)
+
+    Y = torch.cat(Y).numpy()
+
+    total_len = len(full_dataset)
+    n_partitions = total_len//n_images
+
+    X = np.array(range(total_len))
+    temp_dataset = [X, Y]
+    partitions = create_lda_partitions(
+        temp_dataset, num_partitions=n_partitions, concentration=alpha, accept_imbalanced=True, seed=seed)
+
+    indices = partitions[0][0][0]
+    all_labels = partitions[0][0][1]
+    all_imgs = []
+    for index in indices:
+        all_imgs.append(full_dataset[index][0])
+    new_dataset = DistillDataset(root=None, data=all_imgs, targets=all_labels)
+    new_dataloader = DataLoader(new_dataset, batch_size=batch_size,
+                                num_workers=n_workers, pin_memory=True, shuffle=False)
+
+    return new_dataloader

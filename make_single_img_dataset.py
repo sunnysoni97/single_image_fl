@@ -149,8 +149,10 @@ def save_batch_imgs(imgs, count, pth):
 
 
 def make_(thred):
-    random.seed(555*thred)
-    torch.manual_seed(555*thred)
+    if(args.seed == None):
+        args.seed = int(random.random()*100)
+    random.seed(args.seed*thred)
+    torch.manual_seed(args.seed*thred)
     data_loader = get_mono_data_loader(args.batch_size, 0,
                                        image_path=args.imgpath,
                                        initcrop=args.initcrop, degrees=args.deg,
@@ -201,6 +203,10 @@ def get_parser():
     parser.add_argument('--debug', default=False)
     parser.add_argument('--imgpath', default="static/single_images/ameyoko.jpg", type=str)
     parser.add_argument('--targetpath', default="./data", type=str)
+
+    #seeding
+    parser.add_argument("--seed", type=int, default=None)
+    
     return parser
 
 

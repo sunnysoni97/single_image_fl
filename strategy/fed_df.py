@@ -253,13 +253,12 @@ class FedDF_strategy(Strategy):
         print("Performing server side distillation training...")
         net = init_model(model_name=model_type, n_classes=model_n_classes)
         set_parameters(net, global_parameters)
-        criterion = nn.KLDivLoss(reduction='sum')
+        criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
-        # optimizer = torch.optim.SGD(params=net.parameters(
-        # ), lr=config['lr'], momentum=config['momentum'])
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer=optimizer, T_max=config['steps'])
+        if(config['use_adaptive_lr']):
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer=optimizer, T_max=config['steps'])
         net.train()
         net.to(DEVICE)
 
@@ -272,9 +271,13 @@ class FedDF_strategy(Strategy):
         total_step_acc = []
         total_step_loss = []
 
-        while(cur_step < config['steps'] and plateau_step < config['early_stopping_steps']):
+        log_interval = 100
+        val_interval = log_interval / \
+            5 if config["use_early_stopping"] else log_interval
+
+        while(cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
             for images, labels in train_loader:
-                if(cur_step == config['steps'] or plateau_step == config['early_stopping_steps']):
+                if(cur_step == config['steps'] or (plateau_step == config['early_stopping_steps'] and config["use_early_stopping"])):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
@@ -285,27 +288,32 @@ class FedDF_strategy(Strategy):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                scheduler.step()
+                if(config['use_adaptive_lr']):
+                    scheduler.step()
 
-                total = 0
-                correct = 0
-                net.eval()
-                with torch.no_grad():
-                    for images2, labels2 in val_dataloader:
-                        images2, labels2 = images2.to(
-                            DEVICE), labels2.to(DEVICE)
-                        outputs2 = net(images2)
-                        total += labels2.size(0)
-                        correct += (torch.max(outputs2.detach(), 1)
-                                    [1] == labels2.detach()).sum().item()
-                net.train()
-                step_val_acc = correct/total
                 plateau_step += 1
-                if(step_val_acc >= best_val_acc+1e-2):
-                    plateau_step = 0
-                    best_val_acc = step_val_acc
 
-                total_step_acc.append(step_val_acc)
+                if((cur_step+1) % val_interval == 0):
+                    total = 0
+                    correct = 0
+                    net.eval()
+                    with torch.no_grad():
+                        for images2, labels2 in val_dataloader:
+                            images2, labels2 = images2.to(
+                                DEVICE), labels2.to(DEVICE)
+                            outputs2 = net(images2)
+                            total += labels2.size(0)
+                            correct += (torch.max(outputs2.detach(), 1)
+                                        [1] == labels2.detach()).sum().item()
+                    net.train()
+                    step_val_acc = correct/total
+
+                    if(step_val_acc >= best_val_acc+1e-2):
+                        plateau_step = 0
+                        best_val_acc = step_val_acc
+
+                    total_step_acc.append(step_val_acc)
+
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
@@ -329,26 +337,24 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1) -> Callable:
         def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
-            lr = 1e-1
             config = {
-                'lr': lr,
+                'lr': client_lr,
                 'epochs': client_epochs,
-                # 'momentum': 0.9
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, early_stop_steps: int) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
-            lr = 1e-3
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,
-                "lr": lr,
-                # "momentum": 0.9,
+                "use_early_stopping": use_early_stopping,
+                "use_adaptive_lr": use_adaptive_lr,
+                "lr": server_lr,
                 "temperature": 1,
             }
             return config

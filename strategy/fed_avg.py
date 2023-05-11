@@ -2,37 +2,30 @@ from typing import Dict, Tuple
 from common import test_model
 from torch.utils.data import DataLoader
 import torch
+import numpy as np
 from flwr.common import (
     Parameters
 )
 
+
 class fed_avg_fn:
     @staticmethod
-    def get_fit_config_fn():
+    def get_fit_config_fn(local_lr: float = 0.005, local_epochs: int = 40, adaptive_lr_round: bool = False, max_server_rounds: int = 30):
         def on_fit_config_fn(server_round: int) -> Dict[str, float]:
 
-            if(server_round < 16):
-                lr = 1e-3
-            elif(server_round < 21):
-                lr = 1e-4
-            else:
-                lr = 1e-5
+            lr = local_lr
 
-            # adaptive lr
-            # end_round = 20
-            # low = -5
-            # high = -2
-            # xp = [x for x in range(1,end_round+1)]
-            # yp = np.logspace(high,low,end_round)
-            # lr = np.interp(server_round, xp=xp, fp=yp)
+            if(adaptive_lr_round):
+                xp = [x for x in range(1, max_server_rounds+1)]
+                yp = np.logspace(local_lr, 0.0, max_server_rounds)
+                lr = np.interp(server_round, xp=xp, fp=yp)
 
             config = {
                 'lr': lr,
-                'epochs': 1,
-                'momentum': 0.9,
-                'round': server_round
+                'epochs': local_epochs,
             }
             return config
+
         return on_fit_config_fn
 
     @staticmethod

@@ -16,17 +16,22 @@ module load Anaconda3/2022.05
 
 source activate single_image_fl
 
-NO_IMGS=1000
+NO_IMGS=5000
 STRATEGY=feddf
 NUM_ROUNDS=30
 CLIENT_GPUS=0.1
 SEED=42
-VAL_RATIO=0.05
-USE_CROPS=True
-BATCH_SIZE=512
+VAL_RATIO=0.1
+USE_CROPS=False
+BATCH_SIZE=1024
 LOCAL_EPOCHS=80
-DISTILL_STEPS=10000
+DISTILL_STEPS=500
 EARLY_STEPS=1000
+USE_EARLY_STOPPING=False
+USE_ADAPTIVE_LR=False
+DISTILLATION_DATASET=cifar100
+LOCAL_LR=0.005
+SERVER_LR=0.0005
 
 echo "---------"
 echo "Number of crops : $NO_IMGS"
@@ -38,13 +43,19 @@ echo "Batch Size : $BATCH_SIZE"
 echo "Local Epochs : $LOCAL_EPOCHS"
 echo "Distill Steps : $DISTILL_STEPS"
 echo "Early Stopping Steps : $EARLY_STEPS"
+echo "Use Early Stopping : $USE_EARLY_STOPPING"
+echo "Use Adaptive LR : $USE_ADAPTIVE_LR"
+echo "Use Crops : $USE_CROPS"
+echo "Distillation Dataset : $DISTILLATION_DATASET"
+echo "Local LR : $LOCAL_LR"
+echo "Server LR : $SERVER_LR"
 
 echo "---------"
 echo "Generating crops for FedDF"
 
-srun python make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS
+srun python make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS --seed $SEED
 
 echo "---------"
 echo "Simulating FedDF training using crops"
 
-srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS
+srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING --num_distill_images $NO_IMGS --use_adaptive_lr $USE_ADAPTIVE_LR --distill_dataset $DISTILLATION_DATASET --local_lr $LOCAL_LR --server_lr $SERVER_LR 

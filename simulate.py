@@ -2,14 +2,13 @@ import flwr as fl
 from flwr.server import strategy
 import torch
 import numpy as np
-import argparse
 from torch.utils.data import DataLoader
 import random
 
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
 from data_loader_scripts.create_dataloader import combine_val_loaders
-from fed_df_data_loader.split_standard import split_standard
+from fed_df_data_loader.split_standard import create_std_distill_loader, split_standard
 from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 
 from strategy.common import common_functions
@@ -19,34 +18,7 @@ from strategy.fed_df import FedDF_strategy, fed_df_fn
 import client.fed_avg
 import client.fed_df
 
-parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
-
-parser.add_argument("--fed_strategy", type=str, default="fedavg")
-
-parser.add_argument("--num_clients", type=int, default=20)
-parser.add_argument("--num_rounds", type=int, default=10)
-parser.add_argument("--fraction_fit", type=float, default=0.4)
-parser.add_argument("--fraction_evaluate", type=float, default=0.0)
-
-parser.add_argument("--dataset_name", type=str, default="cifar10")
-parser.add_argument("--data_dir", type=str, default="./data")
-parser.add_argument("--partition_alpha", type=float, default=100.0)
-parser.add_argument("--partition_val_ratio", type=float, default=0.1)
-
-parser.add_argument("--client_cpus", type=int, default=2)
-parser.add_argument("--client_gpus", type=float, default=0.5)
-parser.add_argument("--server_cpus", type=int, default=4)
-
-parser.add_argument("--batch_size", type=int, default=32)
-parser.add_argument("--local_epochs", type=int, default=20)
-parser.add_argument("--server_steps", type=int, default=1e3)
-parser.add_argument("--server_early_steps", type=int, default=5e2)
-
-parser.add_argument("--seed", type=int, default=None)
-parser.add_argument("--cuda_deterministic", type=bool, default=False)
-
-parser.add_argument("--use_crops", type=bool, default=False)
-
+from arg_handler import parser
 
 if __name__ == "__main__":
 
@@ -74,14 +46,22 @@ if __name__ == "__main__":
     SERVER_CPUS = args.server_cpus
 
     BATCH_SIZE = args.batch_size
+
     LOCAL_EPOCHS = args.local_epochs
+    LOCAL_LR = args.local_lr
+
+    SERVER_LR = args.server_lr
     SERVER_STEPS = args.server_steps
     SERVER_EARLY_STEPS = args.server_early_steps
+    USE_EARLY_STOPPING = args.use_early_stopping
+    USE_ADAPTIVE_LR = args.use_adaptive_lr
 
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
 
     USE_CROPS = args.use_crops
+    DISTILL_DATASET = args.distill_dataset
+    NUM_DISTILL_IMAGES = args.num_distill_images
 
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -109,6 +89,11 @@ if __name__ == "__main__":
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 
+    split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
+        'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
+    test_loader = split_test_loaders[0]
+    distill_dataloader = split_test_loaders[1]
+
     fed_dir = do_fl_partitioning(
         train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
 
@@ -121,10 +106,9 @@ if __name__ == "__main__":
             distill_dataloader = get_distill_imgloader(
                 f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=BATCH_SIZE, num_workers=CLIENT_CPUS)
         else:
-            test_loader_partitions = split_standard(
-                dataloader=test_loader, batch_size=BATCH_SIZE, n_workers=CLIENT_CPUS)
-            test_loader = test_loader_partitions[0]
-            distill_dataloader = test_loader_partitions[1]
+            if(DISTILL_DATASET != DATASET_NAME):
+                distill_dataloader = create_std_distill_loader(
+                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=100.0)
 
         val_dataloader = combine_val_loaders(
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
@@ -146,14 +130,17 @@ if __name__ == "__main__":
             num_clients=NUM_CLIENTS,
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=strategy.FedAvg(
-                on_fit_config_fn=fed_avg_fn.get_fit_config_fn(),
+                on_fit_config_fn=fed_avg_fn.get_fit_config_fn(
+                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS),
                 on_evaluate_config_fn=fed_avg_fn.get_eval_config_fn(),
                 initial_parameters=common_functions.initialise_parameters(
                     MODEL_NAME, NUM_CLASSES),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 evaluate_fn=fed_avg_fn.get_evaluate_fn(
-                    MODEL_NAME, NUM_CLASSES, test_loader, DEVICE)
+                    MODEL_NAME, NUM_CLASSES, test_loader, DEVICE),
+                fraction_fit=FRACTION_FIT,
+                fraction_evaluate=FRACTION_EVALUATE
             ),
             client_resources=client_resources,
         )
@@ -178,9 +165,9 @@ if __name__ == "__main__":
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
-                    LOCAL_EPOCHS),
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    SERVER_STEPS, SERVER_EARLY_STEPS),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR),
                 evaluate_fn=fed_df_fn.evaluate_fn
             ),
             client_resources=client_resources,
