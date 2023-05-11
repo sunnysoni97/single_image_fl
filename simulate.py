@@ -98,10 +98,12 @@ if __name__ == "__main__":
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 
-    split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
-        'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
-    test_loader = split_test_loaders[0]
-    distill_dataloader = split_test_loaders[1]
+    if(DISTILL_DATASET == DATASET_NAME):
+        print(f"Same dataset for distillation and private training, splitting up test set into half...")
+        split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
+            'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
+        test_loader = split_test_loaders[0]
+        distill_dataloader = split_test_loaders[1]
 
     fed_dir = do_fl_partitioning(
         train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
