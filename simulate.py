@@ -20,6 +20,13 @@ import client.fed_df
 
 from arg_handler import parser
 
+# disabling tqdm percentages in download
+
+from torch.utils.model_zoo import tqdm
+from functools import partialmethod
+
+tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
+
 if __name__ == "__main__":
 
     MODEL_NAME = "resnet18"
