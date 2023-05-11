@@ -1,12 +1,15 @@
 import argparse
 
-def parse_bool(inp_str:str) -> bool:
+
+def parse_bool(inp_str: str) -> bool:
     if(inp_str == 'True' or inp_str == 'true'):
         return True
     elif(inp_str == 'False' or inp_str == 'false'):
         return False
     else:
-        raise TypeError(f"{inp_str} is not a valid boolean value! Check passed arguments again.")
+        raise TypeError(
+            f"{inp_str} is not a valid boolean value! Check passed arguments again.")
+
 
 parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 

@@ -4,6 +4,7 @@ from flwr.common import (
 )
 from models import init_model, get_parameters
 from typing import Dict
+import math
 
 
 class common_functions:
@@ -43,3 +44,10 @@ class common_functions:
         avg_eval_acc = total_eval_acc / total_clients
 
         return {'avg_eval_acc': avg_eval_acc}
+
+
+def cosine_annealing_round(max_lr: float, min_lr: float, max_rounds: int, curr_round: int) -> float:
+    min = min_lr
+    max = max_lr
+    lr = min + (1/2)*(max-min)*(1+math.cos(curr_round/max_rounds*math.pi))
+    return lr

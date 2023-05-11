@@ -2,10 +2,10 @@ from typing import Dict, Tuple
 from common import test_model
 from torch.utils.data import DataLoader
 import torch
-import numpy as np
 from flwr.common import (
     Parameters
 )
+from strategy.common import cosine_annealing_round
 
 
 class fed_avg_fn:
@@ -16,9 +16,9 @@ class fed_avg_fn:
             lr = local_lr
 
             if(adaptive_lr_round):
-                xp = [x for x in range(1, max_server_rounds+1)]
-                yp = np.logspace(local_lr, 0.0, max_server_rounds)
-                lr = np.interp(server_round, xp=xp, fp=yp)
+                lr = cosine_annealing_round(
+                    max_lr=local_lr, min_lr=1e-5, max_rounds=max_server_rounds, curr_round=server_round)
+                print(f"Current LR : {lr}")
 
             config = {
                 'lr': lr,
