@@ -1,5 +1,13 @@
 import argparse
 
+def parse_bool(inp_str:str) -> bool:
+    if(inp_str == 'True' or inp_str == 'true'):
+        return True
+    elif(inp_str == 'False' or inp_str == 'false'):
+        return False
+    else:
+        raise TypeError(f"{inp_str} is not a valid boolean value! Check passed arguments again.")
+
 parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 
 parser.add_argument("--fed_strategy", type=str, default="fedavg")
@@ -24,12 +32,12 @@ parser.add_argument("--local_lr", type=float, default=0.005)
 parser.add_argument("--server_lr", type=float, default=1e-3)
 parser.add_argument("--server_steps", type=int, default=1e3)
 parser.add_argument("--server_early_steps", type=int, default=5e2)
-parser.add_argument("--use_early_stopping", type=bool, default=False)
-parser.add_argument("--use_adaptive_lr", type=bool, default=False)
+parser.add_argument("--use_early_stopping", type=parse_bool, default=False)
+parser.add_argument("--use_adaptive_lr", type=parse_bool, default=False)
 
 parser.add_argument("--seed", type=int, default=None)
-parser.add_argument("--cuda_deterministic", type=bool, default=False)
+parser.add_argument("--cuda_deterministic", type=parse_bool, default=False)
 
-parser.add_argument("--use_crops", type=bool, default=False)
+parser.add_argument("--use_crops", type=parse_bool, default=False)
 parser.add_argument("--distill_dataset", type=str, default="cifar100")
 parser.add_argument("--num_distill_images", type=int, default=2250)
