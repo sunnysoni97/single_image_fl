@@ -90,7 +90,6 @@ class FlowerClient(fl.client.Client):
         self.distill_dataloader = distill_dataloader
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
-        print(f'Getting parameters from Client {self.cid}')
         # Build and return response
         status = Status(code=Code.OK, message="Success")
         return GetParametersRes(

@@ -44,5 +44,6 @@ class fed_avg_fn:
                                   model_params, test_loader, device)
             test_loss = test_res['test_loss']
             test_acc = test_res['test_acc']
+            print(f'Server test accuracy after round {server_round}: {test_acc}')
             return test_loss, {'server_test_acc': test_acc}
         return evaluate_fn

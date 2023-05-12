@@ -168,25 +168,6 @@ class FedDF_strategy(Strategy):
             config = self.on_fit_config_fn_server(server_round)
             warm_start = config['warm_start']
 
-        # Aggregating and outputting training results
-
-        all_local_loss = [
-            fit_res.metrics['train_loss']
-            for _, fit_res in results
-        ]
-        local_training_loss = np.mean(all_local_loss)
-
-        all_local_acc = [
-            fit_res.metrics['train_acc']
-            for _, fit_res in results
-        ]
-        local_training_acc = np.mean(all_local_acc)
-
-        print(
-            f'Average local training loss across all clients : {local_training_loss}')
-        print(
-            f'Average local training accuracy across all clients : {local_training_acc}')
-
         # Aggregating logits using averaging
 
         logits_results = [
