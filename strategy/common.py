@@ -29,6 +29,8 @@ class common_functions:
         avg_train_loss = total_train_loss/total_clients
         avg_train_acc = total_train_acc/total_clients
 
+        print(f'Average local training loss : {avg_train_loss}')
+        print(f'Average local training accuracy : {avg_train_acc}')
         return {'avg_train_loss': avg_train_loss, 'avg_train_acc': avg_train_acc}
 
     @staticmethod
