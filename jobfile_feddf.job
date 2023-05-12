@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH --time=5:00:00
+#SBATCH --time=01:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks 1
 #SBATCH --cpus-per-task 18
 #SBATCH --gpus=1
 #SBATCH --gpus-per-node=1
-#SBATCH --job-name=S_I_FL_sim
+#SBATCH --job-name=SImg_FDF
 #SBATCH --output=./results/log/exp_out_%A.out 
 
 module purge
@@ -16,7 +16,7 @@ module load Anaconda3/2022.05
 
 source activate single_image_fl
 
-NO_IMGS=5000
+NO_IMGS=2250
 STRATEGY=feddf
 NUM_ROUNDS=30
 CLIENT_GPUS=0.1
@@ -32,6 +32,7 @@ USE_ADAPTIVE_LR=False
 DISTILLATION_DATASET=cifar100
 LOCAL_LR=0.005
 SERVER_LR=0.0005
+WARM_START=True
 
 echo "---------"
 echo "Number of crops : $NO_IMGS"
@@ -49,6 +50,7 @@ echo "Use Crops : $USE_CROPS"
 echo "Distillation Dataset : $DISTILLATION_DATASET"
 echo "Local LR : $LOCAL_LR"
 echo "Server LR : $SERVER_LR"
+echo "Warm Start : $WARM_START"
 
 echo "---------"
 echo "Generating crops for FedDF"
@@ -58,4 +60,4 @@ srun python make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS 
 echo "---------"
 echo "Simulating FedDF training using crops"
 
-srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING --num_distill_images $NO_IMGS --use_adaptive_lr $USE_ADAPTIVE_LR --distill_dataset $DISTILLATION_DATASET --local_lr $LOCAL_LR --server_lr $SERVER_LR 
+srun python simulate.py --fed_strategy $STRATEGY --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING --num_distill_images $NO_IMGS --use_adaptive_lr $USE_ADAPTIVE_LR --distill_dataset $DISTILLATION_DATASET --local_lr $LOCAL_LR --server_lr $SERVER_LR --warm_start $WARM_START
