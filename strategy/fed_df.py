@@ -168,6 +168,25 @@ class FedDF_strategy(Strategy):
             config = self.on_fit_config_fn_server(server_round)
             warm_start = config['warm_start']
 
+        # Aggregating and outputting training results
+
+        all_local_loss = [
+            fit_res.metrics['train_loss']
+            for _, fit_res in results
+        ]
+        local_training_loss = np.mean(all_local_loss)
+
+        all_local_acc = [
+            fit_res.metrics['train_acc']
+            for _, fit_res in results
+        ]
+        local_training_acc = np.mean(all_local_acc)
+
+        print(
+            f'Average local training loss across all clients : {local_training_loss}')
+        print(
+            f'Average local training accuracy across all clients : {local_training_acc}')
+
         # Aggregating logits using averaging
 
         logits_results = [
@@ -260,7 +279,7 @@ class FedDF_strategy(Strategy):
         return loss, metrics
 
     @staticmethod
-    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device) -> Parameters:
+    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
         print("Performing server side distillation training...")
         net = init_model(model_name=model_type, n_classes=model_n_classes)
@@ -329,7 +348,7 @@ class FedDF_strategy(Strategy):
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
-                if(cur_step % 100 == 0):
+                if(cur_step % 100 == 0 and enable_step_logging):
                     print(f"step {cur_step}, val_acc : {step_val_acc}")
 
         print(f'Distillation training stopped at step number : {cur_step}')
@@ -340,7 +359,7 @@ class FedDF_strategy(Strategy):
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
         print(
-            f'Fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}')
+            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}')
 
         return (new_parameters, train_res)
 

@@ -25,7 +25,7 @@ from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
 
 
-def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
+def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
     model = init_model(model_name, model_n_classes)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
@@ -55,7 +55,7 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
-        if((epoch+1) % 10 == 0):
+        if((epoch+1) % 10 == 0 and enable_epoch_logging):
             print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
     new_parameters = get_parameters(model)
