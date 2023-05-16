@@ -67,6 +67,7 @@ if __name__ == "__main__":
 
     USE_CROPS = args.use_crops
     DISTILL_DATASET = args.distill_dataset
+    DISTILL_ALPHA = args.distill_alpha
     NUM_DISTILL_IMAGES = args.num_distill_images
 
     WARM_START = args.warm_start
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         else:
             if(DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
-                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=100.0)
+                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=DISTILL_ALPHA)
 
         val_dataloader = combine_val_loaders(
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
