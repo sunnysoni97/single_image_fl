@@ -12,8 +12,8 @@ from data_loader_scripts.create_dataloader import create_dataloader
 # function for training a model
 
 
-def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], Dict[str, float]]:
-    model = init_model(model_name, model_n_classes)
+def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], train_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], Dict[str, float]]:
+    model = init_model(dataset_name, model_name)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
@@ -52,10 +52,9 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, cid: str, model_name: str, model_n_classes: int, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device) -> None:
         self.cid = cid
         self.model_name = model_name
-        self.model_n_classes = model_n_classes
         self.dataset_name = dataset_name
         self.fed_dir = fed_dir
         self.batch_size = batch_size
@@ -76,7 +75,7 @@ class FlowerClient(fl.client.NumPyClient):
         train_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
         new_params, train_res = train_model(
-            self.model_name, self.model_n_classes, self.parameters, train_loader, config, self.device)
+            self.model_name, self.dataset_name, self.parameters, train_loader, config, self.device)
         self.set_parameters(new_params)
         return (self.get_parameters(config), len(train_loader), train_res)
 
@@ -85,6 +84,6 @@ class FlowerClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
         val_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, False, self.batch_size, self.num_cpu_workers)
-        val_res = test_model(self.model_name, self.model_n_classes,
+        val_res = test_model(self.model_name, self.dataset_name,
                              self.parameters, val_loader, self.device)
         return (val_res['test_loss'], len(val_loader), {"accuracy": val_res['test_acc']})

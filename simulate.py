@@ -29,14 +29,13 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 if __name__ == "__main__":
 
-    MODEL_NAME = "resnet18"
-
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     args = parser.parse_args()
 
     FED_STRATEGY = args.fed_strategy
+    MODEL_NAME = args.model_name
 
     NUM_CLIENTS = args.num_clients
     NUM_ROUNDS = args.num_rounds
@@ -110,7 +109,7 @@ if __name__ == "__main__":
 
     if(FED_STRATEGY == "fedavg"):
         def client_fn(cid) -> client.fed_avg.FlowerClient:
-            return client.fed_avg.FlowerClient(cid, MODEL_NAME, NUM_CLASSES, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
+            return client.fed_avg.FlowerClient(cid, MODEL_NAME, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
 
     elif(FED_STRATEGY == "feddf"):
         if(USE_CROPS):
@@ -125,7 +124,7 @@ if __name__ == "__main__":
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, model_n_classes=NUM_CLASSES, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader)
+            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
@@ -145,11 +144,11 @@ if __name__ == "__main__":
                     local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS),
                 on_evaluate_config_fn=fed_avg_fn.get_eval_config_fn(),
                 initial_parameters=common_functions.initialise_parameters(
-                    MODEL_NAME, NUM_CLASSES),
+                    MODEL_NAME, DATASET_NAME),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 evaluate_fn=fed_avg_fn.get_evaluate_fn(
-                    MODEL_NAME, NUM_CLASSES, test_loader, DEVICE),
+                    MODEL_NAME, DATASET_NAME, test_loader, DEVICE),
                 fraction_fit=FRACTION_FIT,
                 fraction_evaluate=FRACTION_EVALUATE
             ),
@@ -169,10 +168,10 @@ if __name__ == "__main__":
                 evaluation_dataloader=test_loader,
                 val_dataloader=val_dataloader,
                 model_type=MODEL_NAME,
-                model_n_classes=NUM_CLASSES,
+                dataset_name=DATASET_NAME,
                 device=DEVICE,
                 initial_parameters=common_functions.initialise_parameters(
-                    MODEL_NAME, NUM_CLASSES),
+                    MODEL_NAME, DATASET_NAME),
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(

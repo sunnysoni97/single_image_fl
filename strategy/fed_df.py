@@ -38,7 +38,7 @@ class FedDF_strategy(Strategy):
                  evaluation_dataloader: DataLoader,
                  val_dataloader: DataLoader,
                  model_type: str,
-                 model_n_classes: int,
+                 dataset_name: str,
                  device: torch.device,
                  fraction_fit: float = 1.0,
                  fraction_evaluate: float = 1.0,
@@ -62,7 +62,7 @@ class FedDF_strategy(Strategy):
 
         # Neural Net specifications
         self.model_type = model_type
-        self.model_n_classes = model_n_classes
+        self.dataset_name = dataset_name
 
         # fraction of participating clients
         self.min_available_clients = min_available_clients
@@ -193,7 +193,7 @@ class FedDF_strategy(Strategy):
         # Distilling student model using Average Logits
 
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
-                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, model_n_classes=self.model_n_classes, DEVICE=self.device)
+                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device)
 
         # Aggregate custom metrics if aggregation fn was provided
 
@@ -251,7 +251,7 @@ class FedDF_strategy(Strategy):
             return None
         parameters_ndarrays = parameters_to_ndarrays(parameters)
         eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
-                                    n_classes=self.model_n_classes, test_loader=self.evaluation_dataloader, device=self.device)
+                                    dataset_name=self.dataset_name, test_loader=self.evaluation_dataloader, device=self.device)
         if eval_res is None:
             return None
         loss, metrics = eval_res
@@ -260,10 +260,10 @@ class FedDF_strategy(Strategy):
         return loss, metrics
 
     @staticmethod
-    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, model_n_classes: int, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
+    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, dataset_name: str, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
         print("Performing server side distillation training...")
-        net = init_model(model_name=model_type, n_classes=model_n_classes)
+        net = init_model(dataset_name, model_type)
         set_parameters(net, global_parameters)
         criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
@@ -374,8 +374,8 @@ class fed_df_fn:
         return on_fit_config_fn_server
 
     @staticmethod
-    def evaluate_fn(model_params: NDArray, model_name: str, n_classes: int, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
-        test_res = test_model(model_name, n_classes,
+    def evaluate_fn(model_params: NDArray, model_name: str, dataset_name: str, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
+        test_res = test_model(model_name, dataset_name,
                               model_params, test_loader, device)
         test_loss = test_res['test_loss']
         test_acc = test_res['test_acc']

@@ -25,8 +25,9 @@ from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
 
 
-def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
-    model = init_model(model_name, model_n_classes)
+def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
+
+    model = init_model(dataset_name, model_name)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
@@ -77,10 +78,9 @@ def train_model(model_name: str, model_n_classes: int, parameters: List[np.ndarr
 
 
 class FlowerClient(fl.client.Client):
-    def __init__(self, cid: str, model_name: str, model_n_classes: int, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, distill_dataloader: DataLoader) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, distill_dataloader: DataLoader) -> None:
         self.cid = cid
         self.model_name = model_name
-        self.model_n_classes = model_n_classes
         self.dataset_name = dataset_name
         self.fed_dir = fed_dir
         self.batch_size = batch_size
@@ -108,7 +108,7 @@ class FlowerClient(fl.client.Client):
         train_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
         new_parameters, distill_preds, train_res = train_model(
-            model_name=self.model_name, model_n_classes=self.model_n_classes, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device)
+            model_name=self.model_name, dataset_name=self.dataset_name, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device)
 
         self.set_parameters(new_parameters)
         train_res['preds'] = ndarray_to_bytes(distill_preds)
@@ -128,7 +128,7 @@ class FlowerClient(fl.client.Client):
         self.set_parameters(parameters_to_ndarrays(ins.parameters))
         val_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, False, self.batch_size, self.num_cpu_workers)
-        val_res = test_model(self.model_name, self.model_n_classes,
+        val_res = test_model(self.model_name, self.dataset_name,
                              self.parameters, val_loader, self.device)
 
         # Build and return response
