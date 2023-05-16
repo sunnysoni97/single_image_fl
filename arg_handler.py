@@ -14,6 +14,7 @@ def parse_bool(inp_str: str) -> bool:
 parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
 
 parser.add_argument("--fed_strategy", type=str, default="fedavg")
+parser.add_argument("--model_name", type=str, default="resnet8")
 
 parser.add_argument("--num_clients", type=int, default=20)
 parser.add_argument("--num_rounds", type=int, default=30)

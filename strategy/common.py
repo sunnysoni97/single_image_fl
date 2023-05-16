@@ -9,8 +9,8 @@ import math
 
 class common_functions:
     @staticmethod
-    def initialise_parameters(model_name: str, num_classes: int) -> Parameters:
-        new_model = init_model(model_name, num_classes)
+    def initialise_parameters(model_name: str, dataset_name: str) -> Parameters:
+        new_model = init_model(dataset_name, model_name)
         parameters = get_parameters(new_model)
         return ndarrays_to_parameters(parameters)
 

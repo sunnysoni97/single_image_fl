@@ -6,8 +6,8 @@ import numpy as np
 from models import init_model, set_parameters
 
 
-def test_model(model_name: str, model_n_classes: int, parameters: List[np.ndarray], test_loader: DataLoader, DEVICE: torch.device) -> Dict[str, float]:
-    model = init_model(model_name, model_n_classes)
+def test_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], test_loader: DataLoader, DEVICE: torch.device) -> Dict[str, float]:
+    model = init_model(dataset_name, model_name)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="sum")
     correct, total, loss = 0, 0, 0.0
