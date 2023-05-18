@@ -17,7 +17,7 @@ def plot_graph(data_dict: dict, criteria: str, static_title: str, output_dir: Pa
 
     plt.xlabel("Round")
     plt.ylabel("Accuracy/100")
-    plt.title(f'{experiment_title} - {static_title}'.strip(' - '))
+    plt.title(f'{experiment_title} - {static_title}'.strip(' -:'))
     plt.legend(title=criteria)
     plt.savefig(f"{output_dir.joinpath(f'{experiment_title}-{criteria}.png')}")
     plt.show()
