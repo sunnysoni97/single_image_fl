@@ -57,10 +57,10 @@ class TorchVision_FL(VisionDataset):
         return len(self.data)
 
 
-def get_dataset(dataset_name: str, path_to_data: Path, cid: str, partition: str):
+def get_dataset(dataset_name: str, path_to_data: Path, cid: str, partition: str, is_train: bool):
     # generate path to cid's data
     path_to_data = path_to_data / cid / (partition + ".pt")
-    transformF = get_transforms(dataset_name)
+    transformF = get_transforms(dataset_name, is_train=is_train)
     return TorchVision_FL(path_to_data, transform=transformF)
 
 
@@ -70,7 +70,8 @@ def create_dataloader(
     """Generates trainset/valset object and returns appropiate dataloader."""
 
     partition = "train" if is_train else "val"
-    dataset = get_dataset(dataset_name, Path(path_to_data), cid, partition)
+    dataset = get_dataset(dataset_name, Path(
+        path_to_data), cid, partition, is_train)
 
     # we use as number of workers all the cpu cores assigned to this actor
     shuffle_var = True if is_train else False
@@ -92,7 +93,7 @@ def combine_val_loaders(dataset_name: str, path_to_data: str, n_clients: int, ba
     val_data = np.concatenate(val_data, axis=0)
     val_targets = np.concatenate(val_targets, axis=0)
 
-    transformF = get_transforms(dataset_name=dataset_name)
+    transformF = get_transforms(dataset_name=dataset_name, is_train=False)
     dataset = TorchVision_FL(
         data=val_data, targets=val_targets, transform=transformF)
 
