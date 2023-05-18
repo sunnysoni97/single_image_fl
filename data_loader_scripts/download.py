@@ -9,14 +9,15 @@ import os
 # Transforms for CIFAR 10 test set
 def cifar10_transforms(is_train: bool = True):
     t_compose = transforms.Compose([])
-    if(is_train):
-        t_compose += [transforms.RandomHorizontalFlip(),
-                      transforms.RandomCrop((32, 32), 4),
-                      ]
 
-    t_compose += [transforms.ToTensor(),
-                  transforms.Normalize((0.4914, 0.4822, 0.4465),
-                                       (0.2023, 0.1994, 0.2010))]
+    if(is_train):
+        t_compose.transforms.extend([transforms.RandomHorizontalFlip(),
+                                     transforms.RandomCrop((32, 32), 4),
+                                     ])
+
+    t_compose.transforms.extend([transforms.ToTensor(),
+                                 transforms.Normalize((0.4914, 0.4822, 0.4465),
+                                                      (0.2023, 0.1994, 0.2010))])
 
     return t_compose
 
@@ -26,14 +27,15 @@ def cifar10_transforms(is_train: bool = True):
 def cifar100_transforms(is_train: bool = True):
 
     t_compose = transforms.Compose([])
-    if(is_train):
-        t_compose += [transforms.RandomHorizontalFlip(),
-                      transforms.RandomCrop((32, 32), 4),
-                      ]
 
-    t_compose += [transforms.ToTensor(),
-                  transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                       (0.2675, 0.2565, 0.2761))]
+    if(is_train):
+        t_compose.transforms.extend([transforms.RandomHorizontalFlip(),
+                                     transforms.RandomCrop((32, 32), 4),
+                                     ])
+
+    t_compose.transforms.extend([transforms.ToTensor(),
+                                 transforms.Normalize((0.5071, 0.4867, 0.4408),
+                                                      (0.2675, 0.2565, 0.2761))])
 
     return t_compose
 
