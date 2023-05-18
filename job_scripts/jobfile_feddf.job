@@ -8,7 +8,7 @@
 #SBATCH --gpus=1
 #SBATCH --gpus-per-node=1
 #SBATCH --job-name=SImg_FDF
-#SBATCH --output=../results/log/exp_out_%A.out 
+#SBATCH --output=./results/log/exp_out_%A.out 
 
 module purge
 module load 2022
@@ -22,7 +22,7 @@ NUM_ROUNDS=30
 CLIENT_GPUS=0.1
 SEED=42
 VAL_RATIO=0.1
-USE_CROPS=True
+USE_CROPS=False
 BATCH_SIZE=1024
 LOCAL_EPOCHS=80
 DISTILL_STEPS=500
@@ -34,7 +34,7 @@ DISTILLATION_ALPHA=1.0
 LOCAL_LR=0.05
 SERVER_LR=0.005
 WARM_START=True
-MODEL_NAME=resnet20
+MODEL_NAME=resnet8
 
 while getopts "l::g::" flag
 do
@@ -67,9 +67,9 @@ echo "Warm Start : $WARM_START"
 echo "---------"
 echo "Generating crops for FedDF"
 
-srun python ../make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS --seed $SEED --imgpath "../static/single_images/ameyoko.jpg"
+srun python ./make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NO_IMGS --seed $SEED --imgpath "./static/single_images/ameyoko.jpg"
 
 echo "---------"
-echo "Simulating FedDF training using crops"
+echo "Simulating FedDF training"
 
-srun python ../simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING --num_distill_images $NO_IMGS --use_adaptive_lr $USE_ADAPTIVE_LR --distill_dataset $DISTILLATION_DATASET --local_lr $LOCAL_LR --server_lr $SERVER_LR --warm_start $WARM_START --distill_alpha $DISTILLATION_ALPHA
+srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME --num_rounds $NUM_ROUNDS --client_gpus $CLIENT_GPUS --seed $SEED --data_dir $TMPDIR --use_crops $USE_CROPS --partition_val_ratio $VAL_RATIO --local_epochs $LOCAL_EPOCHS --server_steps $DISTILL_STEPS --batch_size $BATCH_SIZE --server_early_steps $EARLY_STEPS --use_early_stopping $USE_EARLY_STOPPING --num_distill_images $NO_IMGS --use_adaptive_lr $USE_ADAPTIVE_LR --distill_dataset $DISTILLATION_DATASET --local_lr $LOCAL_LR --server_lr $SERVER_LR --warm_start $WARM_START --distill_alpha $DISTILLATION_ALPHA
