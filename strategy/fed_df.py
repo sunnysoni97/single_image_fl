@@ -172,7 +172,7 @@ class FedDF_strategy(Strategy):
 
         logits_results = [
             (bytes_to_ndarray(
-                fit_res.metrics['preds']), fit_res.metrics['preds_number'])
+                fit_res.metrics['preds']), fit_res.num_examples)
             for _, fit_res in results
         ]
 
