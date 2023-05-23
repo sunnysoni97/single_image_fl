@@ -125,11 +125,12 @@ if __name__ == "__main__":
     if(static_vars == ""):
         print(f'Enter list of static criteria (separated by comma): ')
         static_vars = input()
-    static_vars = static_vars.split(",")
-    static_vars[:] = [item.strip() for item in static_vars]
-    heading = "Generic Heading"
-    with open(file_list[0], 'rt') as f:
-        heading = extract_static(static_vars, f)
+    static_title = ""
+    if(static_vars != ""):
+        static_vars = static_vars.split(",")
+        static_vars[:] = [item.strip() for item in static_vars]
+        with open(file_list[0], 'rt') as f:
+            static_title = extract_static(static_vars, f)
 
     lines = {}
     for i in range(len(file_list)):
@@ -137,4 +138,4 @@ if __name__ == "__main__":
             lines[keys[i]] = extract_server_test_acc(f)
 
     plot_graph(data_dict=lines, criteria=criteria,
-               static_title=heading, output_dir=output_dir, experiment_title=experiment_name)
+               static_title=static_title, output_dir=output_dir, experiment_title=experiment_name)
