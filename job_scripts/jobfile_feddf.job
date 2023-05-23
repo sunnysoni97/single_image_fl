@@ -8,7 +8,7 @@
 #SBATCH --gpus=1
 #SBATCH --gpus-per-node=1
 #SBATCH --job-name=SImg_FDF
-#SBATCH --output=./results/log/exp_out_%A.out 
+#SBATCH --output=./results/log/FDF_%A.out 
 
 module purge
 module load 2022
@@ -63,7 +63,7 @@ echo "-----SETTINGS-----"
 echo "STRATEGY:$STRATEGY"
 echo "MODEL_NAME:$MODEL_NAME"
 
-echo "NUM_CLIENTS:$NUM_CLI"
+echo "NUM_CLIENTS:$NUM_CLIENTS"
 echo "NUM_ROUNDS:$NUM_ROUNDS"
 echo "FRACTION_FIT:$FRACTION_FIT"
 echo "FRACTION_EVALUATE:$FRACTION_EVALUATE"
@@ -100,9 +100,9 @@ then
     echo "---------"
     echo "Generating crops for FedDF"
     srun python ./make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NUM_DISTILL_IMAGES --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
+    echo "---------"
 fi
     
-echo "---------"
 echo "Simulating $STRATEGY training"
 
 srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
