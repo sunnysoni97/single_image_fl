@@ -39,7 +39,7 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
 
 def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: int, transforms_name: str = "cifar10", alpha: float = 100.0, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> DataLoader:
 
-    transform = get_transforms(dataset_name=dataset_name, is_train=True)
+    transform = get_transforms(dataset_name=dataset_name, is_train=False)
 
     if(dataset_name == "cifar100"):
         full_dataset = CIFAR100(

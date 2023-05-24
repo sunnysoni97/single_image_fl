@@ -20,7 +20,7 @@ def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar
     no_of_images = len(image_list)
     dummy_targets = np.zeros((no_of_images, 1))
 
-    transformF = get_transforms(dataset_name)
+    transformF = get_transforms(dataset_name, is_train=False)
 
     new_dataset = TorchVision_FL(
         data=image_list, targets=dummy_targets, transform=transformF)
