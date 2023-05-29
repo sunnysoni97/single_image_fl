@@ -71,6 +71,9 @@ if __name__ == "__main__":
     NUM_DISTILL_IMAGES = args.num_distill_images
 
     WARM_START = args.warm_start
+    WARM_START_ROUNDS = args.warm_start_rounds
+
+    DEBUG = args.debug
 
     if(DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -125,7 +128,7 @@ if __name__ == "__main__":
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader)
+            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader, debug=DEBUG)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
@@ -179,7 +182,9 @@ if __name__ == "__main__":
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
                     server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START),
-                evaluate_fn=fed_df_fn.evaluate_fn
+                evaluate_fn=fed_df_fn.evaluate_fn,
+                warm_start_rounds=WARM_START_ROUNDS,
+                debug=DEBUG,
             ),
             client_resources=client_resources,
         )

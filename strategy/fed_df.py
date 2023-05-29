@@ -52,6 +52,8 @@ class FedDF_strategy(Strategy):
                  on_fit_config_fn_server=None,
                  evaluate_fn=None,
                  logger_fn=None,
+                 warm_start_rounds: int = 30,
+                 debug: bool = False
                  ) -> None:
         super().__init__()
 
@@ -93,6 +95,12 @@ class FedDF_strategy(Strategy):
 
         # cpu/gpu selection
         self.device = device
+
+        # handling parameter initialisation for fusion
+        self.warm_start_rounds = warm_start_rounds
+
+        # logging for debugging
+        self.debug = debug
 
     def __repr__(self) -> str:
         rep = f'FedDF'
@@ -180,7 +188,7 @@ class FedDF_strategy(Strategy):
 
         # Aggregating new parameters for warm start using averaging
 
-        if (warm_start):
+        if (warm_start and (server_round <= self.warm_start_rounds)):
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results
@@ -193,7 +201,7 @@ class FedDF_strategy(Strategy):
         # Distilling student model using Average Logits
 
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
-                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device)
+                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device, enable_step_logging=self.debug)
 
         # Aggregate custom metrics if aggregation fn was provided
 
