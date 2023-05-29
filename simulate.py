@@ -72,6 +72,7 @@ if __name__ == "__main__":
 
     WARM_START = args.warm_start
     WARM_START_ROUNDS = args.warm_start_rounds
+    WARM_START_INTERVAL = args.warm_start_interval
 
     DEBUG = args.debug
 
@@ -185,6 +186,7 @@ if __name__ == "__main__":
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,
+                warm_start_interval=WARM_START_INTERVAL
             ),
             client_resources=client_resources,
         )

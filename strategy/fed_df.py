@@ -53,6 +53,7 @@ class FedDF_strategy(Strategy):
                  evaluate_fn=None,
                  logger_fn=None,
                  warm_start_rounds: int = 30,
+                 warm_start_interval: int = 30,
                  debug: bool = False
                  ) -> None:
         super().__init__()
@@ -98,6 +99,7 @@ class FedDF_strategy(Strategy):
 
         # handling parameter initialisation for fusion
         self.warm_start_rounds = warm_start_rounds
+        self.warm_start_interval = warm_start_interval
 
         # logging for debugging
         self.debug = debug
@@ -188,7 +190,7 @@ class FedDF_strategy(Strategy):
 
         # Aggregating new parameters for warm start using averaging
 
-        if (warm_start and (server_round <= self.warm_start_rounds)):
+        if (warm_start and ((server_round <= self.warm_start_rounds)) or (server_round % self.warm_start_interval == 0)):
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results

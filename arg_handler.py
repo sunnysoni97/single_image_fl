@@ -50,5 +50,6 @@ parser.add_argument("--num_distill_images", type=int, default=2250)
 
 parser.add_argument("--warm_start", type=parse_bool, default=True)
 parser.add_argument("--warm_start_rounds", type=int, default=30)
+parser.add_argument("--warm_start_interval", type=int, default=30)
 
 parser.add_argument("--debug", type=parse_bool, default=False)
