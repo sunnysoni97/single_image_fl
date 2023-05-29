@@ -56,6 +56,7 @@ if __name__ == "__main__":
     LOCAL_EPOCHS = args.local_epochs
     LOCAL_LR = args.local_lr
 
+    DISTILL_BATCH_SIZE = args.distill_batch_size
     SERVER_LR = args.server_lr
     SERVER_STEPS = args.server_steps
     SERVER_EARLY_STEPS = args.server_early_steps
@@ -119,11 +120,11 @@ if __name__ == "__main__":
     elif(FED_STRATEGY == "feddf"):
         if(USE_CROPS):
             distill_dataloader = get_distill_imgloader(
-                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=BATCH_SIZE, num_workers=CLIENT_CPUS)
+                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=CLIENT_CPUS)
         else:
             if(DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
-                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=DISTILL_ALPHA)
+                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=DISTILL_ALPHA)
 
         val_dataloader = combine_val_loaders(
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
