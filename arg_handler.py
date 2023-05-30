@@ -48,6 +48,7 @@ parser.add_argument("--use_crops", type=parse_bool, default=False)
 parser.add_argument("--distill_dataset", type=str, default="cifar100")
 parser.add_argument("--distill_alpha", type=float, default=1.0)
 parser.add_argument("--num_distill_images", type=int, default=2250)
+parser.add_argument("--distill_transforms", type=str, default="v0")
 
 parser.add_argument("--warm_start", type=parse_bool, default=True)
 parser.add_argument("--warm_start_rounds", type=int, default=30)
