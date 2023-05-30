@@ -290,12 +290,14 @@ class FedDF_strategy(Strategy):
         cur_step = 0
         plateau_step = 0
         best_val_acc = 0.0
+        best_val_param = None
         total_step_acc = []
         total_step_loss = []
 
         log_interval = 100
-        val_interval = log_interval / \
-            5 if config["use_early_stopping"] else log_interval
+        val_interval = 50
+        # val_interval = log_interval / \
+        #     5 if config["use_early_stopping"] else log_interval
 
         while(cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
             for images, labels in train_loader:
@@ -330,27 +332,28 @@ class FedDF_strategy(Strategy):
                     net.train()
                     step_val_acc = correct/total
 
-                    if(step_val_acc >= best_val_acc+1e-2):
+                    if(step_val_acc >= best_val_acc):
                         plateau_step = 0
                         best_val_acc = step_val_acc
+                        best_val_param = get_parameters(net)
 
                     total_step_acc.append(step_val_acc)
 
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
-                if(cur_step % 100 == 0 and enable_step_logging):
-                    print(f"step {cur_step}, val_acc : {step_val_acc}")
+                if(cur_step % log_interval == 0 and enable_step_logging):
+                    print(f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
         print(f'Distillation training stopped at step number : {cur_step}')
 
-        new_parameters = get_parameters(net)
+        new_parameters = best_val_param
 
         train_res = {'fusion_loss': np.mean(
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
         print(
-            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}')
+            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}, best val accuracy : {best_val_acc}')
 
         return (new_parameters, train_res)
 
