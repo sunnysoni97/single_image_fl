@@ -1,0 +1,592 @@
+-----BEGIN-----
+-----SETTINGS-----
+STRATEGY:feddf
+MODEL_NAME:resnet8
+NUM_CLIENTS:20
+NUM_ROUNDS:30
+FRACTION_FIT:0.4
+FRACTION_EVALUATE:0.0
+DATASET_NAME:cifar10
+PARTITION_ALPHA:1.0
+PARTITION_VAL_RATIO:0.1
+BATCH_SIZE:1024
+LOCAL_EPOCHS:80
+LOCAL_LR:0.05
+DISTILL_BATCH_SIZE:1024
+SERVER_LR:0.005
+SERVER_STEPS:500
+SERVER_EARLY_STEPS:1000
+USE_EARLY_STOPPING:False
+USE_ADAPTIVE_LR:False
+SEED:42
+CUDA_DETERMINISTIC:False
+USE_CROPS:True
+IMG_NAME:ameyoko.jpg
+DISTILL_DATASET:cifar100
+DISTILL_ALPHA:1.0
+NUM_DISTILL_IMAGES:2250
+DISTILL_TRANSFORMS:v0
+WARM_START:False
+WARM_START_ROUNDS:5
+WARM_START_INTERVAL:5
+DEBUG:False
+-----SETTINGS END-----
+-----EXPERIMENT BEGINS-----
+---------
+Generating crops for FedDF
+Namespace(img_size=32, batch_size=32, num_imgs=2250, threads=12, vflip=False, deg=30, shear=30, cropfirst=True, initcrop=0.5, scale=[500, 1], randinterp=False, debug=False, imgpath='./static/single_images/ameyoko.jpg', targetpath='/scratch-local/sunnys.2819188', seed=42, img_per_thread=187)
+will save 2250 patches in /scratch-local/sunnys.2819188/single_img_crops/crops
+2250 took 0.04min with 12 threads
+---------
+Simulating feddf training
+INFO flwr 2023-05-30 20:52:35,477 | app.py:145 | Starting Flower simulation, config: ServerConfig(num_rounds=30, round_timeout=None)
+2023-05-30 20:52:37,560	INFO worker.py:1529 -- Started a local Ray instance. View the dashboard at [1m[32m127.0.0.1:8265 [39m[22m
+INFO flwr 2023-05-30 20:52:41,475 | app.py:179 | Flower VCE: Ray initialized with resources: {'memory': 345088315188.0, 'node:145.136.62.6': 1.0, 'object_store_memory': 152180706508.0, 'GPU': 1.0, 'CPU': 72.0, 'accelerator_type:A100': 1.0}
+INFO flwr 2023-05-30 20:52:41,475 | server.py:86 | Initializing global parameters
+INFO flwr 2023-05-30 20:52:41,476 | server.py:266 | Using initial parameters provided by strategy
+INFO flwr 2023-05-30 20:52:41,476 | server.py:88 | Evaluating initial parameters
+Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to /scratch-local/sunnys.2819188/cifar-10-python.tar.gz
+Extracting /scratch-local/sunnys.2819188/cifar-10-python.tar.gz to /scratch-local/sunnys.2819188
+Generating unified cifar10 dataset
+Class histogram for 0-th partition (alpha=1.0, 10 classes): [440 381 415  39  10 257 227 532  17 182]
+INFO flwr 2023-05-30 20:52:44,844 | server.py:91 | initial parameters (loss, other metrics): 2.323421728515625, {'server_test_acc': 0.108}
+INFO flwr 2023-05-30 20:52:44,844 | server.py:101 | FL starting
+DEBUG flwr 2023-05-30 20:52:44,844 | server.py:215 | fit_round 1: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 20:53:39,935 | server.py:229 | fit_round 1 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1024452)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=1024458)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=1024454)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1024455)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1024453)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=1024451)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1024456)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1024457)[0m Fitting Client 13
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.07397508789412677, val accuracy : 0.37856000000000006, best val accuracy : 0.418
+Average local training loss : 3.6756936213932936
+Average local training accuracy : 0.5672881944444443
+INFO flwr 2023-05-30 20:54:36,690 | server.py:116 | fit progress: (1, 1.5724171997070313, {'server_test_acc': 0.4097}, 111.84576172707602)
+INFO flwr 2023-05-30 20:54:36,690 | server.py:163 | evaluate_round 1: no clients selected, cancel
+DEBUG flwr 2023-05-30 20:54:36,690 | server.py:215 | fit_round 2: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 20:55:32,551 | server.py:229 | fit_round 2 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1158449)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=1158450)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=1158452)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1158453)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1158454)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1158455)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=1158456)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=1158451)[0m Fitting Client 18
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.029823441376909614, val accuracy : 0.34634, best val accuracy : 0.3578
+Average local training loss : 3.6692657181061805
+Average local training accuracy : 0.5694298611111112
+INFO flwr 2023-05-30 20:56:31,074 | server.py:116 | fit progress: (2, 2.1124859985351563, {'server_test_acc': 0.3606}, 226.2297373560723)
+INFO flwr 2023-05-30 20:56:31,074 | server.py:163 | evaluate_round 2: no clients selected, cancel
+DEBUG flwr 2023-05-30 20:56:31,074 | server.py:215 | fit_round 3: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 20:57:24,299 | server.py:229 | fit_round 3 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1293183)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=1293186)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=1293184)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1293179)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=1293181)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1293185)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1293182)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1293178)[0m Fitting Client 2
+Performing server side distillation training...
+E0530 20:58:18.896831177 1023534 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 60000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.020887846145778894, val accuracy : 0.36578, best val accuracy : 0.3792
+Average local training loss : 3.7778176287189122
+Average local training accuracy : 0.55198125
+INFO flwr 2023-05-30 20:58:20,336 | server.py:116 | fit progress: (3, 2.3489333129882812, {'server_test_acc': 0.3765}, 335.49199900007807)
+INFO flwr 2023-05-30 20:58:20,336 | server.py:163 | evaluate_round 3: no clients selected, cancel
+DEBUG flwr 2023-05-30 20:58:20,336 | server.py:215 | fit_round 4: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 20:59:15,880 | server.py:229 | fit_round 4 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1427086)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=1427085)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1427078)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=1427083)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=1427082)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1427079)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1427087)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1427084)[0m Fitting Client 1
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.02376577611081302, val accuracy : 0.354, best val accuracy : 0.3612
+Average local training loss : 3.5189298838376994
+Average local training accuracy : 0.5810027777777778
+INFO flwr 2023-05-30 21:00:13,930 | server.py:116 | fit progress: (4, 2.137994445800781, {'server_test_acc': 0.3618}, 449.08636571792886)
+INFO flwr 2023-05-30 21:00:13,931 | server.py:163 | evaluate_round 4: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:00:13,931 | server.py:215 | fit_round 5: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:01:06,883 | server.py:229 | fit_round 5 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1566951)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=1566972)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1566977)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=1566970)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1566973)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1566975)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1566974)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=1566976)[0m Fitting Client 9
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.06468725811503828, val accuracy : 0.38464000000000004, best val accuracy : 0.4092
+Average local training loss : 3.7756590521894395
+Average local training accuracy : 0.5553618055555556
+INFO flwr 2023-05-30 21:02:03,255 | server.py:116 | fit progress: (5, 1.570312158203125, {'server_test_acc': 0.4163}, 558.4108876569662)
+INFO flwr 2023-05-30 21:02:03,255 | server.py:163 | evaluate_round 5: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:02:03,255 | server.py:215 | fit_round 6: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:02:58,720 | server.py:229 | fit_round 6 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1731211)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=1731213)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1731215)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=1731216)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1731212)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1731214)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=1731210)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=1731208)[0m Fitting Client 14
+Performing server side distillation training...
+E0530 21:03:38.523065860 1853928 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 120000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.06234426104277373, val accuracy : 0.3513, best val accuracy : 0.3752
+Average local training loss : 2.8286758191883563
+Average local training accuracy : 0.6598631944444445
+INFO flwr 2023-05-30 21:03:56,949 | server.py:116 | fit progress: (6, 2.06750966796875, {'server_test_acc': 0.3662}, 672.1050301089417)
+INFO flwr 2023-05-30 21:03:56,949 | server.py:163 | evaluate_round 6: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:03:56,949 | server.py:215 | fit_round 7: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:04:51,448 | server.py:229 | fit_round 7 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1864697)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1864692)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1864699)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1864704)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=1864700)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=1864698)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1864701)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1864702)[0m Fitting Client 6
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.043793283138424156, val accuracy : 0.35872000000000004, best val accuracy : 0.3734
+Average local training loss : 2.6552834957372395
+Average local training accuracy : 0.6887048611111111
+INFO flwr 2023-05-30 21:05:49,500 | server.py:116 | fit progress: (7, 2.207743115234375, {'server_test_acc': 0.3775}, 784.6556669310667)
+INFO flwr 2023-05-30 21:05:49,500 | server.py:163 | evaluate_round 7: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:05:49,500 | server.py:215 | fit_round 8: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:06:43,040 | server.py:229 | fit_round 8 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1998202)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=1998205)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1998206)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=1998203)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=1998204)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=1998199)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1998201)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=1998200)[0m Fitting Client 4
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05536012529954314, val accuracy : 0.4316, best val accuracy : 0.443
+Average local training loss : 2.6158712015487255
+Average local training accuracy : 0.6924527777777777
+INFO flwr 2023-05-30 21:07:41,680 | server.py:116 | fit progress: (8, 1.8738162719726563, {'server_test_acc': 0.4283}, 896.8354409709573)
+INFO flwr 2023-05-30 21:07:41,680 | server.py:163 | evaluate_round 8: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:07:41,680 | server.py:215 | fit_round 9: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:08:37,645 | server.py:229 | fit_round 9 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2132333)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2132353)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=2132351)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2132352)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2132356)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2132357)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=2132354)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2132355)[0m Fitting Client 2
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.051757759656757114, val accuracy : 0.46726, best val accuracy : 0.482
+Average local training loss : 2.76925984036643
+Average local training accuracy : 0.6757784722222223
+INFO flwr 2023-05-30 21:09:34,682 | server.py:116 | fit progress: (9, 1.55318056640625, {'server_test_acc': 0.4685}, 1009.8382408719044)
+INFO flwr 2023-05-30 21:09:34,683 | server.py:163 | evaluate_round 9: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:09:34,683 | server.py:215 | fit_round 10: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:10:28,003 | server.py:229 | fit_round 10 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2266244)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2266250)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2266245)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2266247)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2266252)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2266246)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2266251)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2266249)[0m Fitting Client 0
+Performing server side distillation training...
+E0530 21:11:19.588713241 2396471 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 240000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.059900499004870655, val accuracy : 0.45088, best val accuracy : 0.467
+Average local training loss : 2.480588345136493
+Average local training accuracy : 0.711961111111111
+INFO flwr 2023-05-30 21:11:26,426 | server.py:116 | fit progress: (10, 1.8403257080078126, {'server_test_acc': 0.4575}, 1121.5813993948977)
+INFO flwr 2023-05-30 21:11:26,426 | server.py:163 | evaluate_round 10: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:11:26,426 | server.py:215 | fit_round 11: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:12:22,283 | server.py:229 | fit_round 11 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2400672)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2400677)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=2400678)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=2400674)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2400676)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2400675)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2400679)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=2400673)[0m Fitting Client 3
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.07960698561370373, val accuracy : 0.5301400000000001, best val accuracy : 0.5418
+Average local training loss : 1.6194739643717184
+Average local training accuracy : 0.8136277777777778
+INFO flwr 2023-05-30 21:13:21,082 | server.py:116 | fit progress: (11, 1.49044765625, {'server_test_acc': 0.528}, 1236.2374456608668)
+INFO flwr 2023-05-30 21:13:21,082 | server.py:163 | evaluate_round 11: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:13:21,082 | server.py:215 | fit_round 12: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:14:16,129 | server.py:229 | fit_round 12 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2535569)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2535572)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2535571)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2535574)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2535573)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2535567)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2535568)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=2535570)[0m Fitting Client 18
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.06277098897844553, val accuracy : 0.44719999999999993, best val accuracy : 0.4678
+Average local training loss : 1.5543761075357905
+Average local training accuracy : 0.8210027777777779
+INFO flwr 2023-05-30 21:15:14,041 | server.py:116 | fit progress: (12, 1.897751171875, {'server_test_acc': 0.4559}, 1349.1970332600176)
+INFO flwr 2023-05-30 21:15:14,041 | server.py:163 | evaluate_round 12: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:15:14,041 | server.py:215 | fit_round 13: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:16:08,418 | server.py:229 | fit_round 13 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2673166)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2673173)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2673171)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2673169)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=2673168)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=2673170)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2673172)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2673167)[0m Fitting Client 16
+Performing server side distillation training...
+E0530 21:16:31.156286682 2397117 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 480000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04889733213, val accuracy : 0.56186, best val accuracy : 0.57
+Average local training loss : 1.6594836688367651
+Average local training accuracy : 0.8088249999999999
+INFO flwr 2023-05-30 21:17:06,645 | server.py:116 | fit progress: (13, 1.4121615478515626, {'server_test_acc': 0.555}, 1461.8008629248943)
+INFO flwr 2023-05-30 21:17:06,645 | server.py:163 | evaluate_round 13: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:17:06,645 | server.py:215 | fit_round 14: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:17:59,593 | server.py:229 | fit_round 14 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2842344)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=2842345)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2842349)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=2842348)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2842351)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2842350)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2842352)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2842346)[0m Fitting Client 15
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04766413128562272, val accuracy : 0.46334, best val accuracy : 0.4738
+Average local training loss : 1.5187153569422664
+Average local training accuracy : 0.8237118055555556
+INFO flwr 2023-05-30 21:18:57,724 | server.py:116 | fit progress: (14, 1.9115214111328125, {'server_test_acc': 0.4688}, 1572.879931008909)
+INFO flwr 2023-05-30 21:18:57,724 | server.py:163 | evaluate_round 14: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:18:57,724 | server.py:215 | fit_round 15: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:19:52,268 | server.py:229 | fit_round 15 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2977160)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=2977163)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=2977166)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=2977162)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2977169)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2977165)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2977167)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=2977160)[0m 
+[2m[36m(launch_and_fit pid=2977168)[0m Fitting Client 11
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0709321649223566, val accuracy : 0.5069600000000001, best val accuracy : 0.5132
+Average local training loss : 1.5287918216665275
+Average local training accuracy : 0.8231631944444444
+INFO flwr 2023-05-30 21:20:50,703 | server.py:116 | fit progress: (15, 2.155381005859375, {'server_test_acc': 0.5092}, 1685.8584090310615)
+INFO flwr 2023-05-30 21:20:50,703 | server.py:163 | evaluate_round 15: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:20:50,703 | server.py:215 | fit_round 16: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:21:45,280 | server.py:229 | fit_round 16 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3111839)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3111851)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=3111792)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3111846)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3111674)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3111806)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=3111778)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=3111826)[0m Fitting Client 15
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05235536497272551, val accuracy : 0.488, best val accuracy : 0.4916
+Average local training loss : 0.9782321938895622
+Average local training accuracy : 0.8880111111111111
+INFO flwr 2023-05-30 21:22:42,709 | server.py:116 | fit progress: (16, 3.32010615234375, {'server_test_acc': 0.4849}, 1797.8649334299844)
+INFO flwr 2023-05-30 21:22:42,709 | server.py:163 | evaluate_round 16: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:22:42,709 | server.py:215 | fit_round 17: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:23:37,984 | server.py:229 | fit_round 17 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3245317)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3245314)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=3245308)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3245311)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=3245316)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=3245315)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=3245313)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3245309)[0m Fitting Client 13
+Performing server side distillation training...
+E0530 21:24:18.542436103 3241823 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 960000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.041838965274393555, val accuracy : 0.49198000000000003, best val accuracy : 0.4974
+Average local training loss : 1.0870016991277227
+Average local training accuracy : 0.8775416666666668
+INFO flwr 2023-05-30 21:24:31,950 | server.py:116 | fit progress: (17, 3.922539306640625, {'server_test_acc': 0.4952}, 1907.1062415218912)
+INFO flwr 2023-05-30 21:24:31,951 | server.py:163 | evaluate_round 17: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:24:31,951 | server.py:215 | fit_round 18: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:25:26,392 | server.py:229 | fit_round 18 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3379005)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=3379009)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=3379006)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3379016)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3379008)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=3379012)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3379022)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=3379007)[0m Fitting Client 3
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04937159682437778, val accuracy : 0.46196000000000004, best val accuracy : 0.4726
+Average local training loss : 1.2284933994349558
+Average local training accuracy : 0.8619118055555556
+INFO flwr 2023-05-30 21:26:07,773 | server.py:116 | fit progress: (18, 4.4500744140625, {'server_test_acc': 0.4684}, 2002.9291229040828)
+INFO flwr 2023-05-30 21:26:07,773 | server.py:163 | evaluate_round 18: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:26:07,774 | server.py:215 | fit_round 19: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:27:00,402 | server.py:229 | fit_round 19 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3511407)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=3511421)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=3511416)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3511406)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=3511427)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3511409)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=3511426)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=3511408)[0m Fitting Client 17
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03944660095591098, val accuracy : 0.47753999999999996, best val accuracy : 0.4836
+Average local training loss : 1.2894640830927528
+Average local training accuracy : 0.8579104166666667
+INFO flwr 2023-05-30 21:27:41,855 | server.py:116 | fit progress: (19, 3.4218288330078126, {'server_test_acc': 0.4798}, 2097.0113577069715)
+INFO flwr 2023-05-30 21:27:41,856 | server.py:163 | evaluate_round 19: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:27:41,856 | server.py:215 | fit_round 20: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:28:34,461 | server.py:229 | fit_round 20 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3643444)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=3643450)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=3643451)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3643446)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=3643452)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3643447)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=3643449)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3643448)[0m Fitting Client 1
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.07340087096765638, val accuracy : 0.62516, best val accuracy : 0.6314
+Average local training loss : 1.2881496494461315
+Average local training accuracy : 0.8556472222222224
+INFO flwr 2023-05-30 21:29:16,154 | server.py:116 | fit progress: (20, 1.8264015625, {'server_test_acc': 0.6139}, 2191.3102894129697)
+INFO flwr 2023-05-30 21:29:16,155 | server.py:163 | evaluate_round 20: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:29:16,155 | server.py:215 | fit_round 21: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:30:10,817 | server.py:229 | fit_round 21 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3775648)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=3775650)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=3775644)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3775649)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=3775647)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=3775645)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=3775646)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3775651)[0m Fitting Client 18
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.048119084525853395, val accuracy : 0.61418, best val accuracy : 0.6202
+Average local training loss : 0.8360978312673978
+Average local training accuracy : 0.9058430555555554
+INFO flwr 2023-05-30 21:30:52,699 | server.py:116 | fit progress: (21, 1.5998755004882812, {'server_test_acc': 0.6154}, 2287.85493982397)
+INFO flwr 2023-05-30 21:30:52,699 | server.py:163 | evaluate_round 21: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:30:52,699 | server.py:215 | fit_round 22: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:31:46,430 | server.py:229 | fit_round 22 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3943465)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3943463)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=3943469)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3943471)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3943467)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=3943472)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=3943470)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=3943468)[0m Fitting Client 6
+Performing server side distillation training...
+E0530 21:32:19.239932085 4068698 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 1920000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.045161676408723, val accuracy : 0.5394999999999999, best val accuracy : 0.5448
+Average local training loss : 0.8211763522820547
+Average local training accuracy : 0.9070006944444444
+INFO flwr 2023-05-30 21:32:28,392 | server.py:116 | fit progress: (22, 2.234516711425781, {'server_test_acc': 0.5433}, 2383.547406625934)
+INFO flwr 2023-05-30 21:32:28,392 | server.py:163 | evaluate_round 22: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:32:28,392 | server.py:215 | fit_round 23: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:33:23,557 | server.py:229 | fit_round 23 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=4078074)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=4078075)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=4078077)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=4078080)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=4078081)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=4078076)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=4078079)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=4078078)[0m Fitting Client 12
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03866713508591056, val accuracy : 0.5884999999999999, best val accuracy : 0.592
+Average local training loss : 0.8970788504433586
+Average local training accuracy : 0.8993409722222223
+INFO flwr 2023-05-30 21:34:05,535 | server.py:116 | fit progress: (23, 1.9428439331054688, {'server_test_acc': 0.5942}, 2480.691143247066)
+INFO flwr 2023-05-30 21:34:05,535 | server.py:163 | evaluate_round 23: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:34:05,536 | server.py:215 | fit_round 24: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:35:01,533 | server.py:229 | fit_round 24 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=17469)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=17477)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=17470)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=17471)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=17472)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=17474)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=17473)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=17476)[0m Fitting Client 2
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.042406647564843296, val accuracy : 0.6274200000000001, best val accuracy : 0.633
+Average local training loss : 0.9373172073188469
+Average local training accuracy : 0.8938847222222222
+INFO flwr 2023-05-30 21:35:43,871 | server.py:116 | fit progress: (24, 1.962425439453125, {'server_test_acc': 0.6256}, 2579.0269573170226)
+INFO flwr 2023-05-30 21:35:43,871 | server.py:163 | evaluate_round 24: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:35:43,871 | server.py:215 | fit_round 25: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:36:40,178 | server.py:229 | fit_round 25 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=151588)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=151581)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=151587)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=151589)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=151586)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=151584)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=151583)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=151585)[0m Fitting Client 8
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0715094529427588, val accuracy : 0.6206600000000001, best val accuracy : 0.6274
+Average local training loss : 0.8472592296195216
+Average local training accuracy : 0.9056972222222223
+INFO flwr 2023-05-30 21:37:22,621 | server.py:116 | fit progress: (25, 1.6711687866210938, {'server_test_acc': 0.6208}, 2677.7767806560732)
+INFO flwr 2023-05-30 21:37:22,621 | server.py:163 | evaluate_round 25: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:37:22,621 | server.py:215 | fit_round 26: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:38:16,497 | server.py:229 | fit_round 26 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=284813)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=284815)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=284819)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=284817)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=284816)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=284820)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=284818)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=284821)[0m Fitting Client 19
+Performing server side distillation training...
+E0530 21:38:37.240109914  299245 chttp2_transport.cc:1079]             ipv4:145.136.62.6:48989: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 3840000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05296877393312752, val accuracy : 0.5993999999999999, best val accuracy : 0.6082
+Average local training loss : 0.6976234988193027
+Average local training accuracy : 0.923061111111111
+INFO flwr 2023-05-30 21:38:58,697 | server.py:116 | fit progress: (26, 1.7775455688476562, {'server_test_acc': 0.5999}, 2773.853169889888)
+INFO flwr 2023-05-30 21:38:58,697 | server.py:163 | evaluate_round 26: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:38:58,698 | server.py:215 | fit_round 27: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:39:52,508 | server.py:229 | fit_round 27 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=418577)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=418585)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=418591)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=418587)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=418592)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=418590)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=418589)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=418588)[0m Fitting Client 15
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04876097869127989, val accuracy : 0.5802400000000001, best val accuracy : 0.583
+Average local training loss : 0.7201453187444712
+Average local training accuracy : 0.9192263888888889
+INFO flwr 2023-05-30 21:40:34,895 | server.py:116 | fit progress: (27, 1.9692711669921874, {'server_test_acc': 0.5819}, 2870.051268142881)
+INFO flwr 2023-05-30 21:40:34,896 | server.py:163 | evaluate_round 27: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:40:34,896 | server.py:215 | fit_round 28: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:41:27,762 | server.py:229 | fit_round 28 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=551370)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=551374)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=551372)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=551371)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=551375)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=551373)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=551376)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=551369)[0m Fitting Client 12
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.039025715362280604, val accuracy : 0.6562, best val accuracy : 0.6624
+Average local training loss : 0.7125628810637863
+Average local training accuracy : 0.9217513888888889
+INFO flwr 2023-05-30 21:42:10,371 | server.py:116 | fit progress: (28, 1.3819594604492187, {'server_test_acc': 0.6458}, 2965.5273091169074)
+INFO flwr 2023-05-30 21:42:10,372 | server.py:163 | evaluate_round 28: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:42:10,372 | server.py:215 | fit_round 29: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:43:04,868 | server.py:229 | fit_round 29 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=684939)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=684944)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=684948)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=684940)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=684942)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=684946)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=684945)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=684941)[0m Fitting Client 15
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05635019650682807, val accuracy : 0.6470800000000001, best val accuracy : 0.6522
+Average local training loss : 0.7227770198922372
+Average local training accuracy : 0.9195291666666666
+INFO flwr 2023-05-30 21:43:47,511 | server.py:116 | fit progress: (29, 1.4196282836914063, {'server_test_acc': 0.6338}, 3062.66697521694)
+INFO flwr 2023-05-30 21:43:47,511 | server.py:163 | evaluate_round 29: no clients selected, cancel
+DEBUG flwr 2023-05-30 21:43:47,511 | server.py:215 | fit_round 30: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-30 21:44:41,080 | server.py:229 | fit_round 30 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=817101)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=817107)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=817106)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=817110)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=817109)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=817105)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=817108)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=817104)[0m Fitting Client 1
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.06492341313138604, val accuracy : 0.6008200000000001, best val accuracy : 0.6062
+Average local training loss : 0.6387221738754306
+Average local training accuracy : 0.9288451388888888
+INFO flwr 2023-05-30 21:45:23,720 | server.py:116 | fit progress: (30, 1.90466865234375, {'server_test_acc': 0.6038}, 3158.8756009358913)
+INFO flwr 2023-05-30 21:45:23,720 | server.py:163 | evaluate_round 30: no clients selected, cancel
+INFO flwr 2023-05-30 21:45:23,720 | server.py:144 | FL finished in 3158.8758719798643
+INFO flwr 2023-05-30 21:45:23,721 | app.py:202 | app_fit: losses_distributed []
+INFO flwr 2023-05-30 21:45:23,721 | app.py:203 | app_fit: metrics_distributed {}
+INFO flwr 2023-05-30 21:45:23,721 | app.py:204 | app_fit: losses_centralized [(0, 2.323421728515625), (1, 1.5724171997070313), (2, 2.1124859985351563), (3, 2.3489333129882812), (4, 2.137994445800781), (5, 1.570312158203125), (6, 2.06750966796875), (7, 2.207743115234375), (8, 1.8738162719726563), (9, 1.55318056640625), (10, 1.8403257080078126), (11, 1.49044765625), (12, 1.897751171875), (13, 1.4121615478515626), (14, 1.9115214111328125), (15, 2.155381005859375), (16, 3.32010615234375), (17, 3.922539306640625), (18, 4.4500744140625), (19, 3.4218288330078126), (20, 1.8264015625), (21, 1.5998755004882812), (22, 2.234516711425781), (23, 1.9428439331054688), (24, 1.962425439453125), (25, 1.6711687866210938), (26, 1.7775455688476562), (27, 1.9692711669921874), (28, 1.3819594604492187), (29, 1.4196282836914063), (30, 1.90466865234375)]
+INFO flwr 2023-05-30 21:45:23,721 | app.py:205 | app_fit: metrics_centralized {'server_test_acc': [(0, 0.108), (1, 0.4097), (2, 0.3606), (3, 0.3765), (4, 0.3618), (5, 0.4163), (6, 0.3662), (7, 0.3775), (8, 0.4283), (9, 0.4685), (10, 0.4575), (11, 0.528), (12, 0.4559), (13, 0.555), (14, 0.4688), (15, 0.5092), (16, 0.4849), (17, 0.4952), (18, 0.4684), (19, 0.4798), (20, 0.6139), (21, 0.6154), (22, 0.5433), (23, 0.5942), (24, 0.6256), (25, 0.6208), (26, 0.5999), (27, 0.5819), (28, 0.6458), (29, 0.6338), (30, 0.6038)]}
+-----EXPERIMENT ENDS-----
+-----END-----
+
+JOB STATISTICS
+==============
+Job ID: 2819188
+Cluster: snellius
+User/Group: sunnys/sunnys
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 18
+CPU Utilized: 01:53:18
+CPU Efficiency: 11.81% of 15:59:42 core-walltime
+Job Wall-clock time: 00:53:19
+Memory Utilized: 26.34 GB
+Memory Efficiency: 0.00% of 0.00 MB
