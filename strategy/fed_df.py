@@ -190,7 +190,8 @@ class FedDF_strategy(Strategy):
 
         # Aggregating new parameters for warm start using averaging
 
-        if (warm_start and ((server_round <= self.warm_start_rounds)) or (server_round % self.warm_start_interval == 0)):
+        if (warm_start and ((server_round <= self.warm_start_rounds) or (server_round % self.warm_start_interval == 0))):
+            print(f'Warm start at round {server_round}')
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results
