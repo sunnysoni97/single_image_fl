@@ -1,0 +1,81 @@
+-----BEGIN-----
+-----SETTINGS-----
+STRATEGY:feddf
+MODEL_NAME:resnet8
+NUM_CLIENTS:20
+NUM_ROUNDS:30
+FRACTION_FIT:0.4
+FRACTION_EVALUATE:0.0
+DATASET_NAME:cifar10
+PARTITION_ALPHA:1.0
+PARTITION_VAL_RATIO:0.1
+BATCH_SIZE:1024
+LOCAL_EPOCHS:80
+LOCAL_LR:0.05
+DISTILL_BATCH_SIZE:1024
+SERVER_LR:0.005
+SERVER_STEPS:500
+SERVER_EARLY_STEPS:1000
+USE_EARLY_STOPPING:False
+USE_ADAPTIVE_LR:False
+SEED:42
+CUDA_DETERMINISTIC:False
+USE_CROPS:True
+IMG_NAME:ameyoko.jpg
+DISTILL_DATASET:cifar100
+DISTILL_ALPHA:1.0
+NUM_DISTILL_IMAGES:2250
+DISTILL_TRANSFORMS:v0
+WARM_START:True
+WARM_START_ROUNDS:30
+WARM_START_INTERVAL:1
+DEBUG:False
+-----SETTINGS END-----
+-----EXPERIMENT BEGINS-----
+---------
+Generating crops for FedDF
+Namespace(img_size=32, batch_size=32, num_imgs=2250, threads=12, vflip=False, deg=30, shear=30, cropfirst=True, initcrop=0.5, scale=[500, 1], randinterp=False, debug=False, imgpath='./static/single_images/ameyoko.jpg', targetpath='/scratch-local/sunnys.2821403', seed=42, img_per_thread=187)
+will save 2250 patches in /scratch-local/sunnys.2821403/single_img_crops/crops
+2250 took 0.05min with 12 threads
+---------
+Simulating feddf training
+INFO flwr 2023-05-31 11:52:28,011 | app.py:145 | Starting Flower simulation, config: ServerConfig(num_rounds=30, round_timeout=None)
+2023-05-31 11:52:30,341	INFO worker.py:1529 -- Started a local Ray instance. View the dashboard at [1m[32m127.0.0.1:8265 [39m[22m
+INFO flwr 2023-05-31 11:52:34,188 | app.py:179 | Flower VCE: Ray initialized with resources: {'object_store_memory': 154709068185.0, 'memory': 350987825767.0, 'CPU': 72.0, 'GPU': 1.0, 'accelerator_type:A100': 1.0, 'node:145.136.62.32': 1.0}
+INFO flwr 2023-05-31 11:52:34,188 | server.py:86 | Initializing global parameters
+INFO flwr 2023-05-31 11:52:34,188 | server.py:266 | Using initial parameters provided by strategy
+INFO flwr 2023-05-31 11:52:34,188 | server.py:88 | Evaluating initial parameters
+Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to /scratch-local/sunnys.2821403/cifar-10-python.tar.gz
+Extracting /scratch-local/sunnys.2821403/cifar-10-python.tar.gz to /scratch-local/sunnys.2821403
+Generating unified cifar10 dataset
+Class histogram for 0-th partition (alpha=1.0, 10 classes): [440 381 415  39  10 257 227 532  17 182]
+INFO flwr 2023-05-31 11:52:39,151 | server.py:91 | initial parameters (loss, other metrics): 2.323421728515625, {'server_test_acc': 0.108}
+INFO flwr 2023-05-31 11:52:39,151 | server.py:101 | FL starting
+DEBUG flwr 2023-05-31 11:52:39,151 | server.py:215 | fit_round 1: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-31 11:53:32,368 | server.py:229 | fit_round 1 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=4552)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=4547)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=4549)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=4551)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=4554)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=4548)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=4550)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=4553)[0m Fitting Client 10
+Performing server side distillation training...
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.07500088443420827, val accuracy : 0.39592000000000005, best val accuracy : 0.4416
+Average local training loss : 3.709166561439633
+Average local training accuracy : 0.5639923611111111
+INFO flwr 2023-05-31 11:54:09,985 | server.py:116 | fit progress: (1, 1.5207566650390625, {'server_test_acc': 0.434}, 90.83360820123926)
+INFO flwr 2023-05-31 11:54:09,985 | server.py:163 | evaluate_round 1: no clients selected, cancel
+DEBUG flwr 2023-05-31 11:54:09,985 | server.py:215 | fit_round 2: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-05-31 11:55:00,996 | server.py:229 | fit_round 2 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=128278)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=128281)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=128275)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=128280)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=128279)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=128277)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=128274)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=128276)[0m Fitting Client 18
+Performing server side distillation training...
