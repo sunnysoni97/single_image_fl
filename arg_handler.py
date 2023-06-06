@@ -11,9 +11,10 @@ def parse_bool(inp_str: str) -> bool:
             f"{inp_str} is not a valid boolean value! Check passed arguments again.")
 
 
-parser = argparse.ArgumentParser(description="FedAvg Simulation using Flower")
+parser = argparse.ArgumentParser(
+    description="FedAvg/FedDF Simulation using Flower")
 
-parser.add_argument("--fed_strategy", type=str, default="fedavg")
+parser.add_argument("--fed_strategy", type=str, default="feddf")
 parser.add_argument("--model_name", type=str, default="resnet8")
 
 parser.add_argument("--num_clients", type=int, default=20)
@@ -32,9 +33,10 @@ parser.add_argument("--server_cpus", type=int, default=4)
 
 parser.add_argument("--batch_size", type=int, default=128)
 parser.add_argument("--local_epochs", type=int, default=40)
-parser.add_argument("--local_lr", type=float, default=0.005)
-parser.add_argument("--server_lr", type=float, default=1e-3)
-parser.add_argument("--server_steps", type=int, default=1e3)
+parser.add_argument("--local_lr", type=float, default=0.05)
+parser.add_argument("--distill_batch_size", type=int, default=128)
+parser.add_argument("--server_lr", type=float, default=0.005)
+parser.add_argument("--server_steps", type=int, default=500)
 parser.add_argument("--server_early_steps", type=int, default=5e2)
 parser.add_argument("--use_early_stopping", type=parse_bool, default=False)
 parser.add_argument("--use_adaptive_lr", type=parse_bool, default=False)
@@ -46,5 +48,10 @@ parser.add_argument("--use_crops", type=parse_bool, default=False)
 parser.add_argument("--distill_dataset", type=str, default="cifar100")
 parser.add_argument("--distill_alpha", type=float, default=1.0)
 parser.add_argument("--num_distill_images", type=int, default=2250)
+parser.add_argument("--distill_transforms", type=str, default="v0")
 
-parser.add_argument("--warm_start", type=parse_bool, default=False)
+parser.add_argument("--warm_start", type=parse_bool, default=True)
+parser.add_argument("--warm_start_rounds", type=int, default=30)
+parser.add_argument("--warm_start_interval", type=int, default=30)
+
+parser.add_argument("--debug", type=parse_bool, default=False)

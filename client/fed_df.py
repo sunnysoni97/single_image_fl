@@ -78,7 +78,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
 
 class FlowerClient(fl.client.Client):
-    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, distill_dataloader: DataLoader) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, distill_dataloader: DataLoader, debug: bool = False) -> None:
         self.cid = cid
         self.model_name = model_name
         self.dataset_name = dataset_name
@@ -88,6 +88,7 @@ class FlowerClient(fl.client.Client):
         self.device = device
         self.parameters = None
         self.distill_dataloader = distill_dataloader
+        self.debug = debug
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
         # Build and return response
@@ -108,7 +109,7 @@ class FlowerClient(fl.client.Client):
         train_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
         new_parameters, distill_preds, train_res = train_model(
-            model_name=self.model_name, dataset_name=self.dataset_name, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device)
+            model_name=self.model_name, dataset_name=self.dataset_name, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device, enable_epoch_logging=self.debug)
 
         self.set_parameters(new_parameters)
         train_res['preds'] = ndarray_to_bytes(distill_preds)

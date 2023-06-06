@@ -52,6 +52,9 @@ class FedDF_strategy(Strategy):
                  on_fit_config_fn_server=None,
                  evaluate_fn=None,
                  logger_fn=None,
+                 warm_start_rounds: int = 30,
+                 warm_start_interval: int = 30,
+                 debug: bool = False
                  ) -> None:
         super().__init__()
 
@@ -93,6 +96,13 @@ class FedDF_strategy(Strategy):
 
         # cpu/gpu selection
         self.device = device
+
+        # handling parameter initialisation for fusion
+        self.warm_start_rounds = warm_start_rounds
+        self.warm_start_interval = warm_start_interval
+
+        # logging for debugging
+        self.debug = debug
 
     def __repr__(self) -> str:
         rep = f'FedDF'
@@ -172,7 +182,7 @@ class FedDF_strategy(Strategy):
 
         logits_results = [
             (bytes_to_ndarray(
-                fit_res.metrics['preds']), fit_res.metrics['preds_number'])
+                fit_res.metrics['preds']), fit_res.num_examples)
             for _, fit_res in results
         ]
 
@@ -180,7 +190,8 @@ class FedDF_strategy(Strategy):
 
         # Aggregating new parameters for warm start using averaging
 
-        if (warm_start):
+        if (warm_start and ((server_round <= self.warm_start_rounds) or (server_round % self.warm_start_interval == 0))):
+            print(f'Warm start at round {server_round}')
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results
@@ -193,7 +204,7 @@ class FedDF_strategy(Strategy):
         # Distilling student model using Average Logits
 
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
-                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device)
+                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device, enable_step_logging=self.debug)
 
         # Aggregate custom metrics if aggregation fn was provided
 
@@ -280,12 +291,14 @@ class FedDF_strategy(Strategy):
         cur_step = 0
         plateau_step = 0
         best_val_acc = 0.0
+        best_val_param = None
         total_step_acc = []
         total_step_loss = []
 
         log_interval = 100
-        val_interval = log_interval / \
-            5 if config["use_early_stopping"] else log_interval
+        val_interval = 50
+        # val_interval = log_interval / \
+        #     5 if config["use_early_stopping"] else log_interval
 
         while(cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
             for images, labels in train_loader:
@@ -320,27 +333,28 @@ class FedDF_strategy(Strategy):
                     net.train()
                     step_val_acc = correct/total
 
-                    if(step_val_acc >= best_val_acc+1e-2):
+                    if(step_val_acc >= best_val_acc):
                         plateau_step = 0
                         best_val_acc = step_val_acc
+                        best_val_param = get_parameters(net)
 
                     total_step_acc.append(step_val_acc)
 
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
-                if(cur_step % 100 == 0 and enable_step_logging):
-                    print(f"step {cur_step}, val_acc : {step_val_acc}")
+                if(cur_step % log_interval == 0 and enable_step_logging):
+                    print(f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
         print(f'Distillation training stopped at step number : {cur_step}')
 
-        new_parameters = get_parameters(net)
+        new_parameters = best_val_param
 
         train_res = {'fusion_loss': np.mean(
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
         print(
-            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}')
+            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}, best val accuracy : {best_val_acc}')
 
         return (new_parameters, train_res)
 
