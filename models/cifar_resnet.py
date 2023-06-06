@@ -191,6 +191,21 @@ class CifarResNet(nn.Module):
         x = self.fc(x)
 
         return x
+    
+    def forward_avgpool(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+
+        return x
+
 
 
 def cifar_resnet(dataset_name: str = "cifar10", variant: int = 8) -> CifarResNet:
