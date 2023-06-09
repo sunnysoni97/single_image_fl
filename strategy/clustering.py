@@ -51,6 +51,9 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
         'cuda') else c_model.labels_
     assigned_clusters = np.split(
         clusters, indices_or_sections=clusters.shape[0], axis=0)
+    for i in range(len(assigned_clusters)):
+        assigned_clusters[i] = assigned_clusters[i].item()
+
     assigned_distance = []
 
     i = 0
