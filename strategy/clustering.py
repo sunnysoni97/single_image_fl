@@ -6,13 +6,20 @@ import cupy
 from cuml import KMeans as KMeans_GPU
 from sklearn.cluster import KMeans as KMeans_CPU
 
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from typing import Union, Tuple, List
 from models import CifarResNet
 from torchvision.models import ResNet
 
 from torchvision.utils import make_grid, save_image
 from io import BufferedWriter
+
+from flwr.common import (
+    ndarray_to_bytes,
+    bytes_to_ndarray
+)
+
+
 
 # Function to form K-Mean clusters using the embeddings of the neural network
 
@@ -190,3 +197,52 @@ def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_classes
 
     save_image(grid_imgs, file, format='png')
     return
+
+
+# Function to prepare for images for transport
+
+def prepare_for_transport(pruned_df: pd.DataFrame):
+    distill_imgs = np.array(pruned_df.loc[:, "img"].tolist()).squeeze()
+    distill_imgs = ndarray_to_bytes(distill_imgs)
+    return distill_imgs
+
+# Function to extract dataloader from the transported images
+
+# Class for supporting creation of dataloader
+
+class KMeans_Dataset(Dataset):
+    def __init__(self,
+                 img_list:List[Union[torch.Tensor, np.ndarray]],
+                 tgt_list:List[int]) -> None:
+        super().__init__()
+        self.data = img_list
+        self.tgts = tgt_list
+
+    def __getitem__(self, index) -> Tuple[torch.Tensor, int]:
+        img, tgt = self.data[index], self.tgts[index]
+        if(not isinstance(img, torch.Tensor)):
+            img = torch.tensor(img)
+
+        return img,tgt
+    
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+# function which returns dataloader from tranpsorted bytes
+
+def extract_from_transport(img_bytes, batch_size:int=512, n_workers:int=2) -> DataLoader:
+    img_np = bytes_to_ndarray(img_bytes)
+    img_list = np.split(img_np, img_np.shape[0], axis=0)
+    img_list = [x.squeeze() for x in img_list]
+    
+    dummy_targets = [1 for x in range(len(img_list))]
+
+    new_dataset = KMeans_Dataset(img_list, dummy_targets)
+
+    kwargs = {"batch_size": batch_size, "drop_last": False,
+              "num_workers": n_workers, "pin_memory": True, "shuffle": False}
+    distill_img_loader = DataLoader(new_dataset, **kwargs,)
+
+    return distill_img_loader
+    

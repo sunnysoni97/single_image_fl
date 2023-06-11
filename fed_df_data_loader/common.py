@@ -38,7 +38,7 @@ def make_data_loader(img_dataloader: DataLoader, preds: NDArray, batch_size: int
     return new_data_loader
 
 
-def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "v1"):
+def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "v0"):
     implemented_dataset = ["cifar10", "cifar100"]
     if(not tgt_dataset in implemented_dataset):
         raise NotImplementedError(
