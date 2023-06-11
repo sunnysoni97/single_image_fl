@@ -53,7 +53,7 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
 
     all_embedding = np.concatenate(df['embedding'].to_list())
     if (device == torch.device('cuda')):
-        all_embedding = torch.tensor(data=all_embedding, device=device)
+        all_embedding = torch.tensor(data=all_embedding).to(device)
 
     l2dist = c_model.fit_transform(all_embedding)
 
@@ -241,7 +241,7 @@ def extract_from_transport(img_bytes, batch_size:int=512, n_workers:int=2) -> Da
     new_dataset = KMeans_Dataset(img_list, dummy_targets)
 
     kwargs = {"batch_size": batch_size, "drop_last": False,
-              "num_workers": n_workers, "pin_memory": True, "shuffle": False}
+              "num_workers": n_workers, "pin_memory": False, "shuffle": False}
     distill_img_loader = DataLoader(new_dataset, **kwargs,)
 
     return distill_img_loader

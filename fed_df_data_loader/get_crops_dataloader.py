@@ -27,7 +27,7 @@ def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar
         data=image_list, targets=dummy_targets, transform=transformF)
 
     kwargs = {"batch_size": batch_size, "drop_last": False,
-              "num_workers": num_workers, "pin_memory": True, "shuffle": False}
+              "num_workers": num_workers, "pin_memory": False, "shuffle": False}
     distill_img_loader = DataLoader(new_dataset, **kwargs,)
 
     return distill_img_loader

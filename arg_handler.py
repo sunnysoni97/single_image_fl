@@ -2,9 +2,9 @@ import argparse
 
 
 def parse_bool(inp_str: str) -> bool:
-    if(inp_str == 'True' or inp_str == 'true'):
+    if (inp_str == 'True' or inp_str == 'true'):
         return True
-    elif(inp_str == 'False' or inp_str == 'false'):
+    elif (inp_str == 'False' or inp_str == 'false'):
         return False
     else:
         raise TypeError(
@@ -53,5 +53,10 @@ parser.add_argument("--distill_transforms", type=str, default="v0")
 parser.add_argument("--warm_start", type=parse_bool, default=True)
 parser.add_argument("--warm_start_rounds", type=int, default=30)
 parser.add_argument("--warm_start_interval", type=int, default=30)
+
+parser.add_argument("--kmeans_n_clusters", type=int, default=10)
+parser.add_argument("--kmeans_heuristics", type=str, default="mixed")
+parser.add_argument("--kmeans_mixed_factor", type=str, default="50-50")
+parser.add_argument("--out_dir", type=str, default="./out")
 
 parser.add_argument("--debug", type=parse_bool, default=False)

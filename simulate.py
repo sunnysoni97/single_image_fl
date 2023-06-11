@@ -4,6 +4,8 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 import random
+import os
+import time
 
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
@@ -76,27 +78,47 @@ if __name__ == "__main__":
     WARM_START_ROUNDS = args.warm_start_rounds
     WARM_START_INTERVAL = args.warm_start_interval
 
+    KMEANS_N_CLUSTERS = args.kmeans_n_clusters
+    KMEANS_HEURISTICS = args.kmeans_heuristics
+    KMEANS_MIXED_FACTOR = args.kmeans_mixed_factor
+
+    OUT_DIR = args.out_dir
+
     DEBUG = args.debug
 
-    if(DATASET_NAME == "cifar10"):
+    if (DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
-    elif(DATASET_NAME == "cifar100"):
+    elif (DATASET_NAME == "cifar100"):
         NUM_CLASSES = 100
     else:
         raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
 
     # seeding everything
 
-    if(SEED is not None):
+    if (SEED is not None):
 
         random.seed(SEED)
         np.random.seed(SEED)
         torch.manual_seed(SEED)
         torch.cuda.manual_seed(SEED)
 
-    if(CUDA_DETERMINISTIC):
+    if (CUDA_DETERMINISTIC):
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
+
+    # doing operations on output folder
+
+    if (not os.path.exists(OUT_DIR)):
+        os.makedirs(OUT_DIR)
+
+    experiment_time = f'{int(round(time.time(),2)*100)}'
+    experiment_dir = os.path.join(OUT_DIR, experiment_time)
+    os.makedirs(experiment_dir)
+
+    out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
+    os.makedirs(out_kmeans_folder)
+
+    # setting up private datasets and test datasets
 
     train_data_path, test_set = download_dataset(DATA_DIR, DATASET_NAME)
     kwargs_test_loader = {"num_workers": CLIENT_CPUS,
@@ -104,7 +126,9 @@ if __name__ == "__main__":
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 
-    if(DISTILL_DATASET == DATASET_NAME):
+    # setting up distillation set if it is same as pvt set
+
+    if (DISTILL_DATASET == DATASET_NAME):
         print(f"Same dataset for distillation and private training, splitting up test set into half...")
         split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
             'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
@@ -114,16 +138,18 @@ if __name__ == "__main__":
     fed_dir = do_fl_partitioning(
         train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
 
-    if(FED_STRATEGY == "fedavg"):
+    # creating local client functions
+
+    if (FED_STRATEGY == "fedavg"):
         def client_fn(cid) -> client.fed_avg.FlowerClient:
             return client.fed_avg.FlowerClient(cid, MODEL_NAME, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
 
-    elif(FED_STRATEGY == "feddf"):
-        if(USE_CROPS):
+    elif (FED_STRATEGY == "feddf"):
+        if (USE_CROPS):
             distill_dataloader = get_distill_imgloader(
                 f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=CLIENT_CPUS, distill_transforms=DISTILL_TRANSFORMS)
         else:
-            if(DISTILL_DATASET != DATASET_NAME):
+            if (DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
                     dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_DISTILL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, alpha=DISTILL_ALPHA, distill_transforms=DISTILL_TRANSFORMS)
 
@@ -131,16 +157,18 @@ if __name__ == "__main__":
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, distill_dataloader=distill_dataloader, debug=DEBUG)
+            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
+
+    # starting central server with simulation start
 
     client_resources = {"num_cpus": CLIENT_CPUS}
     if (DEVICE.type == "cuda"):
         client_resources["num_gpus"] = CLIENT_GPUS
 
-    if(FED_STRATEGY == "fedavg"):
+    if (FED_STRATEGY == "fedavg"):
         # FedAvg
         fl.simulation.start_simulation(
             client_fn=client_fn,
@@ -162,7 +190,7 @@ if __name__ == "__main__":
             client_resources=client_resources,
         )
 
-    elif(FED_STRATEGY == "feddf"):
+    elif (FED_STRATEGY == "feddf"):
         # FedDF
         fl.simulation.start_simulation(
             client_fn=client_fn,
@@ -188,7 +216,15 @@ if __name__ == "__main__":
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,
-                warm_start_interval=WARM_START_INTERVAL
+                warm_start_interval=WARM_START_INTERVAL,
+                kmeans_output_folder=out_kmeans_folder,
+                kmeans_n_crops=NUM_DISTILL_IMAGES,
+                kmeans_n_clusters=KMEANS_N_CLUSTERS,
+                kmeans_random_seed=SEED,
+                kmeans_heuristics=KMEANS_HEURISTICS,
+                kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
+                batch_size=DISTILL_BATCH_SIZE,
+                num_cpu_workers=SERVER_CPUS,
             ),
             client_resources=client_resources,
         )
