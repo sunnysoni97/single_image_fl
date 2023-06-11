@@ -174,8 +174,9 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
 
 def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_classes: int = 5, n_imgs: int = 8) -> None:
     cluster_list = list(cluster_df.value_counts('cluster').index)
-    selected_clusters = np.random.choice(
-        cluster_list, size=n_classes, replace=False)
+    # selected_clusters = np.random.choice(
+    #     cluster_list, size=n_classes, replace=False)
+    selected_clusters = cluster_list[0:n_classes]
 
     def get_images(df: pd.DataFrame, cluster_name: int, n_images: int = 2) -> List[np.ndarray]:
         imgs = df.groupby(by='cluster').get_group(cluster_name).sort_values(
