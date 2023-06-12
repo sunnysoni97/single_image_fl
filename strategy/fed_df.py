@@ -32,6 +32,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pathlib
+import copy
 
 
 class FedDF_strategy(Strategy):
@@ -177,8 +178,8 @@ class FedDF_strategy(Strategy):
 
         cluster_bytes = clustering.prepare_for_transport(pruned_clusters)
 
-        self.kmeans_last_crops = cluster_bytes
-        config['distill_crops'] = cluster_bytes
+        self.kmeans_last_crops = copy.deepcopy(cluster_bytes)
+        config['distill_crops'] = self.kmeans_last_crops
         fit_ins = FitIns(parameters, config)
 
         img_file = pathlib.Path(self.kmeans_output_folder,
