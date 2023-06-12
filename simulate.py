@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     # doing operations on output folder
 
-    experiment_time = f'{int(round(time.time(),2)*100)}'
+    experiment_time = f'{time.time_ns()}'
     experiment_dir = os.path.join(OUT_DIR, experiment_time)
 
     out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
