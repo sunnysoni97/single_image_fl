@@ -1,15 +1,11 @@
-from flwr.server.strategy.aggregate import aggregate
-import numpy as np
-import torch
-
+import os
 
 if __name__ == "__main__":
-    a = [[0,0,0,0],[0,0,0,0]]
-    b = [[10,10,10,10],[20,20,20,20]]
-    results = [(np.array(a),500),(np.array(b),500)]
-    avg = np.array(aggregate(results))
-    print("before")
-    print(avg)
-    avg = torch.tensor(avg)
-    print("after")
-    print(avg)
+    print("Trying to create a directory")
+    root_dir = "./"
+    new_dir = "test_dir/test_subdir"
+    final_path = os.path.join(root_dir, new_dir)
+    os.makedirs(new_dir, exist_ok=True)
+    print(final_path)
+    print("Dir created successfully")
+    

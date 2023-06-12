@@ -1,9 +1,13 @@
 #!/bin/bash
 
-VAR1=abc
-VAR2=True
+#SBATCH --time=00:59:00
+#SBATCH --partition=staging
+#SBATCH --ntasks 1
+#SBATCH --cpus-per-task 1
+#SBATCH --job-name=sunny_test_job
 
-if [ $VAR1 == "abc" -a $VAR2 == "True" ] 
-then
-    echo "Its $VAR1 and $VAR2"
-fi
+module purge
+module load 2022
+module load Anaconda3/2022.05
+
+srun python test_file.py
