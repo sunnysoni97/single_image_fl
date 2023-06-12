@@ -54,10 +54,12 @@ WARM_START=True
 WARM_START_ROUNDS=1
 WARM_START_INTERVAL=5
 
-KMEANS_N_CLUSTERS=10
-KMEANS_HEURISTICS=mixed
+KMEANS_N_CLUSTERS=100
+KMEANS_HEURISTICS=hard
 KMEANS_MIXED_FACTOR="50-50"
 
+
+DATA_DIR=$TMPDIR'/'`date +"%s_%N"`
 OUT_DIR='./results/out'
 DEBUG=False
 
@@ -111,8 +113,6 @@ echo "KMEANS_N_CLUSTER:$KMEANS_N_CLUSTERS"
 echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
 echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
 
-echo "DEBUG:$DEBUG"
-
 echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
@@ -121,7 +121,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    srun python ./make_single_img_dataset.py --targetpath './data' --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
+    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
     echo "---------"
 fi
     
@@ -129,7 +129,7 @@ echo "Simulating $STRATEGY training"
 
 srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
-    --dataset_name $DATASET_NAME --data_dir './data' --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
+    --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
