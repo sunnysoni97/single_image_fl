@@ -108,15 +108,11 @@ if __name__ == "__main__":
 
     # doing operations on output folder
 
-    if (not os.path.exists(OUT_DIR)):
-        os.makedirs(OUT_DIR)
-
     experiment_time = f'{int(round(time.time(),2)*100)}'
     experiment_dir = os.path.join(OUT_DIR, experiment_time)
-    os.makedirs(experiment_dir)
 
     out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
-    os.makedirs(out_kmeans_folder)
+    os.makedirs(out_kmeans_folder, exist_ok=True)
 
     # setting up private datasets and test datasets
 

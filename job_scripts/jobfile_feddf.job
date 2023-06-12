@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=02:00:00
+#SBATCH --time=00:15:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks 1
@@ -16,13 +16,13 @@ module load Anaconda3/2022.05
 
 source activate single_image_fl
 
-CLIENT_GPUS=0.1
+CLIENT_GPUS=0.2
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=20
-NUM_ROUNDS=30
+NUM_ROUNDS=3
 FRACTION_FIT=0.4
 FRACTION_EVALUATE=0.0
 
@@ -31,11 +31,11 @@ PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=1024
-LOCAL_EPOCHS=80
+LOCAL_EPOCHS=10
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=1024
 SERVER_LR=0.005
-SERVER_STEPS=1000
+SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
 USE_EARLY_STOPPING=False
 USE_ADAPTIVE_LR=False
@@ -50,10 +50,15 @@ DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=2250
 DISTILL_TRANSFORMS=v0
 
-WARM_START=False
-WARM_START_ROUNDS=30
-WARM_START_INTERVAL=1
+WARM_START=True
+WARM_START_ROUNDS=1
+WARM_START_INTERVAL=5
 
+KMEANS_N_CLUSTERS=10
+KMEANS_HEURISTICS=mixed
+KMEANS_MIXED_FACTOR="50-50"
+
+OUT_DIR='./results/out'
 DEBUG=False
 
 while getopts "l::g::" flag
@@ -102,6 +107,10 @@ echo "WARM_START:$WARM_START"
 echo "WARM_START_ROUNDS:$WARM_START_ROUNDS"
 echo "WARM_START_INTERVAL:$WARM_START_INTERVAL"
 
+echo "KMEANS_N_CLUSTER:$KMEANS_N_CLUSTERS"
+echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
+echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
+
 echo "DEBUG:$DEBUG"
 
 echo "-----SETTINGS END-----"
@@ -112,7 +121,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    srun python ./make_single_img_dataset.py --targetpath $TMPDIR --num_imgs $NUM_DISTILL_IMAGES --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
+    srun python ./make_single_img_dataset.py --targetpath './data' --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
     echo "---------"
 fi
     
@@ -120,7 +129,7 @@ echo "Simulating $STRATEGY training"
 
 srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
-    --dataset_name $DATASET_NAME --data_dir $TMPDIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
+    --dataset_name $DATASET_NAME --data_dir './data' --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
@@ -128,7 +137,8 @@ srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
-    --debug $DEBUG
+    --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
+    --out_dir $OUT_DIR --debug $DEBUG
 
 echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"
