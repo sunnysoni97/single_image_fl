@@ -21,6 +21,7 @@ from flwr.server.client_proxy import ClientProxy
 from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
 from common import test_model
+import strategy.clustering as clustering
 
 from flwr.common.logger import log
 from logging import WARNING
@@ -30,6 +31,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import pathlib
+import copy
 
 
 class FedDF_strategy(Strategy):
@@ -40,6 +43,7 @@ class FedDF_strategy(Strategy):
                  model_type: str,
                  dataset_name: str,
                  device: torch.device,
+                 kmeans_output_folder: str,
                  fraction_fit: float = 1.0,
                  fraction_evaluate: float = 1.0,
                  min_fit_clients: int = 2,
@@ -54,6 +58,13 @@ class FedDF_strategy(Strategy):
                  logger_fn=None,
                  warm_start_rounds: int = 30,
                  warm_start_interval: int = 30,
+                 kmeans_n_crops: int = 2250,
+                 kmeans_n_clusters: int = 10,
+                 kmeans_random_seed: int = 1,
+                 kmeans_heuristics: str = "mixed",
+                 kmeans_mixed_factor: str = "50-50",
+                 batch_size: int = 512,
+                 num_cpu_workers: int = 4,
                  debug: bool = False
                  ) -> None:
         super().__init__()
@@ -104,6 +115,24 @@ class FedDF_strategy(Strategy):
         # logging for debugging
         self.debug = debug
 
+        # configuration for kmean selection
+
+        self.kmeans_output_folder = kmeans_output_folder
+        self.kmeans_n_crops = kmeans_n_crops
+        self.kmeans_n_clusters = kmeans_n_clusters
+        self.kmeans_heuristics = kmeans_heuristics
+        self.kmeans_mixed_factor = kmeans_mixed_factor
+        self.kmeans_random_seed = 1
+        if (kmeans_random_seed is not None):
+            self.kmeans_random_seed = kmeans_random_seed
+
+        self.batch_size = batch_size
+        self.num_cpu_workers = num_cpu_workers
+
+        # storage for kmean selection from last round
+
+        self.kmeans_last_crops = None
+
     def __repr__(self) -> str:
         rep = f'FedDF'
         return rep
@@ -134,7 +163,30 @@ class FedDF_strategy(Strategy):
         if self.on_fit_config_fn_client is not None:
             # Custom fit config function provided
             config = self.on_fit_config_fn_client(server_round)
+
+        # performing kmeans on crops
+
+        net = init_model(self.dataset_name, self.model_type)
+        set_parameters(net, parameters_to_ndarrays(parameters))
+
+        clusters, cluster_score = clustering.cluster_embeddings(
+            dataloader=self.distillation_dataloader, model=net, device=self.device, n_clusters=self.kmeans_n_clusters, seed=self.kmeans_random_seed)
+        print(f'Cluster score for round {server_round} = {cluster_score}')
+
+        pruned_clusters = clustering.prune_clusters(
+            raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
+
+        cluster_bytes = clustering.prepare_for_transport(pruned_clusters)
+
+        self.kmeans_last_crops = copy.deepcopy(cluster_bytes)
+        config['distill_crops'] = self.kmeans_last_crops
         fit_ins = FitIns(parameters, config)
+
+        img_file = pathlib.Path(self.kmeans_output_folder,
+                                f'round_no_{server_round-1}.png')
+        with open(img_file, 'wb') as f:
+            clustering.visualise_clusters(
+                pruned_clusters, f, n_classes=10)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
@@ -174,7 +226,7 @@ class FedDF_strategy(Strategy):
         config = {}
         warm_start = False
 
-        if(self.on_fit_config_fn_server is not None):
+        if (self.on_fit_config_fn_server is not None):
             config = self.on_fit_config_fn_server(server_round)
             warm_start = config['warm_start']
 
@@ -203,8 +255,11 @@ class FedDF_strategy(Strategy):
 
         # Distilling student model using Average Logits
 
+        distill_dataloader = clustering.extract_from_transport(
+            img_bytes=self.kmeans_last_crops, batch_size=self.batch_size, n_workers=self.num_cpu_workers)
+
         parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
-                                                                   config=config, dataloader=self.distillation_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device, enable_step_logging=self.debug)
+                                                                   config=config, dataloader=distill_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device, enable_step_logging=self.debug)
 
         # Aggregate custom metrics if aggregation fn was provided
 
@@ -216,7 +271,7 @@ class FedDF_strategy(Strategy):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        if(self.logger_fn is not None):
+        if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics_aggregated, "fit", "client")
             self.logger_fn(server_round, fusion_metrics, "fit", "server")
 
@@ -249,7 +304,7 @@ class FedDF_strategy(Strategy):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
 
-        if(self.logger_fn is not None):
+        if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics_aggregated,
                            "evaluate", "client")
 
@@ -266,7 +321,7 @@ class FedDF_strategy(Strategy):
         if eval_res is None:
             return None
         loss, metrics = eval_res
-        if(self.logger_fn is not None):
+        if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics, "evaluate", "server")
         return loss, metrics
 
@@ -279,7 +334,7 @@ class FedDF_strategy(Strategy):
         criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
-        if(config['use_adaptive_lr']):
+        if (config['use_adaptive_lr']):
             scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer=optimizer, T_max=config['steps'])
         net.train()
@@ -300,9 +355,9 @@ class FedDF_strategy(Strategy):
         # val_interval = log_interval / \
         #     5 if config["use_early_stopping"] else log_interval
 
-        while(cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
+        while (cur_step < config['steps'] and (plateau_step < config['early_stopping_steps'] or not config["use_early_stopping"])):
             for images, labels in train_loader:
-                if(cur_step == config['steps'] or (plateau_step == config['early_stopping_steps'] and config["use_early_stopping"])):
+                if (cur_step == config['steps'] or (plateau_step == config['early_stopping_steps'] and config["use_early_stopping"])):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
@@ -313,12 +368,12 @@ class FedDF_strategy(Strategy):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                if(config['use_adaptive_lr']):
+                if (config['use_adaptive_lr']):
                     scheduler.step()
 
                 plateau_step += 1
 
-                if((cur_step+1) % val_interval == 0):
+                if ((cur_step+1) % val_interval == 0):
                     total = 0
                     correct = 0
                     net.eval()
@@ -333,7 +388,7 @@ class FedDF_strategy(Strategy):
                     net.train()
                     step_val_acc = correct/total
 
-                    if(step_val_acc >= best_val_acc):
+                    if (step_val_acc >= best_val_acc):
                         plateau_step = 0
                         best_val_acc = step_val_acc
                         best_val_param = get_parameters(net)
@@ -343,7 +398,7 @@ class FedDF_strategy(Strategy):
                 total_step_loss.append(loss.item())
 
                 cur_step += 1
-                if(cur_step % log_interval == 0 and enable_step_logging):
+                if (cur_step % log_interval == 0 and enable_step_logging):
                     print(f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
         print(f'Distillation training stopped at step number : {cur_step}')

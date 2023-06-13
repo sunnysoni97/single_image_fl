@@ -23,6 +23,7 @@ from pathlib import Path
 from models import init_model, set_parameters, get_parameters
 from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
+from strategy.clustering import extract_from_transport
 
 
 def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
@@ -56,7 +57,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
-        if((epoch+1) % 10 == 0 and enable_epoch_logging):
+        if ((epoch+1) % 10 == 0 and enable_epoch_logging):
             print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
     new_parameters = get_parameters(model)
@@ -78,7 +79,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
 
 class FlowerClient(fl.client.Client):
-    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, distill_dataloader: DataLoader, debug: bool = False) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, debug: bool = False) -> None:
         self.cid = cid
         self.model_name = model_name
         self.dataset_name = dataset_name
@@ -87,7 +88,6 @@ class FlowerClient(fl.client.Client):
         self.num_cpu_workers = num_cpu_workers
         self.device = device
         self.parameters = None
-        self.distill_dataloader = distill_dataloader
         self.debug = debug
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
@@ -106,14 +106,19 @@ class FlowerClient(fl.client.Client):
         print(f'Fitting Client {self.cid}')
         parameters = parameters_to_ndarrays(ins.parameters)
         self.set_parameters(parameters)
+
         train_loader = create_dataloader(
             self.dataset_name, self.fed_dir, self.cid, True, self.batch_size, self.num_cpu_workers)
+
+        distill_loader = extract_from_transport(
+            img_bytes=ins.config['distill_crops'], batch_size=self.batch_size, n_workers=self.num_cpu_workers)
+
         new_parameters, distill_preds, train_res = train_model(
-            model_name=self.model_name, dataset_name=self.dataset_name, parameters=self.parameters, train_loader=train_loader, distill_loader=self.distill_dataloader, config=ins.config, DEVICE=self.device, enable_epoch_logging=self.debug)
+            model_name=self.model_name, dataset_name=self.dataset_name, parameters=self.parameters, train_loader=train_loader, distill_loader=distill_loader, config=ins.config, DEVICE=self.device, enable_epoch_logging=self.debug)
 
         self.set_parameters(new_parameters)
         train_res['preds'] = ndarray_to_bytes(distill_preds)
-        train_res['preds_number'] = len(self.distill_dataloader.dataset)
+        train_res['preds_number'] = len(distill_loader)
 
         # Build and return response
         status = Status(code=Code.OK, message="Success")

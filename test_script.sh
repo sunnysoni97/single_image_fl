@@ -1,28 +1,14 @@
 #!/bin/bash
 
-#SBATCH --time=04:00:00
-#SBATCH --partition=gpu
-#SBATCH --nodes=1
-#SBATCH --ntasks 1
-#SBATCH --cpus-per-task 18
-#SBATCH --gpus=1
-#SBATCH --gpus-per-node=1
-#SBATCH --job-name=SImg_FDF
-#SBATCH --output=./results/log/FDF_%A.out 
+conda activate single_image_fl
 
-module purge
-module load 2022
-module load Anaconda3/2022.05
-
-source activate single_image_fl
-
-CLIENT_GPUS=0.125
+CLIENT_GPUS=1.0
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
-NUM_CLIENTS=20
-NUM_ROUNDS=30
+NUM_CLIENTS=5
+NUM_ROUNDS=3
 FRACTION_FIT=0.4
 FRACTION_EVALUATE=0.0
 
@@ -30,12 +16,12 @@ DATASET_NAME=cifar10
 PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
-BATCH_SIZE=1024
-LOCAL_EPOCHS=80
+BATCH_SIZE=256
+LOCAL_EPOCHS=10
 LOCAL_LR=0.05
-DISTILL_BATCH_SIZE=1024
+DISTILL_BATCH_SIZE=256
 SERVER_LR=0.005
-SERVER_STEPS=500
+SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
 USE_EARLY_STOPPING=False
 USE_ADAPTIVE_LR=False
@@ -50,16 +36,14 @@ DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=2250
 DISTILL_TRANSFORMS=v0
 
-WARM_START=True
-WARM_START_ROUNDS=1
+WARM_START=False
+WARM_START_ROUNDS=0
 WARM_START_INTERVAL=5
 
-KMEANS_N_CLUSTERS=100
-KMEANS_HEURISTICS=hard
+KMEANS_N_CLUSTERS=10
+KMEANS_HEURISTICS=mixed
 KMEANS_MIXED_FACTOR="50-50"
 
-
-DATA_DIR=$TMPDIR'/'`date +"%s_%N"`
 OUT_DIR='./results/out'
 DEBUG=False
 
@@ -113,6 +97,8 @@ echo "KMEANS_N_CLUSTER:$KMEANS_N_CLUSTERS"
 echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
 echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
 
+echo "DEBUG:$DEBUG"
+
 echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
@@ -121,15 +107,15 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
+    python ./make_single_img_dataset.py --targetpath './data' --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
     echo "---------"
 fi
     
 echo "Simulating $STRATEGY training"
 
-srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
+python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
-    --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
+    --dataset_name $DATASET_NAME --data_dir './data' --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\

@@ -30,7 +30,7 @@ def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 100
         imgs = all_imgs[indices]
         new_dataset = DistillDataset(None, data=imgs, targets=labels)
         new_dataloader = DataLoader(
-            new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=True, shuffle=False)
+            new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=False, shuffle=False)
         dataloader_list.append(new_dataloader)
 
     return dataloader_list
@@ -41,10 +41,10 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
     transform = get_distill_transforms(
         tgt_dataset=transforms_name, transform_type=distill_transforms)
 
-    if(dataset_name == "cifar100"):
+    if (dataset_name == "cifar100"):
         full_dataset = CIFAR100(
             root=storage_path, train=True, transform=transform, download=True)
-    elif(dataset_name == "cifar10"):
+    elif (dataset_name == "cifar10"):
         full_dataset = CIFAR10(
             root=storage_path, train=True, transform=transform, download=True)
     else:
@@ -74,6 +74,6 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
         all_imgs.append(full_dataset[index][0])
     new_dataset = DistillDataset(root=None, data=all_imgs, targets=all_labels)
     new_dataloader = DataLoader(new_dataset, batch_size=batch_size,
-                                num_workers=n_workers, pin_memory=True, shuffle=False)
+                                num_workers=n_workers, pin_memory=False, shuffle=False)
 
     return new_dataloader

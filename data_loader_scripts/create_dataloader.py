@@ -75,7 +75,7 @@ def create_dataloader(
 
     # we use as number of workers all the cpu cores assigned to this actor
     shuffle_var = True if is_train else False
-    kwargs = {"num_workers": workers, "pin_memory": True,
+    kwargs = {"num_workers": workers, "pin_memory": False,
               "drop_last": False, "shuffle": shuffle_var}
     return DataLoader(dataset, batch_size=batch_size, **kwargs)
 

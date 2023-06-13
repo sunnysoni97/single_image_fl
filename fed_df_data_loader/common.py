@@ -12,7 +12,7 @@ class DistillDataset(VisionDataset):
         super().__init__(root, transforms, transform, target_transform)
         self.data = data
         self.targets = targets
-        if(root):
+        if (root):
             self.data, self.targets = torch.load(root)
 
     def __getitem__(self, index: int) -> Any:
@@ -20,7 +20,7 @@ class DistillDataset(VisionDataset):
         return img, target
 
     def __len__(self) -> int:
-        assert(len(self.data) == len(self.targets))
+        assert (len(self.data) == len(self.targets))
         return len(self.data)
 
 
@@ -33,31 +33,31 @@ def make_data_loader(img_dataloader: DataLoader, preds: NDArray, batch_size: int
     all_imgs = torch.cat(all_imgs, dim=0)
     new_dataset = DistillDataset(None, data=all_imgs, targets=preds_tensor)
     new_data_loader = DataLoader(
-        new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=True, shuffle=True)
+        new_dataset, batch_size=batch_size, num_workers=n_workers, pin_memory=False, shuffle=True)
 
     return new_data_loader
 
 
-def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "v1"):
+def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "v0"):
     implemented_dataset = ["cifar10", "cifar100"]
-    if(not tgt_dataset in implemented_dataset):
+    if (not tgt_dataset in implemented_dataset):
         raise NotImplementedError(
             f"{tgt_dataset} has not been implemented for distillation transforms!")
 
-    if(tgt_dataset == "cifar10"):
+    if (tgt_dataset == "cifar10"):
         t_normalise = transforms.Compose([
             transforms.Normalize((0.4914, 0.4822, 0.4465),
                                  (0.2023, 0.1994, 0.2010))
         ])
-    elif(tgt_dataset == "cifar100"):
+    elif (tgt_dataset == "cifar100"):
         t_normalise = transforms.Compose([
             transforms.Normalize((0.5071, 0.4867, 0.4408),
                                  (0.2675, 0.2565, 0.2761))
         ])
 
-    if(transform_type == "v0"):
+    if (transform_type == "v0"):
         t_initial = transforms.Compose([])
-    elif(transform_type == "v1"):
+    elif (transform_type == "v1"):
         t_initial = transforms.Compose([
             transforms.RandomCrop((32, 32), 4)
         ])
