@@ -179,7 +179,7 @@ class FedDF_strategy(Strategy):
         cluster_bytes = clustering.prepare_for_transport(pruned_clusters)
 
         self.kmeans_last_crops = copy.deepcopy(cluster_bytes)
-        config['distill_crops'] = self.kmeans_last_crops
+        config['distill_crops'] = copy.deepcopy(cluster_bytes)
         fit_ins = FitIns(parameters, config)
 
         img_file = pathlib.Path(self.kmeans_output_folder,
@@ -197,7 +197,7 @@ class FedDF_strategy(Strategy):
         )
 
         # Return client/config pairs
-        return [(client, fit_ins) for client in clients]
+        return [(client, copy.deepcopy(fit_ins)) for client in clients]
 
     def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
         # Do not configure federated evaluation if fraction eval is 0.
