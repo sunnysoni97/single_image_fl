@@ -1,7 +1,7 @@
 from models.cifar_resnet import cifar_resnet
 import torch
 from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
-from strategy.clustering import cluster_embeddings, prune_clusters, visualise_clusters
+from strategy.clustering import cluster_embeddings, prune_clusters
 
 
 if __name__ == "__main__":
@@ -14,10 +14,6 @@ if __name__ == "__main__":
     print(f'embeddings clustered, score : {score}')
     prune_df = prune_clusters(cluster_df,n_crops=3000)
     print(f'embeddings pruned, length : {len(prune_df)}')
-
-    with open('test_img.png','wb') as f:
-        visualise_clusters(prune_df,f,10,10)
-    print(f'image outputted')
 
 
 

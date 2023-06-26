@@ -141,7 +141,7 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
     df = df[df['selected'] == 'no']
 
     def fill_rest(x: pd.DataFrame):
-        rem_crops = n_crops - int(min_n_crops*n_clusters)
+        rem_crops = n_crops - len(out_df)
         n_easy = int(percent_easy/100*rem_crops)
         n_hard = int(percent_hard/100*rem_crops)
 
