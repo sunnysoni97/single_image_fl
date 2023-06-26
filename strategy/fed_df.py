@@ -177,9 +177,6 @@ class FedDF_strategy(Strategy):
 
         self.kmeans_last_crops = clustering.prepare_for_transport(
             pruned_clusters)
-        config_list = [{**config, 'distill_crops': clustering.prepare_for_transport(
-            pruned_clusters)} for client in clients]
-        fit_ins_list = [FitIns(parameters, config) for config in config_list]
 
         img_file = pathlib.Path(self.kmeans_output_folder,
                                 f'round_no_{server_round-1}.png')
@@ -194,6 +191,11 @@ class FedDF_strategy(Strategy):
         clients = client_manager.sample(
             num_clients=sample_size, min_num_clients=min_num_clients
         )
+
+        # adding crops to clients
+        config_list = [{**config, 'distill_crops': clustering.prepare_for_transport(
+            pruned_clusters)} for client in clients]
+        fit_ins_list = [FitIns(parameters, config) for config in config_list]
 
         # Return client/config pairs
         return [(client, fit_ins) for (client, fit_ins) in zip(clients, fit_ins_list)]
