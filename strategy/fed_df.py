@@ -186,7 +186,7 @@ class FedDF_strategy(Strategy):
                                 f'round_no_{server_round-1}.png')
         with open(img_file, 'wb') as f:
             clustering.visualise_clusters(
-                pruned_clusters, f, n_classes=10)
+                pruned_clusters, f, 10, 10)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(

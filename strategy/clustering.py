@@ -172,28 +172,30 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
 
 # Function to visualise the images in the clusters
 
-def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_classes: int = 5, n_imgs: int = 8) -> None:
+def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_rows:int=10, n_cols:int=10) -> None:
+    total_classes = n_rows*n_cols
     cluster_list = list(cluster_df.value_counts('cluster').index)
-    # selected_clusters = np.random.choice(
-    #     cluster_list, size=n_classes, replace=False)
-    selected_clusters = cluster_list[0:n_classes]
+    
+    if(total_classes > len(cluster_list)):
+        total_classes = len(cluster_list)
 
-    def get_images(df: pd.DataFrame, cluster_name: int, n_images: int = 2) -> List[np.ndarray]:
+    selected_clusters = [x for x in range(total_classes)]
+
+    def get_images(df: pd.DataFrame, cluster_name: int, n_images: int = 1) -> List[np.ndarray]:
         imgs = df.groupby(by='cluster').get_group(cluster_name).sort_values(
             by='cluster_dist').loc[:, ["img", "cluster_dist"]].reset_index()
         easy_imgs = imgs.loc[0:n_images-1, "img"].tolist()
-        hard_imgs = imgs.loc[len(imgs)-n_images:len(imgs)-1, "img"].tolist()
-        return easy_imgs+hard_imgs
+        return easy_imgs
 
     all_imgs = []
     for cluster in selected_clusters:
-        cluster_imgs = get_images(cluster_df, cluster, n_imgs)
+        cluster_imgs = get_images(cluster_df, cluster, 1)
         all_imgs += cluster_imgs
 
     all_imgs = [torch.tensor(x) for x in all_imgs]
     all_imgs = torch.cat(all_imgs, dim=0)
 
-    grid_imgs = make_grid(tensor=all_imgs, nrow=n_imgs,
+    grid_imgs = make_grid(tensor=all_imgs, nrow=n_rows,
                           pad_value=0.2, normalize=True)
 
     save_image(grid_imgs, file, format='png')
