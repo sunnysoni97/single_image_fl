@@ -32,7 +32,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pathlib
-import copy
 
 
 class FedDF_strategy(Strategy):
@@ -176,11 +175,11 @@ class FedDF_strategy(Strategy):
         pruned_clusters = clustering.prune_clusters(
             raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
 
-        cluster_bytes = clustering.prepare_for_transport(pruned_clusters)
-
-        self.kmeans_last_crops = copy.deepcopy(cluster_bytes)
-        config['distill_crops'] = copy.deepcopy(cluster_bytes)
-        fit_ins = FitIns(parameters, config)
+        self.kmeans_last_crops = clustering.prepare_for_transport(
+            pruned_clusters)
+        config_list = [{**config, 'distill_crops': clustering.prepare_for_transport(
+            pruned_clusters)} for client in clients]
+        fit_ins_list = [FitIns(parameters, config) for config in config_list]
 
         img_file = pathlib.Path(self.kmeans_output_folder,
                                 f'round_no_{server_round-1}.png')
@@ -197,7 +196,7 @@ class FedDF_strategy(Strategy):
         )
 
         # Return client/config pairs
-        return [(client, copy.deepcopy(fit_ins)) for client in clients]
+        return [(client, fit_ins) for (client, fit_ins) in zip(clients, fit_ins_list)]
 
     def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
         # Do not configure federated evaluation if fraction eval is 0.
