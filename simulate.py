@@ -179,7 +179,7 @@ if __name__ == "__main__":
     elif (FED_STRATEGY == "feddf"):
         if (USE_CROPS):
             distill_dataloader = get_distill_imgloader(
-                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=CLIENT_CPUS, distill_transforms=DISTILL_TRANSFORMS)
+                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=SERVER_CPUS, distill_transforms=DISTILL_TRANSFORMS)
         else:
             if (DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
