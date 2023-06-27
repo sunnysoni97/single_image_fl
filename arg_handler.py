@@ -59,4 +59,6 @@ parser.add_argument("--kmeans_heuristics", type=str, default="mixed")
 parser.add_argument("--kmeans_mixed_factor", type=str, default="50-50")
 parser.add_argument("--out_dir", type=str, default="./out")
 
+parser.add_argument("--clipping_factor", type=float, default=1.0)
+
 parser.add_argument("--debug", type=parse_bool, default=False)

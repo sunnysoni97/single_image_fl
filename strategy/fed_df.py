@@ -22,6 +22,7 @@ from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
 from common import test_model
 import strategy.tools.clustering as clustering
+from strategy.tools.clipping import clip_logits
 
 from flwr.common.logger import log
 from logging import WARNING
@@ -362,7 +363,8 @@ class FedDF_strategy(Strategy):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                outputs = net(images)
+                outputs = clip_logits(outputs=net(
+                    images), scaling_factor=config['clipping_factor'])
                 outputs = F.log_softmax(outputs/temperature, dim=1)
                 labels = F.softmax(labels/temperature, dim=1)
                 loss = criterion(outputs, labels)
@@ -419,17 +421,18 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0) -> Callable:
         def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
                 'epochs': client_epochs,
+                'clipping_factor': clipping_factor,
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
@@ -439,6 +442,7 @@ class fed_df_fn:
                 "lr": server_lr,
                 "temperature": 1,
                 "warm_start": warm_start,
+                "clipping_factor": clipping_factor,
             }
             return config
         return on_fit_config_fn_server

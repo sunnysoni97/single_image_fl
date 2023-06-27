@@ -84,6 +84,8 @@ if __name__ == "__main__":
 
     OUT_DIR = args.out_dir
 
+    CLIPPING_FACTOR = args.clipping_factor
+
     DEBUG = args.debug
 
     if (DATASET_NAME == "cifar10"):
@@ -206,9 +208,9 @@ if __name__ == "__main__":
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
-                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR),
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR),
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,
