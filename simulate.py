@@ -7,6 +7,7 @@ import random
 import os
 import time
 import logging
+import sys
 
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
@@ -35,11 +36,18 @@ if __name__ == "__main__":
     # initialise same logger as flower
     logger = logging.getLogger("simulate")
     logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(stream=sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    DEFAULT_FORMATTER = logging.Formatter(
+        "%(levelname)s %(name)s %(asctime)s | %(filename)s:%(lineno)d | %(message)s"
+    )
+    handler.setFormatter(DEFAULT_FORMATTER)
+    logger.addHandler(handler)
     log = logger.log
     INFO = logging.INFO
     DEBUG = logging.DEBUG
 
-    log(INFO, "Python script started")
+    log(INFO, f"Python script started : {__file__.split('/')[-1]}")
 
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
