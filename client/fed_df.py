@@ -23,7 +23,7 @@ from pathlib import Path
 from models import init_model, set_parameters, get_parameters
 from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
-from strategy.clustering import extract_from_transport
+from strategy.tools.clustering import extract_from_transport
 
 
 def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:

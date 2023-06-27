@@ -21,7 +21,7 @@ from flwr.server.client_proxy import ClientProxy
 from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
 from common import test_model
-import strategy.clustering as clustering
+import strategy.tools.clustering as clustering
 
 from flwr.common.logger import log
 from logging import WARNING
