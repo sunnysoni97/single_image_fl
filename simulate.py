@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import random
 import os
 import time
+import logging
 
 from data_loader_scripts.download import download_dataset
 from data_loader_scripts.partition import do_fl_partitioning
@@ -31,8 +32,19 @@ tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
 
 if __name__ == "__main__":
 
+    # initialise same logger as flower
+    logger = logging.getLogger("simulate")
+    logger.setLevel(logging.DEBUG)
+    log = logger.log
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+
+    log(INFO, "Python script started")
+
     DEVICE = torch.device(
         "cuda") if torch.cuda.is_available() else torch.device("cpu")
+
+    log(DEBUG, "Reading args from argument parser")
 
     args = parser.parse_args()
 
@@ -88,6 +100,8 @@ if __name__ == "__main__":
 
     DEBUG = args.debug
 
+    log(DEBUG, "Arguments read")
+
     if (DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
     elif (DATASET_NAME == "cifar100"):
@@ -97,32 +111,43 @@ if __name__ == "__main__":
 
     # seeding everything
 
-    if (SEED is not None):
+    log(DEBUG, "Seeding RNG")
 
+    if (SEED is not None):
         random.seed(SEED)
         np.random.seed(SEED)
         torch.manual_seed(SEED)
-        torch.cuda.manual_seed(SEED)
 
     if (CUDA_DETERMINISTIC):
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
 
+    log(DEBUG, "RNG Seeded")
+
     # doing operations on output folder
+
+    log(DEBUG, "Creating output folder for visualisation")
 
     experiment_time = f'{time.time_ns()}'
     experiment_dir = os.path.join(OUT_DIR, experiment_time)
 
     out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
+
     os.makedirs(out_kmeans_folder, exist_ok=True)
 
+    log(DEBUG, "Folder created for visualisation")
+
     # setting up private datasets and test datasets
+
+    log(DEBUG, "Commencing dataset download")
 
     train_data_path, test_set = download_dataset(DATA_DIR, DATASET_NAME)
     kwargs_test_loader = {"num_workers": CLIENT_CPUS,
                           "pin_memory": True, "drop_last": False}
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
+
+    log(DEBUG, "Dataset has been downloaded")
 
     # setting up distillation set if it is same as pvt set
 
@@ -133,8 +158,12 @@ if __name__ == "__main__":
         test_loader = split_test_loaders[0]
         distill_dataloader = split_test_loaders[1]
 
+    log(DEBUG, "Doing fl partioning")
+
     fed_dir = do_fl_partitioning(
         train_data_path, NUM_CLIENTS, PARTITION_ALPHA, NUM_CLASSES, SEED, PARTITION_VAL_RATIO)
+
+    log(DEBUG, "FL partitioning has been done")
 
     # creating local client functions
 
