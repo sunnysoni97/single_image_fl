@@ -64,6 +64,9 @@ if __name__ == "__main__":
     CLIENT_CPUS = args.client_cpus
     CLIENT_GPUS = args.client_gpus
     SERVER_CPUS = args.server_cpus
+    TOTAL_CPUS = args.total_cpus
+    TOTAL_GPUS = args.total_gpus
+    TOTAL_MEM = args.total_mem
 
     BATCH_SIZE = args.batch_size
 
@@ -101,6 +104,8 @@ if __name__ == "__main__":
     DEBUG = args.debug
 
     log(DEBUG, "Arguments read")
+
+    TOTAL_MEM = TOTAL_MEM*(1024**3)
 
     if (DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -195,6 +200,15 @@ if __name__ == "__main__":
     if (DEVICE.type == "cuda"):
         client_resources["num_gpus"] = CLIENT_GPUS
 
+    ray_init_args = {
+        "ignore_reinit_error": True,
+        "include_dashboard": False,
+        "_memory": int(0.7*TOTAL_MEM),
+        "num_cpus": TOTAL_CPUS,
+        "num_gpus": TOTAL_GPUS,
+        "object_store_memory": int(0.3*TOTAL_MEM)
+    }
+
     if (FED_STRATEGY == "fedavg"):
         # FedAvg
         fl.simulation.start_simulation(
@@ -214,7 +228,9 @@ if __name__ == "__main__":
                 fraction_fit=FRACTION_FIT,
                 fraction_evaluate=FRACTION_EVALUATE
             ),
+            ray_init_args=ray_init_args,
             client_resources=client_resources,
+
         )
 
     elif (FED_STRATEGY == "feddf"):
@@ -253,5 +269,6 @@ if __name__ == "__main__":
                 batch_size=DISTILL_BATCH_SIZE,
                 num_cpu_workers=SERVER_CPUS,
             ),
+            ray_init_args=ray_init_args,
             client_resources=client_resources,
         )
