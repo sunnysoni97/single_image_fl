@@ -4,6 +4,7 @@ from data_loader_scripts.download import download_dataset
 from torch.utils.data import DataLoader
 from strategy.tools.clipping import clip_logits
 import torch.nn as nn
+import time
 
 
 if __name__ == "__main__":
@@ -19,7 +20,9 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(params= cresnet8.parameters(), lr=0.01)
     
+    
     print(f'Training network')
+    start_time = time.time()
     for epoch in range(10):
         print(f'Epoch commenced : {epoch}')
         b_no = 0
@@ -44,7 +47,10 @@ if __name__ == "__main__":
 
         print(f'Epoch {epoch}, loss = {epoch_loss}, acc = {epoch_acc}')
     
+    end_time = time.time()
     print(f'Training finished')
+    print(f'Seconds taken for code : {end_time-start_time}')
+    
 
 
 
