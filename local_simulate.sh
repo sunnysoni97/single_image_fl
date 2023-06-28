@@ -1,23 +1,26 @@
-#!/bin/bash
-
-CLIENT_GPUS=1.0
+CLIENT_GPUS=1
+CLIENT_CPUS=2
+SERVER_CPUS=8
+TOTAL_CPUS=12
+TOTAL_GPUS=1
+TOTAL_MEM=16
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
-NUM_CLIENTS=3
-NUM_ROUNDS=2
-FRACTION_FIT=1.0
+NUM_CLIENTS=20
+NUM_ROUNDS=3
+FRACTION_FIT=0.1
 FRACTION_EVALUATE=0.0
 
 DATASET_NAME=cifar10
 PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
-BATCH_SIZE=512
+BATCH_SIZE=256
 LOCAL_EPOCHS=10
 LOCAL_LR=0.05
-DISTILL_BATCH_SIZE=512
+DISTILL_BATCH_SIZE=256
 SERVER_LR=0.005
 SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
@@ -39,20 +42,21 @@ WARM_START_ROUNDS=1
 WARM_START_INTERVAL=5
 
 KMEANS_N_CLUSTERS=100
-KMEANS_HEURISTICS=hard
+KMEANS_HEURISTICS=mixed
 KMEANS_MIXED_FACTOR="50-50"
 
-CLIPPING_FACTOR=2.0
+CLIPPING_FACTOR=1.0
 
 DATA_DIR='./data'
 OUT_DIR='./results/out'
-DEBUG=True
+DEBUG=False
 
-while getopts "l::g::" flag
+while getopts "l::g::c::" flag
 do
     case "${flag}" in
         l) LOCAL_LR=${OPTARG};;
         g) SERVER_LR=${OPTARG};;
+        c) CLIPPING_FACTOR=${OPTARG};;
     esac
 done
 
@@ -108,7 +112,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME"
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 12
     echo "---------"
 fi
     
@@ -117,7 +121,7 @@ echo "Simulating $STRATEGY training"
 python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
     --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
-    --client_gpus $CLIENT_GPUS\
+    --client_gpus $CLIENT_GPUS --client_cpus $CLIENT_CPUS --server_cpus $SERVER_CPUS --total_cpus $TOTAL_CPUS --total_gpus $TOTAL_GPUS --total_mem $TOTAL_MEM\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
     --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR\
@@ -127,6 +131,7 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
     --clipping_factor $CLIPPING_FACTOR\
     --out_dir $OUT_DIR --debug $DEBUG
+
 
 echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"
