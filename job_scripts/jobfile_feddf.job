@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=00:30:00
+#SBATCH --time=04:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=18
@@ -19,7 +19,7 @@ source activate single_image_fl
 
 CLIENT_GPUS=0.11
 CLIENT_CPUS=2
-SERVER_CPUS=18
+SERVER_CPUS=16
 TOTAL_CPUS=18
 TOTAL_GPUS=1
 TOTAL_MEM=120
@@ -28,7 +28,7 @@ STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=20
-NUM_ROUNDS=5
+NUM_ROUNDS=30
 FRACTION_FIT=0.4
 FRACTION_EVALUATE=0.0
 
@@ -53,7 +53,7 @@ USE_CROPS=True
 IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
-NUM_DISTILL_IMAGES=3000
+NUM_DISTILL_IMAGES=5000
 DISTILL_TRANSFORMS=v0
 
 WARM_START=True
@@ -61,7 +61,7 @@ WARM_START_ROUNDS=1
 WARM_START_INTERVAL=5
 
 KMEANS_N_CLUSTERS=100
-KMEANS_HEURISTICS=mixed
+KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
 CLIPPING_FACTOR=1.0
@@ -131,7 +131,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 10000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 25000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
     echo "---------"
 fi
     

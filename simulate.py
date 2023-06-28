@@ -211,10 +211,10 @@ if __name__ == "__main__":
     ray_init_args = {
         "ignore_reinit_error": True,
         "include_dashboard": False,
-        "_memory": int(0.7*TOTAL_MEM),
+        "_memory": int(0.8*TOTAL_MEM),
         "num_cpus": TOTAL_CPUS,
         "num_gpus": TOTAL_GPUS,
-        "object_store_memory": int(0.3*TOTAL_MEM)
+        "object_store_memory": int(0.6*0.8*TOTAL_MEM)
     }
 
     if (FED_STRATEGY == "fedavg"):
