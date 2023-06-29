@@ -17,9 +17,9 @@ module load Anaconda3/2022.05
 
 source activate single_image_fl
 
-CLIENT_GPUS=0.11
+CLIENT_GPUS=0.125
 CLIENT_CPUS=2
-SERVER_CPUS=16
+SERVER_CPUS=18
 TOTAL_CPUS=18
 TOTAL_GPUS=1
 TOTAL_MEM=120
@@ -37,7 +37,7 @@ PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=1024
-LOCAL_EPOCHS=40
+LOCAL_EPOCHS=80
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=1024
 SERVER_LR=0.005
@@ -53,7 +53,7 @@ USE_CROPS=True
 IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
-NUM_DISTILL_IMAGES=5000
+NUM_DISTILL_IMAGES=10000
 DISTILL_TRANSFORMS=v0
 
 WARM_START=True
@@ -64,7 +64,7 @@ KMEANS_N_CLUSTERS=100
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CLIPPING_FACTOR=1.0
+CLIPPING_FACTOR=3
 
 DATA_DIR=$TMPDIR'/'`date +"%s_%N"`
 OUT_DIR=$DATA_DIR'/out'
@@ -131,7 +131,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 25000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
     echo "---------"
 fi
     
