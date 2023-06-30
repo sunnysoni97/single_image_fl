@@ -30,6 +30,9 @@ parser.add_argument("--partition_val_ratio", type=float, default=0.1)
 parser.add_argument("--client_cpus", type=int, default=2)
 parser.add_argument("--client_gpus", type=float, default=0.5)
 parser.add_argument("--server_cpus", type=int, default=4)
+parser.add_argument("--total_cpus", type=int, default=8)
+parser.add_argument("--total_gpus", type=int, default=0)
+parser.add_argument("--total_mem", type=int, default=8)
 
 parser.add_argument("--batch_size", type=int, default=128)
 parser.add_argument("--local_epochs", type=int, default=40)
@@ -58,5 +61,7 @@ parser.add_argument("--kmeans_n_clusters", type=int, default=10)
 parser.add_argument("--kmeans_heuristics", type=str, default="mixed")
 parser.add_argument("--kmeans_mixed_factor", type=str, default="50-50")
 parser.add_argument("--out_dir", type=str, default="./out")
+
+parser.add_argument("--clipping_factor", type=float, default=1.0)
 
 parser.add_argument("--debug", type=parse_bool, default=False)

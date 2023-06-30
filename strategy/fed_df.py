@@ -21,7 +21,8 @@ from flwr.server.client_proxy import ClientProxy
 from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
 from common import test_model
-import strategy.clustering as clustering
+import strategy.tools.clustering as clustering
+from strategy.tools.clipping import clip_logits
 
 from flwr.common.logger import log
 from logging import WARNING
@@ -32,7 +33,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pathlib
-import copy
 
 
 class FedDF_strategy(Strategy):
@@ -176,17 +176,14 @@ class FedDF_strategy(Strategy):
         pruned_clusters = clustering.prune_clusters(
             raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
 
-        cluster_bytes = clustering.prepare_for_transport(pruned_clusters)
-
-        self.kmeans_last_crops = copy.deepcopy(cluster_bytes)
-        config['distill_crops'] = self.kmeans_last_crops
-        fit_ins = FitIns(parameters, config)
+        self.kmeans_last_crops = clustering.prepare_for_transport(
+            pruned_clusters)
 
         img_file = pathlib.Path(self.kmeans_output_folder,
                                 f'round_no_{server_round-1}.png')
         with open(img_file, 'wb') as f:
             clustering.visualise_clusters(
-                pruned_clusters, f, n_classes=10)
+                pruned_clusters, f, 10, 10)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
@@ -196,8 +193,13 @@ class FedDF_strategy(Strategy):
             num_clients=sample_size, min_num_clients=min_num_clients
         )
 
+        # adding crops to clients
+        config_list = [{**config, 'distill_crops': clustering.prepare_for_transport(
+            pruned_clusters)} for client in clients]
+        fit_ins_list = [FitIns(parameters, config) for config in config_list]
+
         # Return client/config pairs
-        return [(client, fit_ins) for client in clients]
+        return [(client, fit_ins) for (client, fit_ins) in zip(clients, fit_ins_list)]
 
     def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
         # Do not configure federated evaluation if fraction eval is 0.
@@ -361,7 +363,8 @@ class FedDF_strategy(Strategy):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                outputs = net(images)
+                outputs = clip_logits(outputs=net(
+                    images), scaling_factor=config['clipping_factor'])
                 outputs = F.log_softmax(outputs/temperature, dim=1)
                 labels = F.softmax(labels/temperature, dim=1)
                 loss = criterion(outputs, labels)
@@ -418,17 +421,18 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0) -> Callable:
         def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
                 'epochs': client_epochs,
+                'clipping_factor': clipping_factor,
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
@@ -438,6 +442,7 @@ class fed_df_fn:
                 "lr": server_lr,
                 "temperature": 1,
                 "warm_start": warm_start,
+                "clipping_factor": clipping_factor,
             }
             return config
         return on_fit_config_fn_server
