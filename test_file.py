@@ -1,55 +1,37 @@
+import argparse
 from models.cifar_resnet import cifar_resnet
 import torch
-from data_loader_scripts.download import download_dataset
-from torch.utils.data import DataLoader
-from strategy.tools.clipping import clip_logits
-import torch.nn as nn
-import time
+from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
+from strategy.tools.clustering import cluster_embeddings, prune_clusters
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_dir',type=str,default=str(Path.joinpath(Path(__file__).parent,'data')))
 
 
 if __name__ == "__main__":
+    
+    args = parser.parse_args()
+    data_path = Path.joinpath(Path(args.input_dir),'single_img_crops','crops')
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     cresnet8 = cifar_resnet(variant=8).to(torch.device('cuda'))    
     print(f'model initialised')
-    
-    train_data_path, test_set = download_dataset(data_storage_path="./data",dataset_name="cifar10")
-    train_loader = DataLoader(dataset=test_set, batch_size=1024, pin_memory=True)
-    
-    print(f'train loader created')
-    
-    criterion = nn.CrossEntropyLoss(reduction="mean")
-    optimizer = torch.optim.Adam(params= cresnet8.parameters(), lr=0.01)
-    
-    
-    print(f'Training network')
-    start_time = time.time()
-    for epoch in range(10):
-        print(f'Epoch commenced : {epoch}')
-        b_no = 0
-        correct, total = 0,0
-        epoch_loss = 0
-        for imgs,labels in train_loader:
-            imgs, labels = imgs.to(device), labels.to(device)
-            # outputs = cresnet8(imgs)
-            outputs = clip_logits(outputs=cresnet8(imgs))
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-            epoch_loss += loss.item()
-            b_no += 1
 
-            total += labels.size(0)
-            correct += (torch.max(outputs.detach(),1)[1] == labels).sum().item()
+    train_set = get_distill_imgloader(path_to_crops=data_path, batch_size=1024)
+    print('distillation image loader loaded')
+    print(f'length of dataset : {len(train_set.dataset)}')
 
-        epoch_loss /= b_no
-        epoch_acc = correct/total
+    n_clusters=20
+    cluster_df,score = cluster_embeddings(train_set, model=cresnet8, device=device, n_clusters=n_clusters, seed=42)
+    print(f'Clustering done, cluster score : {score}')
+    print(cluster_df.head())
 
-        print(f'Epoch {epoch}, loss = {epoch_loss}, acc = {epoch_acc}')
+    pruned_df = prune_clusters(cluster_df, n_crops=3000, heuristic="easy")
+    print(f"Pruning done")
+
+    print(pruned_df.head())
     
-    end_time = time.time()
-    print(f'Training finished')
-    print(f'Seconds taken for code : {end_time-start_time}')
+    
     
 
 

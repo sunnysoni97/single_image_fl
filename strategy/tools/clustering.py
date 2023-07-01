@@ -20,7 +20,6 @@ from flwr.common import (
 )
 
 
-
 # Function to form K-Mean clusters using the embeddings of the neural network
 
 
@@ -78,8 +77,6 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
 
     df.index = list(df.index)
     df.index.name = 'img_no'
-
-    df.drop(labels='embedding', axis=1, inplace=True)
 
     return df, c_model.inertia_
 
@@ -172,11 +169,11 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
 
 # Function to visualise the images in the clusters
 
-def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_rows:int=10, n_cols:int=10) -> None:
+def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_rows: int = 10, n_cols: int = 10) -> None:
     total_classes = n_rows*n_cols
     cluster_list = list(cluster_df.value_counts('cluster').index)
-    
-    if(total_classes > len(cluster_list)):
+
+    if (total_classes > len(cluster_list)):
         total_classes = len(cluster_list)
 
     selected_clusters = [x for x in range(total_classes)]
@@ -213,32 +210,33 @@ def prepare_for_transport(pruned_df: pd.DataFrame):
 
 # Class for supporting creation of dataloader
 
+
 class KMeans_Dataset(Dataset):
     def __init__(self,
-                 img_list:List[Union[torch.Tensor, np.ndarray]],
-                 tgt_list:List[int]) -> None:
+                 img_list: List[Union[torch.Tensor, np.ndarray]],
+                 tgt_list: List[int]) -> None:
         super().__init__()
         self.data = img_list
         self.tgts = tgt_list
 
     def __getitem__(self, index) -> Tuple[torch.Tensor, int]:
         img, tgt = self.data[index], self.tgts[index]
-        if(not isinstance(img, torch.Tensor)):
+        if (not isinstance(img, torch.Tensor)):
             img = torch.tensor(img)
 
-        return img,tgt
-    
+        return img, tgt
+
     def __len__(self) -> int:
         return len(self.data)
 
 
 # function which returns dataloader from tranpsorted bytes
 
-def extract_from_transport(img_bytes, batch_size:int=512, n_workers:int=2) -> DataLoader:
+def extract_from_transport(img_bytes, batch_size: int = 512, n_workers: int = 2) -> DataLoader:
     img_np = bytes_to_ndarray(img_bytes)
     img_list = np.split(img_np, img_np.shape[0], axis=0)
     img_list = [x.squeeze() for x in img_list]
-    
+
     dummy_targets = [1 for x in range(len(img_list))]
 
     new_dataset = KMeans_Dataset(img_list, dummy_targets)
@@ -248,4 +246,3 @@ def extract_from_transport(img_bytes, batch_size:int=512, n_workers:int=2) -> Da
     distill_img_loader = DataLoader(new_dataset, **kwargs,)
 
     return distill_img_loader
-    
