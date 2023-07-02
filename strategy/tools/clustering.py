@@ -275,7 +275,8 @@ def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, round_no: in
     plt.legend(handles=handles, labels=labels, loc='center left',
                bbox_to_anchor=bbox, ncols=ncols, title='Pseudo-Label')
     plt.title(f'tSNE (n=2) at Round {round_no}')
-    plt.savefig(fname=out_file, format='png')
+    plt.savefig(fname=out_file, format='png', bbox_inches='tight')
+    plt.close()
 
     return
 

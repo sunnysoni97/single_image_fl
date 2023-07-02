@@ -185,6 +185,18 @@ class FedDF_strategy(Strategy):
             clustering.visualise_clusters(
                 pruned_clusters, f, 10, 10)
 
+        # calculating tsne and outputting to file in same folder
+
+        tsne_clusters = clustering.calculate_tsne(
+            cluster_df=pruned_clusters, device=self.device, n_cpu=self.num_cpu_workers)
+
+        img_file_tsne = pathlib.Path(
+            self.kmeans_output_folder, f'tsne_round_no_{server_round-1}.png')
+
+        with open(img_file_tsne, 'wb') as f:
+            clustering.visualise_tsne(
+                tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1))
+
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()

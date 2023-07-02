@@ -33,8 +33,8 @@ if __name__ == "__main__":
     print("tsne calculated")
     print(tsne_df.head())
 
-    # with open('test_image.png','wb') as f:
-    #     visualise_tsne(cluster_df=pruned_df, out_file=f, device=device)
+    with open('test_tsne.png','wb') as f:
+        visualise_tsne(tsne_df=tsne_df, out_file=f,round_no=0)
     
     
     
