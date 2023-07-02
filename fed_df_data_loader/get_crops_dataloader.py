@@ -2,7 +2,6 @@ from PIL import Image
 import os
 import numpy as np
 from torch.utils.data import DataLoader
-import copy
 import multiprocessing as mp
 from joblib import Parallel, delayed, parallel_backend
 
@@ -14,7 +13,8 @@ def __fetch_files(file_list: list) -> list:
     im_list = []
 
     for file_name in file_list:
-        im = copy.deepcopy(Image.open(file_name))
+        with Image.open(file_name) as file:
+            im = file.copy()
         im_list.append(im)
 
     return im_list
@@ -51,6 +51,6 @@ def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar
 
     kwargs = {"batch_size": batch_size, "drop_last": False,
               "num_workers": num_workers, "pin_memory": True, "shuffle": False}
-    distill_img_loader = DataLoader(new_dataset, **kwargs,)
+    distill_img_loader = DataLoader(new_dataset, **kwargs)
 
     return distill_img_loader
