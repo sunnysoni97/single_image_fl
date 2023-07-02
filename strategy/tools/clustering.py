@@ -6,6 +6,9 @@ import cupy
 from cuml import KMeans as KMeans_GPU
 from sklearn.cluster import KMeans as KMeans_CPU
 
+from cuml import TSNE as TSNE_GPU
+from sklearn.manifold import TSNE as TSNE_CPU
+
 from torch.utils.data import DataLoader, Dataset
 from typing import Union, Tuple, List
 from models import CifarResNet
@@ -200,8 +203,36 @@ def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, n_rows: i
     save_image(grid_imgs, file, format='png')
     return
 
+# Functions to calculate and visualise tSNE of clusters
+
+# TSNE calculation function
+
+
+def calculate_tsne(cluster_df: pd.DataFrame, device: torch.device, n_cpu: int = -1) -> pd.DataFrame:
+    img_embeddings = np.array(cluster_df["embedding"].to_list()).squeeze()
+
+    if (device == torch.device('cuda')):
+        img_embeddings = cupy.asnumpy(img_embeddings)
+
+    t_model = TSNE_GPU(n_components=2, method='barnes_hut', output_type='numpy') if device == torch.device(
+        'cuda') else TSNE_CPU(n_components=2, method='barnes_hut', n_jobs=n_cpu)
+    tsne_embeddings = t_model.fit_transform(img_embeddings)
+
+    out_df = cluster_df.copy()
+    tsne_embeddings = np.split(tsne_embeddings, len(tsne_embeddings), axis=0)
+
+    out_df.insert(loc=len(out_df.columns),
+                  column="tsne_embeddings", value=tsne_embeddings)
+    return out_df
+
+
+def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter) -> None:
+    raise NotImplementedError
+    pass
+
 
 # Function to prepare for images for transport
+
 
 def prepare_for_transport(pruned_df: pd.DataFrame):
     distill_imgs = np.array(pruned_df.loc[:, "img"].tolist()).squeeze()
