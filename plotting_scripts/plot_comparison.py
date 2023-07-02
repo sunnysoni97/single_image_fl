@@ -3,7 +3,6 @@ from pathlib import Path
 import os
 from io import TextIOWrapper
 import matplotlib.pyplot as plt
-from matplotlib.colors import Colormap
 import numpy as np
 
 

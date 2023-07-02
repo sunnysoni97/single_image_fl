@@ -15,6 +15,7 @@ from models import CifarResNet
 from torchvision.models import ResNet
 
 from torchvision.utils import make_grid, save_image
+import matplotlib.pyplot as plt
 from io import BufferedWriter
 
 from flwr.common import (
@@ -225,11 +226,58 @@ def calculate_tsne(cluster_df: pd.DataFrame, device: torch.device, n_cpu: int = 
                   column="tsne_embeddings", value=tsne_embeddings)
     return out_df
 
+# TSNE visualisation function
 
-def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter) -> None:
-    raise NotImplementedError
-    pass
 
+def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, round_no: int = 0) -> None:
+
+    tsne_values = np.array(tsne_df['tsne_embeddings'].to_list()).squeeze()
+
+    # scaling values between 0 and 1
+    min_val = np.min(tsne_values, axis=0, keepdims=True)
+    max_val = np.max(tsne_values, axis=0, keepdims=True)
+    min_val = np.repeat(a=min_val, repeats=tsne_values.shape[0], axis=0)
+    max_val = np.repeat(a=max_val, repeats=tsne_values.shape[0], axis=0)
+    range_val = max_val-min_val
+    tsne_values = tsne_values-min_val
+    tsne_values = np.divide(tsne_values, range_val)
+
+    # creating a new df for plotting tsne data according to cluster
+    new_df = pd.DataFrame(data={'cluster': tsne_df['cluster'], 'tsne_values': np.split(
+        tsne_values, tsne_values.shape[0])})
+    x_vals = []
+    y_vals = []
+    cluster_no = []
+
+    # collecting x and y data by clusters
+    for group in new_df['cluster'].value_counts().index:
+        grp_df = new_df.groupby(by='cluster').get_group(group)
+        tsne_values = np.array(grp_df['tsne_values'].to_list()).squeeze(axis=1)
+        x_vals_grp = tsne_values[:, 0]
+        y_vals_grp = tsne_values[:, 1]
+        x_vals.append(x_vals_grp)
+        y_vals.append(y_vals_grp)
+        cluster_no.append(group)
+
+    # plotting time
+    colors = np.linspace(0.0, 1.0, len(cluster_no))
+    cmap = plt.get_cmap('rainbow')
+
+    for i in range(len(cluster_no)):
+        plt.scatter(x=x_vals[i], y=y_vals[i], s=10, c=[cmap(colors[i]) for _ in x_vals[i]], label=str(
+            cluster_no[i]), alpha=0.6, linewidths=0, edgecolors='none')
+
+    bbox = (1.05, 0.5)
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles, labels = zip(
+        *sorted(zip(handles, labels), key=lambda t: int(t[1])))
+    ncols = np.ceil((len(cluster_no)/15))
+    plt.legend(handles=handles, labels=labels, loc='center left',
+               bbox_to_anchor=bbox, ncols=ncols, title='Pseudo-Label')
+    plt.title(f'tSNE (n=2) at Round {round_no}')
+    plt.savefig(fname=out_file, format='png')
+
+    return
 
 # Function to prepare for images for transport
 
