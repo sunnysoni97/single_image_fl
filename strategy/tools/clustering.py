@@ -36,12 +36,14 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
         for imgs, _ in dataloader:
             imgs = imgs.to(device)
             output = model.forward_avgpool(imgs)
-            imgs_list = np.split(imgs.cpu().numpy(), imgs.size()[0], axis=0)
+            imgs = imgs.cpu().numpy()
+            output = output.cpu().numpy()
+            imgs_list = np.split(imgs, imgs.shape[0], axis=0)
             embedding_list = np.split(
-                output.cpu().numpy(), output.size()[0], axis=0)
+                output, output.shape[0], axis=0)
             new_data = pd.DataFrame(
                 data={'img': imgs_list, 'embedding': embedding_list})
-            df = pd.concat([df, new_data]).reset_index(drop=True)
+            df = pd.concat([df, new_data], ignore_index=True)
 
     # initialising cluster model
 
@@ -158,7 +160,7 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
     df = fill_rest(df)
     df = df[df['selected'] == 'yes']
 
-    out_df = pd.concat([out_df, df]).reset_index(drop=True)
+    out_df = pd.concat([out_df, df], ignore_index=True)
     out_df.index = list(out_df.index)
     out_df.index.name = 'img_no'
 

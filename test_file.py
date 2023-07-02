@@ -24,6 +24,7 @@ if __name__ == "__main__":
     n_clusters=20
     cluster_df,score = cluster_embeddings(train_set, model=cresnet8, device=device, n_clusters=n_clusters, seed=42)
     print(f'Clustering done, cluster score : {score}')
+    print(f'Length of clustered df : {len(cluster_df)}')
     print(cluster_df.head())
 
     pruned_df = prune_clusters(cluster_df, n_crops=3000, heuristic="easy")
