@@ -252,6 +252,7 @@ if __name__ == "__main__":
                 fraction_evaluate=FRACTION_EVALUATE,
                 distillation_dataloader=distill_dataloader,
                 evaluation_dataloader=test_loader,
+                evaluation_labels=None,
                 val_dataloader=val_dataloader,
                 model_type=MODEL_NAME,
                 dataset_name=DATASET_NAME,

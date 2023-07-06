@@ -44,6 +44,7 @@ class FedDF_strategy(Strategy):
                  dataset_name: str,
                  device: torch.device,
                  kmeans_output_folder: str,
+                 evaluation_labels: list = None,
                  fraction_fit: float = 1.0,
                  fraction_evaluate: float = 1.0,
                  min_fit_clients: int = 2,
@@ -118,6 +119,7 @@ class FedDF_strategy(Strategy):
         # configuration for kmean selection
 
         self.kmeans_output_folder = kmeans_output_folder
+        self.evaluation_labels = evaluation_labels
         self.kmeans_n_crops = kmeans_n_crops
         self.kmeans_n_clusters = kmeans_n_clusters
         self.kmeans_heuristics = kmeans_heuristics
@@ -179,23 +181,25 @@ class FedDF_strategy(Strategy):
         self.kmeans_last_crops = clustering.prepare_for_transport(
             pruned_clusters)
 
+        # calculating tsne
+
+        tsne_clusters = clustering.calculate_tsne(
+            cluster_df=pruned_clusters, device=self.device, n_cpu=self.num_cpu_workers)
+
+        # outputting visualisations : clusters and tsne scatter plot in same folder
+
         img_file = pathlib.Path(self.kmeans_output_folder,
                                 f'round_no_{server_round-1}.png')
         with open(img_file, 'wb') as f:
             clustering.visualise_clusters(
-                pruned_clusters, f, 10, 10)
-
-        # calculating tsne and outputting to file in same folder
-
-        tsne_clusters = clustering.calculate_tsne(
-            cluster_df=pruned_clusters, device=self.device, n_cpu=self.num_cpu_workers)
+                cluster_df=tsne_clusters, file=f, device=self.device, grid_size=10)
 
         img_file_tsne = pathlib.Path(
             self.kmeans_output_folder, f'tsne_round_no_{server_round-1}.png')
 
         with open(img_file_tsne, 'wb') as f:
             clustering.visualise_tsne(
-                tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1))
+                tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1), label_metadata=self.evaluation_labels)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
