@@ -160,6 +160,8 @@ if __name__ == "__main__":
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 
+    test_labels = [f'class_{x}' for x in range(NUM_CLASSES)]
+
     log(DEBUG, "Dataset has been downloaded")
 
     # setting up distillation set if it is same as pvt set
@@ -252,9 +254,11 @@ if __name__ == "__main__":
                 fraction_evaluate=FRACTION_EVALUATE,
                 distillation_dataloader=distill_dataloader,
                 evaluation_dataloader=test_loader,
+                evaluation_labels=test_labels,
                 val_dataloader=val_dataloader,
                 model_type=MODEL_NAME,
                 dataset_name=DATASET_NAME,
+                num_classes=NUM_CLASSES,
                 device=DEVICE,
                 initial_parameters=common_functions.initialise_parameters(
                     MODEL_NAME, DATASET_NAME),

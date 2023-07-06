@@ -1,6 +1,6 @@
-CLIENT_GPUS=1
+CLIENT_GPUS=0.5
 CLIENT_CPUS=2
-SERVER_CPUS=8
+SERVER_CPUS=12
 TOTAL_CPUS=12
 TOTAL_GPUS=1
 TOTAL_MEM=16
@@ -10,7 +10,7 @@ MODEL_NAME=resnet8
 
 NUM_CLIENTS=20
 NUM_ROUNDS=3
-FRACTION_FIT=0.1
+FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
 DATASET_NAME=cifar10
@@ -34,20 +34,20 @@ USE_CROPS=True
 IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
-NUM_DISTILL_IMAGES=3000
+NUM_DISTILL_IMAGES=5000
 DISTILL_TRANSFORMS=v0
 
 WARM_START=True
 WARM_START_ROUNDS=1
 WARM_START_INTERVAL=5
 
-KMEANS_N_CLUSTERS=100
-KMEANS_HEURISTICS=mixed
+KMEANS_N_CLUSTERS=10
+KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CLIPPING_FACTOR=1.0
+CLIPPING_FACTOR=3
 
-DATA_DIR='./data'
+DATA_DIR=./data
 OUT_DIR='./results/out'
 DEBUG=False
 
@@ -108,13 +108,13 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
-then
-    echo "---------"
-    echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 12
-    echo "---------"
-fi
+# if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+# then
+#     echo "---------"
+#     echo "Generating crops for FedDF"
+#     python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+#     echo "---------"
+# fi
     
 echo "Simulating $STRATEGY training"
 
@@ -131,7 +131,6 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
     --clipping_factor $CLIPPING_FACTOR\
     --out_dir $OUT_DIR --debug $DEBUG
-
 
 echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"
