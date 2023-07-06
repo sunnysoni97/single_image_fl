@@ -2,7 +2,7 @@ import argparse
 from models.cifar_resnet import cifar_resnet
 import torch
 from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
-from strategy.tools.clustering import cluster_embeddings, prune_clusters, calculate_tsne, visualise_tsne
+from strategy.tools.clustering import cluster_embeddings, prune_clusters, calculate_tsne, visualise_tsne, visualise_clusters
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     print('distillation image loader loaded')
     print(f'length of dataset : {len(train_set.dataset)}')
 
-    n_clusters=20
+    n_clusters=10
     cluster_df,score = cluster_embeddings(train_set, model=cresnet8, device=device, n_clusters=n_clusters, seed=42)
     print(f'Clustering done, cluster score : {score}')
     print(f'Length of clustered df : {len(cluster_df)}')
@@ -33,10 +33,12 @@ if __name__ == "__main__":
     print("tsne calculated")
     print(tsne_df.head())
 
+    label_metadata = [f'cluster_{x}' for x in range(10)]
     with open('test_tsne.png','wb') as f:
-        visualise_tsne(tsne_df=tsne_df, out_file=f,round_no=0)
+        visualise_tsne(tsne_df=tsne_df, out_file=f, label_metadata=label_metadata)
     
-    
+    with open('test_clusters.png','wb') as f:
+        visualise_clusters(cluster_df=tsne_df, device=device, file=f, grid_size=10)
     
 
 
