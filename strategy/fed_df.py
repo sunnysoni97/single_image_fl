@@ -42,6 +42,7 @@ class FedDF_strategy(Strategy):
                  val_dataloader: DataLoader,
                  model_type: str,
                  dataset_name: str,
+                 num_classes: int,
                  device: torch.device,
                  kmeans_output_folder: str,
                  evaluation_labels: list = None,
@@ -78,6 +79,7 @@ class FedDF_strategy(Strategy):
         # Neural Net specifications
         self.model_type = model_type
         self.dataset_name = dataset_name
+        self.num_classes = num_classes
 
         # fraction of participating clients
         self.min_available_clients = min_available_clients
@@ -199,7 +201,7 @@ class FedDF_strategy(Strategy):
 
         with open(img_file_tsne, 'wb') as f:
             clustering.visualise_tsne(
-                tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1), label_metadata=self.evaluation_labels)
+                tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1), label_metadata=self.evaluation_labels, n_classes=self.num_classes)
 
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(

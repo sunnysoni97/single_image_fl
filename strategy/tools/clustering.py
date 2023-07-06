@@ -255,7 +255,7 @@ def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, device: t
 
 # for visualising scatter plot of all clusters
 
-def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, label_metadata: list = None, round_no: int = 0) -> None:
+def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, n_classes: int, label_metadata: list = None, round_no: int = 0) -> None:
 
     tsne_values = np.array(tsne_df['tsne_embeddings'].to_list()).squeeze()
 
@@ -283,11 +283,13 @@ def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, label_metada
             labels.append(group)
 
     # plotting time
-    colors = np.linspace(0.0, 1.0, len(labels))
+    colors = np.linspace(0.0, 1.0, n_classes)
     cmap = plt.get_cmap('rainbow')
 
     for i in range(len(labels)):
-        plt.scatter(x=x_vals[i], y=y_vals[i], s=10, c=[cmap(colors[i]) for _ in x_vals[i]], label=str(
+        c_idx = int(labels[i]) if not label_metadata else label_metadata.index(
+            labels[i])
+        plt.scatter(x=x_vals[i], y=y_vals[i], s=10, c=[cmap(colors[c_idx]) for _ in x_vals[i]], label=str(
             labels[i]), alpha=0.6, linewidths=0, edgecolors='none')
 
     bbox = (1.05, 0.5)
