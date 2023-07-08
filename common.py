@@ -17,6 +17,7 @@ def test_model(model_name: str, dataset_name: str, parameters: List[np.ndarray],
         for images, labels in test_loader:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             outputs = model(images)
+            labels = labels.squeeze()
             loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.detach(), 1)
             total += labels.size(0)
