@@ -32,7 +32,7 @@ def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar
 
     files_split = np.array_split(np.array(files), no_threads)
 
-    with parallel_backend(backend='loky', n_jobs=no_threads):
+    with parallel_backend(backend='multiprocessing', n_jobs=no_threads):
         images_split = Parallel()(delayed(__fetch_files)(
             files_split[i]) for i in range(no_threads))
 
