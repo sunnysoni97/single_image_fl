@@ -108,13 +108,13 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-# if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
-# then
-#     echo "---------"
-#     echo "Generating crops for FedDF"
-#     python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
-#     echo "---------"
-# fi
+if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+then
+    echo "---------"
+    echo "Generating crops for FedDF"
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    echo "---------"
+fi
     
 echo "Simulating $STRATEGY training"
 
