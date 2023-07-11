@@ -139,10 +139,11 @@ class Bottleneck(nn.Module):
 
 class CifarResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=10):
+    def __init__(self, block, layers, num_classes=10, grayscale: bool = False):
         super(CifarResNet, self).__init__()
         self.inplanes = 16
-        self.conv1 = conv3x3(3, 16)
+        self.in_channels = 1 if grayscale else 3
+        self.conv1 = conv3x3(self.in_channels, 16)
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=True)
 
@@ -191,7 +192,7 @@ class CifarResNet(nn.Module):
         x = self.fc(x)
 
         return x
-    
+
     def forward_avgpool(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
@@ -207,24 +208,28 @@ class CifarResNet(nn.Module):
         return x
 
 
-
 def cifar_resnet(dataset_name: str = "cifar10", variant: int = 8) -> CifarResNet:
-    if(dataset_name == "cifar10"):
+    if (dataset_name == "cifar10"):
         num_classes = 10
-    elif(dataset_name == "cifar100"):
+    elif (dataset_name == "cifar100"):
         num_classes = 100
+    elif (dataset_name == "pathmnist"):
+        num_classes = 9
+    elif (dataset_name == "pneumoniamnist"):
+        num_classes = 2
     else:
         raise ValueError("Incorrect dataset name for cifar resnet!")
 
-    if(variant % 6 != 2):
+    if (variant % 6 != 2):
         raise ValueError("Incorrect variant number for resnet layers!")
 
     layers = [(variant-2)//6]*3
 
-    if(variant > 44):
+    if (variant > 44):
         block_fn = Bottleneck
     else:
         block_fn = BasicBlock
 
-    model = CifarResNet(block_fn, layers, num_classes)
+    grayscale = True if dataset_name == 'pneumoniamnist' else False
+    model = CifarResNet(block_fn, layers, num_classes, grayscale)
     return model

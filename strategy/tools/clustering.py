@@ -342,7 +342,9 @@ class KMeans_Dataset(Dataset):
 def extract_from_transport(img_bytes, batch_size: int = 512, n_workers: int = 2) -> DataLoader:
     img_np = bytes_to_ndarray(img_bytes)
     img_list = np.split(img_np, img_np.shape[0], axis=0)
-    img_list = [x.squeeze() for x in img_list]
+
+    if (len(img_list[0].shape) == 4):
+        img_list = [x.squeeze() for x in img_list]
 
     dummy_targets = [1 for x in range(len(img_list))]
 

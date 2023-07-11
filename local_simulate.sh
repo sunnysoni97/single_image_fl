@@ -3,24 +3,24 @@ CLIENT_CPUS=2
 SERVER_CPUS=12
 TOTAL_CPUS=12
 TOTAL_GPUS=1
-TOTAL_MEM=16
+TOTAL_MEM=13
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
-NUM_CLIENTS=20
-NUM_ROUNDS=3
-FRACTION_FIT=0.2
+NUM_CLIENTS=2
+NUM_ROUNDS=2
+FRACTION_FIT=1.0
 FRACTION_EVALUATE=0.0
 
-DATASET_NAME=cifar10
+DATASET_NAME=pneumoniamnist
 PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
-BATCH_SIZE=256
+BATCH_SIZE=1024
 LOCAL_EPOCHS=10
 LOCAL_LR=0.05
-DISTILL_BATCH_SIZE=256
+DISTILL_BATCH_SIZE=1024
 SERVER_LR=0.005
 SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
@@ -31,7 +31,7 @@ SEED=42
 CUDA_DETERMINISTIC=False
 
 USE_CROPS=True
-IMG_NAME=ameyoko.jpg
+IMG_NAME=colonpath_sample.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=5000
@@ -108,13 +108,13 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-# if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
-# then
-#     echo "---------"
-#     echo "Generating crops for FedDF"
-#     python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
-#     echo "---------"
-# fi
+if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+then
+    echo "---------"
+    echo "Generating crops for FedDF"
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    echo "---------"
+fi
     
 echo "Simulating $STRATEGY training"
 

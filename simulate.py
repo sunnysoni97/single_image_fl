@@ -119,6 +119,10 @@ if __name__ == "__main__":
         NUM_CLASSES = 10
     elif (DATASET_NAME == "cifar100"):
         NUM_CLASSES = 100
+    elif (DATASET_NAME == 'pathmnist'):
+        NUM_CLASSES = 9
+    elif (DATASET_NAME == 'pneumoniamnist'):
+        NUM_CLASSES = 2
     else:
         raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
 

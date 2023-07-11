@@ -39,7 +39,8 @@ def make_data_loader(img_dataloader: DataLoader, preds: NDArray, batch_size: int
 
 
 def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "v0"):
-    implemented_dataset = ["cifar10", "cifar100"]
+    implemented_dataset = ["cifar10", "cifar100",
+                           "pathmnist", "pneumoniamnist"]
     if (not tgt_dataset in implemented_dataset):
         raise NotImplementedError(
             f"{tgt_dataset} has not been implemented for distillation transforms!")
@@ -54,6 +55,12 @@ def get_distill_transforms(tgt_dataset: str = "cifar10", transform_type: str = "
             transforms.Normalize((0.5071, 0.4867, 0.4408),
                                  (0.2675, 0.2565, 0.2761))
         ])
+    else:
+        t_normalise = transforms.Compose([
+            transforms.Normalize([0.5], [0.5])
+        ])
+        if (tgt_dataset == 'pneumoniamnist'):
+            t_normalise.transforms.extend([transforms.Grayscale()])
 
     if (transform_type == "v0"):
         t_initial = transforms.Compose([])

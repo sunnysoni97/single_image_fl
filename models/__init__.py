@@ -13,7 +13,7 @@ from models.cifar_resnet import cifar_resnet, CifarResNet
 
 def extract_int(inp_str: str) -> int:
     num = re.findall(r'\d+$', inp_str)
-    if(len(num) == 0):
+    if (len(num) == 0):
         raise ValueError(f'{inp_str} is an incorrect argument!')
     num = int(num[0])
     return num
@@ -23,17 +23,17 @@ def extract_int(inp_str: str) -> int:
 
 def init_model(dataset_name: str, model_name: str) -> Union[ResNet, CifarResNet]:
 
-    if(not(model_name.startswith("resnet"))):
+    if (not (model_name.startswith("resnet"))):
         raise ValueError(f"{model_name} not implemented yet!")
 
-    if(dataset_name == "cifar10" or dataset_name == "cifar100"):
+    if (dataset_name in ["cifar10", "cifar100", "pathmnist", "pneumoniamnist"]):
         variant = extract_int(model_name)
         model = cifar_resnet(dataset_name, variant)
 
     else:
         torch_models = {"resnet18": resnet18,
                         "resnet34": resnet34, "resnet50": resnet50}
-        if(model_name in torch_models.keys()):
+        if (model_name in torch_models.keys()):
             model = torch_models[model_name](weights=None, progress=False)
         else:
             raise ValueError(f'{model_name} not implemented for ImageNet!')
@@ -53,7 +53,7 @@ def set_parameters(model: ResNet, parameters: List[np.ndarray]):
     params_dict = zip(model.state_dict().keys(), parameters)
     state_dict = {}
     for k, v in params_dict:
-        if(v.shape == ()):
+        if (v.shape == ()):
             state_dict[k] = torch.Tensor([v.item()])
         else:
             state_dict[k] = torch.Tensor(v)
@@ -65,7 +65,7 @@ def set_parameters(model: ResNet, parameters: List[np.ndarray]):
 def print_bn_values(model: ResNet, n_outputs: int = 4):
     i = 0
     for name, values in model.named_parameters():
-        if(name.find("bn") > -1 and i < n_outputs):
+        if (name.find("bn") > -1 and i < n_outputs):
             print(name)
             print(values)
             i += 1
