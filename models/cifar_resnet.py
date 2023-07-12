@@ -217,6 +217,8 @@ def cifar_resnet(dataset_name: str = "cifar10", variant: int = 8) -> CifarResNet
         num_classes = 9
     elif (dataset_name == "pneumoniamnist"):
         num_classes = 2
+    elif (dataset_name == "organamnist"):
+        num_classes = 11
     else:
         raise ValueError("Incorrect dataset name for cifar resnet!")
 
@@ -230,6 +232,7 @@ def cifar_resnet(dataset_name: str = "cifar10", variant: int = 8) -> CifarResNet
     else:
         block_fn = BasicBlock
 
-    grayscale = True if dataset_name == 'pneumoniamnist' else False
+    grayscale = True if dataset_name in [
+        'pneumoniamnist', 'organamnist'] else False
     model = CifarResNet(block_fn, layers, num_classes, grayscale)
     return model
