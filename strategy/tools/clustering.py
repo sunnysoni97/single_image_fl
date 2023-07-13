@@ -219,8 +219,10 @@ def _scale_tsne(tsne_vals: np.ndarray) -> np.ndarray:
 
 def visualise_clusters(cluster_df: pd.DataFrame, file: BufferedWriter, device: torch.device = torch.device('cpu'), grid_size: int = 10) -> None:
 
-    x_coords = np.linspace(0.05, 0.95, grid_size)
-    y_coords = np.linspace(0.05, 0.95, grid_size)
+    x_coords = np.linspace(0, 1.0, grid_size+1)
+    x_coords = (x_coords[:-1] + np.roll(x_coords, -1)[:-1])/2
+    y_coords = np.linspace(0, 1.0, grid_size+1)
+    y_coords = (y_coords[:-1] + np.roll(y_coords, -1)[:-1])/2
 
     all_coords = np.array(np.meshgrid(x_coords, y_coords,
                           indexing='ij')).T.reshape(-1, 2)
