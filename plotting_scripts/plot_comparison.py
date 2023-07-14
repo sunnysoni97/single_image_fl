@@ -26,6 +26,10 @@ def plot_graph(data_dict: dict, criteria: str, static_title: str, output_dir: Pa
     plt.xlabel("Round")
     plt.ylabel("Accuracy/100")
     plt.title(f'{experiment_title} - {static_title}'.strip(' -:'))
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles, labels = zip(
+        *sorted(zip(handles, labels), key=lambda t: t[1]))
+    plt.legend(handles=handles, labels=labels, title=criteria)
     plt.legend(title=criteria)
     plt.savefig(f"{output_dir.joinpath(f'{experiment_title}-{criteria}.png')}")
     plt.show()
