@@ -100,7 +100,8 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
     df = raw_dataframe.copy(True)
     df.insert(len(df.columns), "selected", "no")
     n_clusters = len(df['cluster'].value_counts().index)
-    min_n_crops = int(n_crops/n_clusters * 50/100)
+    balance_percent = 50/100
+    min_n_crops = int(n_crops/n_clusters * balance_percent)
 
     if (heuristic == 'easy'):
         percent_easy = 100
