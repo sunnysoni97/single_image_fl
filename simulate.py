@@ -123,6 +123,8 @@ if __name__ == "__main__":
         NUM_CLASSES = 9
     elif (DATASET_NAME == 'pneumoniamnist'):
         NUM_CLASSES = 2
+    elif (DATASET_NAME == 'organamnist'):
+        NUM_CLASSES = 11
     else:
         raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
 

@@ -13,7 +13,7 @@ NUM_ROUNDS=2
 FRACTION_FIT=1.0
 FRACTION_EVALUATE=0.0
 
-DATASET_NAME=pneumoniamnist
+DATASET_NAME=pathmnist
 PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
@@ -112,7 +112,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 100000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
     echo "---------"
 fi
     

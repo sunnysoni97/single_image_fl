@@ -1,24 +1,9 @@
-import medmnist
-import argparse
-from pathlib import Path
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--input_dir', type=str,
-                    default=str(Path.joinpath(Path(__file__).parent, 'data')))
-
+import numpy as np
 
 if __name__ == "__main__":
 
-    args = parser.parse_args()
-    data_path = Path(args.input_dir)
-
-    dataset_name = "pathmnist"
-    info = medmnist.INFO[dataset_name]
-    print(info)
-
-    train_set = medmnist.PathMNIST(
-        root=data_path, split='train', download=True)
-    test_set = medmnist.PathMNIST(root=data_path, split='test', download=True)
-
-    print(len(train_set.imgs))
-    print(len(train_set.labels))
+    grid_size = 21
+    x_coords = np.linspace(0, 1.0, grid_size)
+    print(x_coords)
+    x_coords = (x_coords[:-1] + np.roll(x_coords, -1)[:-1])/2
+    print(x_coords)

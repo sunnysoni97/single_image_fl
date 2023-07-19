@@ -26,7 +26,7 @@ def init_model(dataset_name: str, model_name: str) -> Union[ResNet, CifarResNet]
     if (not (model_name.startswith("resnet"))):
         raise ValueError(f"{model_name} not implemented yet!")
 
-    if (dataset_name in ["cifar10", "cifar100", "pathmnist", "pneumoniamnist"]):
+    if (dataset_name in ["cifar10", "cifar100", "pathmnist", "pneumoniamnist", "organamnist"]):
         variant = extract_int(model_name)
         model = cifar_resnet(dataset_name, variant)
 

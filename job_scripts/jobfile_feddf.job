@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=04:00:00
+#SBATCH --time=02:00:00
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=18
@@ -37,7 +37,7 @@ PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=512
-LOCAL_EPOCHS=80
+LOCAL_EPOCHS=40
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=512
 SERVER_LR=0.005
@@ -50,8 +50,8 @@ SEED=42
 CUDA_DETERMINISTIC=False
 
 USE_CROPS=True
-IMG_NAME=colonpath_sample.jpg
-DISTILL_DATASET=cifar10
+IMG_NAME=ameyoko.jpg
+DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=10000
 DISTILL_TRANSFORMS=v0
@@ -64,7 +64,7 @@ KMEANS_N_CLUSTERS=20
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CLIPPING_FACTOR=3
+CLIPPING_FACTOR=2
 
 DATA_DIR=$TMPDIR'/'`date +"%s_%N"`
 OUT_DIR=$DATA_DIR'/out'
@@ -154,4 +154,8 @@ srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
 cp -r $OUT_DIR/* ./results/out/
 
 echo "-----EXPERIMENT ENDS-----"
+echo "-----CLEANING UP DISK------"
+
+rm -rf $TMPDIR
+
 echo "-----END-----"

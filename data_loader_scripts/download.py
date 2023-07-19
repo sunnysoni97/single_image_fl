@@ -4,7 +4,8 @@ import torch
 import numpy as np
 from pathlib import Path
 import os
-from medmnist import PathMNIST, PneumoniaMNIST
+from medmnist.info import INFO
+import medmnist
 
 # Transforms for CIFAR 10 test set
 
@@ -63,7 +64,7 @@ def get_transforms(dataset_name: str = "cifar10", is_train: bool = True):
         transformF = cifar10_transforms(is_train=is_train)
     elif (dataset_name == "cifar100"):
         transformF = cifar100_transforms(is_train=is_train)
-    elif (dataset_name in ['pathmnist', 'pneumoniamnist']):
+    elif (dataset_name in ['pathmnist', 'pneumoniamnist', 'organamnist']):
         transformF = medmnist_transforms(is_train=is_train)
     else:
         raise ValueError(f'{dataset_name} not implemented yet!')
@@ -83,16 +84,14 @@ def download_dataset(data_storage_path="./data", dataset_name="cifar10"):
         train_set = CIFAR100(root=data_storage_path, train=True, download=True)
         test_set = CIFAR100(root=data_storage_path,
                             train=False, transform=get_transforms(dataset_name, is_train=False))
-    elif (dataset_name == "pathmnist"):
-        train_set = PathMNIST(root=data_storage_path,
-                              download=True, split='train')
-        test_set = PathMNIST(split='test', transform=get_transforms(
-            dataset_name, is_train=False), root=data_storage_path)
-    elif (dataset_name == "pneumoniamnist"):
-        train_set = PneumoniaMNIST(
-            root=data_storage_path, download=True, split='train')
-        test_set = PneumoniaMNIST(
-            split='test', transform=get_transforms(dataset_name, is_train=False), root=data_storage_path)
+    elif (dataset_name in ['pathmnist', 'pneumoniamnist', 'organamnist']):
+        py_class_name = INFO[dataset_name]['python_class']
+        py_class = getattr(medmnist, py_class_name)
+        train_set = py_class(root=data_storage_path,
+                             download=True, split='train')
+        test_set = py_class(root=data_storage_path, transform=get_transforms(
+            dataset_name, is_train=False), split='test')
+
     else:
         raise ValueError("This dataset is not implemented yet!")
 

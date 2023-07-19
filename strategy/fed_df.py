@@ -194,7 +194,7 @@ class FedDF_strategy(Strategy):
                                 f'round_no_{server_round-1}.png')
         with open(img_file, 'wb') as f:
             clustering.visualise_clusters(
-                cluster_df=tsne_clusters, file=f, device=self.device, grid_size=10)
+                cluster_df=tsne_clusters, file=f, device=self.device, grid_size=20)
 
         img_file_tsne = pathlib.Path(
             self.kmeans_output_folder, f'tsne_round_no_{server_round-1}.png')
