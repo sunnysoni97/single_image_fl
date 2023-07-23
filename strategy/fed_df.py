@@ -22,10 +22,11 @@ from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
 from common import test_model
 import strategy.tools.clustering as clustering
+from strategy.tools.confidence_select import prune_confident_crops
 from strategy.tools.clipping import clip_logits
 
 from flwr.common.logger import log
-from logging import WARNING
+from logging import WARNING, INFO
 
 from torch.utils.data import DataLoader
 import torch
@@ -65,6 +66,7 @@ class FedDF_strategy(Strategy):
                  kmeans_random_seed: int = 1,
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
+                 confidence_threshold: float = 0.5,
                  batch_size: int = 512,
                  num_cpu_workers: int = 4,
                  debug: bool = False
@@ -133,6 +135,10 @@ class FedDF_strategy(Strategy):
         self.batch_size = batch_size
         self.num_cpu_workers = num_cpu_workers
 
+        # configuration for conf_threshold selection
+
+        self.confidence_threshold = confidence_threshold
+
         # storage for kmean selection from last round
 
         self.kmeans_last_crops = None
@@ -179,6 +185,15 @@ class FedDF_strategy(Strategy):
 
         pruned_clusters = clustering.prune_clusters(
             raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
+
+        # doing selection on the basis of confidence
+
+        pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
+                                                confidence_threshold=self.confidence_threshold, min_crops=3000, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+
+        log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
+
+        # preparing for transport
 
         self.kmeans_last_crops = clustering.prepare_for_transport(
             pruned_clusters)
