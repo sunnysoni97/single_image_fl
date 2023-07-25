@@ -44,8 +44,10 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
         for images, labels in train_loader:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
-            outputs = clip_logits(outputs=model(
-                images), scaling_factor=config['clipping_factor'])
+            outputs = model(images)
+            if (config['use_clipping']):
+                outputs = clip_logits(
+                    outputs=outputs, scaling_factor=config['clipping_factor'])
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()

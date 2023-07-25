@@ -13,12 +13,12 @@ NUM_ROUNDS=2
 FRACTION_FIT=1.0
 FRACTION_EVALUATE=0.0
 
-DATASET_NAME=pathmnist
+DATASET_NAME=cifar10
 PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=1024
-LOCAL_EPOCHS=10
+LOCAL_EPOCHS=2
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=1024
 SERVER_LR=0.005
@@ -31,15 +31,15 @@ SEED=42
 CUDA_DETERMINISTIC=False
 
 USE_CROPS=True
-IMG_NAME=colonpath_sample.jpg
+IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
-NUM_DISTILL_IMAGES=5000
+NUM_DISTILL_IMAGES=10000
 DISTILL_TRANSFORMS=v0
 
 WARM_START=True
 WARM_START_ROUNDS=1
-WARM_START_INTERVAL=5
+WARM_START_INTERVAL=1
 
 KMEANS_N_CLUSTERS=10
 KMEANS_HEURISTICS=easy
@@ -52,6 +52,10 @@ CLIPPING_FACTOR=3
 DATA_DIR=./data
 OUT_DIR='./results/out'
 DEBUG=False
+
+USE_CLIPPING=True
+USE_ENTROPY=True
+USE_KMEANS=True
 
 while getopts "l::g::c::" flag
 do
@@ -108,6 +112,10 @@ echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
 
 echo "CLIPPING_FACTOR:$CLIPPING_FACTOR"
 
+echo "USE_CLIPPING:$USE_CLIPPING"
+echo "USE_ENTROPY:$USE_ENTROPY"
+echo "USE_KMEANS:$USE_KMEANS"
+
 echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
@@ -116,7 +124,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 15000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
     echo "---------"
 fi
     
@@ -134,7 +142,8 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
     --confidence_threshold $CONFIDENCE_THRESHOLD --clipping_factor $CLIPPING_FACTOR\
-    --out_dir $OUT_DIR --debug $DEBUG
+    --out_dir $OUT_DIR --debug $DEBUG\
+    --use_clipping $USE_CLIPPING --use_kmeans $USE_KMEANS --use_entropy $USE_ENTROPY
 
 echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"

@@ -69,7 +69,9 @@ class FedDF_strategy(Strategy):
                  confidence_threshold: float = 0.5,
                  batch_size: int = 512,
                  num_cpu_workers: int = 4,
-                 debug: bool = False
+                 debug: bool = False,
+                 use_kmeans: bool = True,
+                 use_entropy: bool = True
                  ) -> None:
         super().__init__()
 
@@ -143,6 +145,11 @@ class FedDF_strategy(Strategy):
 
         self.kmeans_last_crops = None
 
+        # enabling/disabling new features (crop selection)
+
+        self.use_kmeans = use_kmeans
+        self.use_entropy = use_entropy
+
     def __repr__(self) -> str:
         rep = f'FedDF'
         return rep
@@ -181,15 +188,19 @@ class FedDF_strategy(Strategy):
 
         clusters, cluster_score = clustering.cluster_embeddings(
             dataloader=self.distillation_dataloader, model=net, device=self.device, n_clusters=self.kmeans_n_clusters, seed=self.kmeans_random_seed)
-        print(f'Cluster score for round {server_round} = {cluster_score}')
 
-        pruned_clusters = clustering.prune_clusters(
-            raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
+        pruned_clusters = clusters
+
+        if (self.use_kmeans):
+            print(f'Cluster score for round {server_round} = {cluster_score}')
+            pruned_clusters = clustering.prune_clusters(
+                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
 
         # doing selection on the basis of confidence
 
-        pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
-                                                confidence_threshold=self.confidence_threshold, min_crops=3000, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+        if (self.use_entropy):
+            pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
+                                                    confidence_threshold=self.confidence_threshold, min_crops=5000, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
 
         log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 
@@ -396,8 +407,10 @@ class FedDF_strategy(Strategy):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                outputs = clip_logits(outputs=net(
-                    images), scaling_factor=config['clipping_factor'])
+                outputs = net(images)
+                if (config['use_clipping']):
+                    outputs = clip_logits(
+                        outputs=outputs, scaling_factor=config['clipping_factor'])
                 outputs = F.log_softmax(outputs/temperature, dim=1)
                 labels = F.softmax(labels/temperature, dim=1)
                 loss = criterion(outputs, labels)
@@ -454,18 +467,19 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
         def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
                 'epochs': client_epochs,
                 'clipping_factor': clipping_factor,
+                'use_clipping': use_clipping,
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0) -> Callable:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
         def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
@@ -476,6 +490,7 @@ class fed_df_fn:
                 "temperature": 1,
                 "warm_start": warm_start,
                 "clipping_factor": clipping_factor,
+                "use_clipping": use_clipping,
             }
             return config
         return on_fit_config_fn_server
