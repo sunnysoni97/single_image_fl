@@ -105,6 +105,8 @@ if __name__ == "__main__":
     KMEANS_HEURISTICS = args.kmeans_heuristics
     KMEANS_MIXED_FACTOR = args.kmeans_mixed_factor
 
+    CONFIDENCE_THRESHOLD = args.confidence_threshold
+
     OUT_DIR = args.out_dir
 
     CLIPPING_FACTOR = args.clipping_factor
@@ -284,6 +286,7 @@ if __name__ == "__main__":
                 kmeans_random_seed=SEED,
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
+                confidence_threshold=CONFIDENCE_THRESHOLD,
                 batch_size=DISTILL_BATCH_SIZE,
                 num_cpu_workers=SERVER_CPUS,
             ),
