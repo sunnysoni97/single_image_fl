@@ -68,5 +68,9 @@ parser.add_argument("--use_entropy", type=parse_bool, default=True)
 parser.add_argument("--clipping_factor", type=float, default=1.0)
 parser.add_argument("--use_clipping", type=parse_bool, default=True)
 
+parser.add_argument("--fedprox_factor", type=float, default=1.0)
+parser.add_argument("--fedprox_adaptive", type=parse_bool, default=False)
+parser.add_argument("--use_fedprox", type=parse_bool, default=False)
+
 parser.add_argument("--debug", type=parse_bool, default=False)
 parser.add_argument("--out_dir", type=str, default="./out")

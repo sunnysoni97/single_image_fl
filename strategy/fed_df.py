@@ -67,11 +67,14 @@ class FedDF_strategy(Strategy):
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
                  confidence_threshold: float = 0.5,
+                 fedprox_factor: float = 1.0,
+                 fedprox_adaptive: bool = False,
                  batch_size: int = 512,
                  num_cpu_workers: int = 4,
                  debug: bool = False,
                  use_kmeans: bool = True,
-                 use_entropy: bool = True
+                 use_entropy: bool = True,
+                 use_fedprox: bool = False,
                  ) -> None:
         super().__init__()
 
@@ -141,14 +144,20 @@ class FedDF_strategy(Strategy):
 
         self.confidence_threshold = confidence_threshold
 
+        # configuration for fedprox enable/disable
+
+        self.fedprox_factor = fedprox_factor
+        self.fedprox_adaptive = fedprox_adaptive
+
         # storage for kmean selection from last round
 
         self.kmeans_last_crops = None
 
-        # enabling/disabling new features (crop selection)
+        # enabling/disabling new features (crop selection, fedprox)
 
         self.use_kmeans = use_kmeans
         self.use_entropy = use_entropy
+        self.use_fedprox = use_fedprox
 
     def __repr__(self) -> str:
         rep = f'FedDF'
@@ -179,7 +188,8 @@ class FedDF_strategy(Strategy):
         config = {}
         if self.on_fit_config_fn_client is not None:
             # Custom fit config function provided
-            config = self.on_fit_config_fn_client(server_round)
+            config = self.on_fit_config_fn_client(
+                use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
 
         # performing kmeans on crops
 
@@ -273,7 +283,7 @@ class FedDF_strategy(Strategy):
         warm_start = False
 
         if (self.on_fit_config_fn_server is not None):
-            config = self.on_fit_config_fn_server(server_round)
+            config = self.on_fit_config_fn_server()
             warm_start = config['warm_start']
 
         # Aggregating logits using averaging
@@ -468,19 +478,21 @@ class FedDF_strategy(Strategy):
 class fed_df_fn:
     @staticmethod
     def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
-        def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
+        def on_fit_config_fn_client(use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
                 'epochs': client_epochs,
                 'clipping_factor': clipping_factor,
                 'use_clipping': use_clipping,
+                'use_fedprox': use_fedprox,
+                'fedprox_factor': fedprox_factor,
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
     def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
-        def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
+        def on_fit_config_fn_server() -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,

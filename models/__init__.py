@@ -59,6 +59,17 @@ def set_parameters(model: ResNet, parameters: List[np.ndarray]):
             state_dict[k] = torch.Tensor(v)
     model.load_state_dict(state_dict, strict=True)
 
+# functions for retrieving parameters as tensors
+
+
+def params_to_tensors(param_iterator) -> torch.Tensor:
+    params = []
+    for param in param_iterator:
+        params.append(param.flatten())
+
+    params = torch.cat(tensors=params)
+    return params
+
 
 # DEBUG FUNCTIONS
 

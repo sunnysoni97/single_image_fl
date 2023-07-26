@@ -111,11 +111,15 @@ if __name__ == "__main__":
 
     CLIPPING_FACTOR = args.clipping_factor
 
+    FEDPROX_FACTOR = args.fedprox_factor
+    FEDPROX_ADAPTIVE = args.fedprox_adaptive
+
     DEBUG = args.debug
 
     USE_KMEANS = args.use_kmeans
     USE_ENTROPY = args.use_entropy
     USE_CLIPPING = args.use_clipping
+    USE_FEDPROX = args.use_fedprox
 
     log(DEBUG, "Arguments read")
 
@@ -291,10 +295,13 @@ if __name__ == "__main__":
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
+                fedprox_factor=FEDPROX_FACTOR,
+                fedprox_adaptive=FEDPROX_ADAPTIVE,
                 batch_size=DISTILL_BATCH_SIZE,
                 num_cpu_workers=SERVER_CPUS,
                 use_kmeans=USE_KMEANS,
-                use_entropy=USE_ENTROPY
+                use_entropy=USE_ENTROPY,
+                use_fedprox=USE_FEDPROX,
             ),
             ray_init_args=ray_init_args,
             client_resources=client_resources,

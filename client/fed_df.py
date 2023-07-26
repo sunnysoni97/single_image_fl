@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from pathlib import Path
 
-from models import init_model, set_parameters, get_parameters
+from models import init_model, set_parameters, get_parameters, params_to_tensors
 from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
 from strategy.tools.clustering import extract_from_transport
@@ -32,9 +32,19 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
     model = init_model(dataset_name, model_name)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
+
+    if (config['use_fedprox']):
+
+        def fedprox_term(new_wt: torch.tensor, past_wt: torch.tensor, factor: float):
+            penalty = factor/2*(torch.sum(new_wt-past_wt))**2
+            return penalty
+
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
+
     model.train()
     model.to(DEVICE)
+
+    initial_parameters = params_to_tensors(model.parameters())
 
     total_epoch_loss = []
     total_epoch_acc = []
@@ -49,11 +59,16 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
                 outputs = clip_logits(
                     outputs=outputs, scaling_factor=config['clipping_factor'])
             loss = criterion(outputs, labels)
+            epoch_loss += loss.item()
+
+            if (config['use_fedprox']):
+                loss += fedprox_term(new_wt=params_to_tensors(model.parameters()),
+                                     past_wt=initial_parameters, factor=config['fedprox_factor'])
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
-            epoch_loss += loss.item()
             total += labels.size(0)
             correct += (torch.max(outputs.detach(), 1)
                         [1] == labels).sum().item()

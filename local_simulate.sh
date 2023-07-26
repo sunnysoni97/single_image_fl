@@ -18,7 +18,7 @@ PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=1024
-LOCAL_EPOCHS=2
+LOCAL_EPOCHS=5
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=1024
 SERVER_LR=0.005
@@ -45,9 +45,12 @@ KMEANS_N_CLUSTERS=10
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CONFIDENCE_THRESHOLD=0.5
+CONFIDENCE_THRESHOLD=0.8
 
 CLIPPING_FACTOR=3
+
+FEDPROX_FACTOR=1.0
+FEDPROX_ADAPTIVE=False
 
 DATA_DIR=./data
 OUT_DIR='./results/out'
@@ -56,6 +59,7 @@ DEBUG=False
 USE_CLIPPING=True
 USE_ENTROPY=True
 USE_KMEANS=True
+USE_FEDPROX=False
 
 while getopts "l::g::c::" flag
 do
@@ -112,9 +116,13 @@ echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
 
 echo "CLIPPING_FACTOR:$CLIPPING_FACTOR"
 
+echo "FEDPROX_FACTOR:$FEDPROX_FACTOR"
+echo "FEDPROX_ADAPTIVE:$FEDPROX_ADAPTIVE"
+
 echo "USE_CLIPPING:$USE_CLIPPING"
 echo "USE_ENTROPY:$USE_ENTROPY"
 echo "USE_KMEANS:$USE_KMEANS"
+echo "USE_FEDPROX:$USE_FEDPROX"
 
 echo "-----SETTINGS END-----"
 
@@ -142,8 +150,9 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
     --confidence_threshold $CONFIDENCE_THRESHOLD --clipping_factor $CLIPPING_FACTOR\
+    --fedprox_factor $FEDPROX_FACTOR --fedprox_adaptive $FEDPROX_ADAPTIVE\
     --out_dir $OUT_DIR --debug $DEBUG\
-    --use_clipping $USE_CLIPPING --use_kmeans $USE_KMEANS --use_entropy $USE_ENTROPY
+    --use_clipping $USE_CLIPPING --use_kmeans $USE_KMEANS --use_entropy $USE_ENTROPY --use_fedprox $USE_FEDPROX
 
 echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"
