@@ -34,6 +34,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pathlib
+import random
 
 
 class FedDF_strategy(Strategy):
@@ -63,7 +64,6 @@ class FedDF_strategy(Strategy):
                  warm_start_interval: int = 30,
                  kmeans_n_crops: int = 2250,
                  kmeans_n_clusters: int = 10,
-                 kmeans_random_seed: int = 1,
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
                  confidence_threshold: float = 0.5,
@@ -76,6 +76,8 @@ class FedDF_strategy(Strategy):
                  use_kmeans: bool = True,
                  use_entropy: bool = True,
                  use_fedprox: bool = False,
+                 seed: int = None,
+                 cuda_deterministic: bool = False,
                  ) -> None:
         super().__init__()
 
@@ -135,8 +137,8 @@ class FedDF_strategy(Strategy):
         self.kmeans_heuristics = kmeans_heuristics
         self.kmeans_mixed_factor = kmeans_mixed_factor
         self.kmeans_random_seed = 1
-        if (kmeans_random_seed is not None):
-            self.kmeans_random_seed = kmeans_random_seed
+        if (seed is not None):
+            self.kmeans_random_seed = seed
 
         self.batch_size = batch_size
         self.num_cpu_workers = num_cpu_workers
@@ -160,6 +162,17 @@ class FedDF_strategy(Strategy):
         self.use_kmeans = use_kmeans
         self.use_entropy = use_entropy
         self.use_fedprox = use_fedprox
+
+        # seeding operations
+
+        if (seed is not None):
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+
+        if (cuda_deterministic):
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
 
     def __repr__(self) -> str:
         rep = f'FedDF'

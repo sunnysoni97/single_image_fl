@@ -216,7 +216,7 @@ if __name__ == "__main__":
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG)
+            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
@@ -292,7 +292,6 @@ if __name__ == "__main__":
                 kmeans_output_folder=out_kmeans_folder,
                 kmeans_n_crops=NUM_DISTILL_IMAGES,
                 kmeans_n_clusters=KMEANS_N_CLUSTERS,
-                kmeans_random_seed=SEED,
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
@@ -304,6 +303,8 @@ if __name__ == "__main__":
                 use_kmeans=USE_KMEANS,
                 use_entropy=USE_ENTROPY,
                 use_fedprox=USE_FEDPROX,
+                seed=SEED,
+                cuda_deterministic=CUDA_DETERMINISTIC,
             ),
             ray_init_args=ray_init_args,
             client_resources=client_resources,

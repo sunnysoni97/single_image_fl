@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 from pathlib import Path
+import random
 
 from models import init_model, set_parameters, get_parameters, params_to_tensors
 from data_loader_scripts.create_dataloader import create_dataloader
@@ -98,7 +99,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
 
 class FlowerClient(fl.client.Client):
-    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, debug: bool = False) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, debug: bool = False, seed: int = None, cuda_deterministic: bool = False) -> None:
         self.cid = cid
         self.model_name = model_name
         self.dataset_name = dataset_name
@@ -108,6 +109,15 @@ class FlowerClient(fl.client.Client):
         self.device = device
         self.parameters = None
         self.debug = debug
+
+        if (seed is not None):
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+
+        if (cuda_deterministic):
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
         # Build and return response

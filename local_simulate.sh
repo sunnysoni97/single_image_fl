@@ -1,26 +1,28 @@
+#!/bin/bash
+
 CLIENT_GPUS=0.5
 CLIENT_CPUS=2
 SERVER_CPUS=12
 TOTAL_CPUS=12
 TOTAL_GPUS=1
-TOTAL_MEM=13
+TOTAL_MEM=12
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
-NUM_CLIENTS=2
+NUM_CLIENTS=4
 NUM_ROUNDS=2
 FRACTION_FIT=1.0
 FRACTION_EVALUATE=0.0
 
 DATASET_NAME=cifar10
-PARTITION_ALPHA=1.0
+PARTITION_ALPHA=10.0
 PARTITION_VAL_RATIO=0.1
 
-BATCH_SIZE=1024
+BATCH_SIZE=512
 LOCAL_EPOCHS=5
 LOCAL_LR=0.05
-DISTILL_BATCH_SIZE=1024
+DISTILL_BATCH_SIZE=512
 SERVER_LR=0.005
 SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
@@ -37,36 +39,39 @@ DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=10000
 DISTILL_TRANSFORMS=v0
 
-WARM_START=True
+WARM_START=False
 WARM_START_ROUNDS=1
 WARM_START_INTERVAL=1
 
-KMEANS_N_CLUSTERS=10
+KMEANS_N_CLUSTERS=50
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CONFIDENCE_THRESHOLD=0.8
+CONFIDENCE_THRESHOLD=0.9
+CONFIDENCE_MIN_CROPS=2500
 
-CLIPPING_FACTOR=3
+CLIPPING_FACTOR=2.5
 
 FEDPROX_FACTOR=1.0
 FEDPROX_ADAPTIVE=False
 
-DATA_DIR=./data
+DATA_DIR='./data'
 OUT_DIR='./results/out'
 DEBUG=False
 
 USE_CLIPPING=True
 USE_ENTROPY=True
 USE_KMEANS=True
-USE_FEDPROX=False
+USE_FEDPROX=True
 
-while getopts "l::g::c::" flag
+while getopts "l::g::c::t::s::" flag
 do
     case "${flag}" in
         l) LOCAL_LR=${OPTARG};;
         g) SERVER_LR=${OPTARG};;
         c) CLIPPING_FACTOR=${OPTARG};;
+        t) CONFIDENCE_THRESHOLD=${OPTARG};;
+        s) SEED=${OPTARG};;
     esac
 done
 
@@ -113,6 +118,7 @@ echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
 echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
 
 echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
+echo "CONFIDENCE_MIN_CROPS:$CONFIDENCE_MIN_CROPS"
 
 echo "CLIPPING_FACTOR:$CLIPPING_FACTOR"
 
@@ -132,7 +138,7 @@ if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ]
 then
     echo "---------"
     echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 15000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads 18
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
     echo "---------"
 fi
     
@@ -149,10 +155,9 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
-    --confidence_threshold $CONFIDENCE_THRESHOLD --clipping_factor $CLIPPING_FACTOR\
+    --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_min_crops $CONFIDENCE_MIN_CROPS --clipping_factor $CLIPPING_FACTOR\
     --fedprox_factor $FEDPROX_FACTOR --fedprox_adaptive $FEDPROX_ADAPTIVE\
     --out_dir $OUT_DIR --debug $DEBUG\
     --use_clipping $USE_CLIPPING --use_kmeans $USE_KMEANS --use_entropy $USE_ENTROPY --use_fedprox $USE_FEDPROX
 
-echo "-----EXPERIMENT ENDS-----"
 echo "-----END-----"
