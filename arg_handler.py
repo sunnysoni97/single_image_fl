@@ -62,7 +62,8 @@ parser.add_argument("--kmeans_heuristics", type=str, default="mixed")
 parser.add_argument("--kmeans_mixed_factor", type=str, default="50-50")
 parser.add_argument("--use_kmeans", type=parse_bool, default=True)
 
-parser.add_argument("--confidence_threshold", type=float, default=0.5)
+parser.add_argument("--confidence_threshold", type=float, default=0.8)
+parser.add_argument("--confidence_min_crops", type=int, default=1000)
 parser.add_argument("--use_entropy", type=parse_bool, default=True)
 
 parser.add_argument("--clipping_factor", type=float, default=1.0)

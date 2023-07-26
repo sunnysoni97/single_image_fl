@@ -67,6 +67,7 @@ class FedDF_strategy(Strategy):
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
                  confidence_threshold: float = 0.5,
+                 confidence_min_crops: int = 1000,
                  fedprox_factor: float = 1.0,
                  fedprox_adaptive: bool = False,
                  batch_size: int = 512,
@@ -143,6 +144,7 @@ class FedDF_strategy(Strategy):
         # configuration for conf_threshold selection
 
         self.confidence_threshold = confidence_threshold
+        self.confidence_min_crops = confidence_min_crops
 
         # configuration for fedprox enable/disable
 
@@ -210,7 +212,7 @@ class FedDF_strategy(Strategy):
 
         if (self.use_entropy):
             pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
-                                                    confidence_threshold=self.confidence_threshold, min_crops=5000, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+                                                    confidence_threshold=self.confidence_threshold, min_crops=self.confidence_min_crops, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
 
         log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 
