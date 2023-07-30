@@ -34,6 +34,15 @@ def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_
         f"{output_dir.joinpath(f'{experiment_title}-{legend_title}.png')}")
     plt.show()
 
+    text_file_path = output_dir.joinpath(
+        f'{experiment_title}-{legend_title}.txt')
+
+    with open(text_file_path, 'wt') as f:
+        f.write(f'Acc. Stats for the experiment : {experiment_title}\n\n')
+        for line_name, line_values, max_value in zip(lines_name, lines_y, max_lines_y):
+            f.write(
+                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {max_value} \nMax Round : {np.where(line_values == max_value)[0][0]}\n\n')
+
 
 script_dir = Path(__file__).resolve().parent
 
