@@ -223,8 +223,8 @@ class FedDF_strategy(Strategy):
         # doing selection on the basis of confidence
 
         if (self.use_entropy):
-            pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
-                                                    confidence_threshold=self.confidence_threshold, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+            pruned_clusters = prune_confident_crops(
+                cluster_df=pruned_clusters, confidence_threshold=self.confidence_threshold)
 
         log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 

@@ -43,15 +43,18 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
         for imgs, _ in dataloader:
             imgs = imgs.to(device)
             output = model.forward_avgpool(imgs)
-            preds = torch.argmax(input=F.softmax(
-                input=model(imgs), dim=-1), dim=-1).cpu().numpy().tolist()
+            preds_softmax = F.softmax(input=model(imgs), dim=-1)
+            preds = torch.argmax(input=preds_softmax,
+                                 dim=-1).cpu().numpy().tolist()
+            confs = torch.amax(input=preds_softmax, dim=-
+                               1).cpu().numpy().tolist()
             imgs = imgs.cpu().numpy()
             output = output.cpu().numpy()
             imgs_list = np.split(imgs, imgs.shape[0], axis=0)
             embedding_list = np.split(
                 output, output.shape[0], axis=0)
             new_data = pd.DataFrame(
-                data={'img': imgs_list, 'embedding': embedding_list, 'pred': preds})
+                data={'img': imgs_list, 'embedding': embedding_list, 'pred': preds, 'conf': confs})
             df = pd.concat([df, new_data], ignore_index=True)
 
     # initialising cluster model
