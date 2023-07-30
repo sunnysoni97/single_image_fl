@@ -106,7 +106,6 @@ if __name__ == "__main__":
     KMEANS_MIXED_FACTOR = args.kmeans_mixed_factor
 
     CONFIDENCE_THRESHOLD = args.confidence_threshold
-    CONFIDENCE_MIN_CROPS = args.confidence_min_crops
 
     OUT_DIR = args.out_dir
 
@@ -295,7 +294,6 @@ if __name__ == "__main__":
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
-                confidence_min_crops=CONFIDENCE_MIN_CROPS,
                 fedprox_factor=FEDPROX_FACTOR,
                 fedprox_adaptive=FEDPROX_ADAPTIVE,
                 batch_size=DISTILL_BATCH_SIZE,

@@ -23,7 +23,7 @@ def __create_dl(cluster_df: pd.DataFrame, batch_size: int = 128, num_workers: in
     return dl
 
 
-def prune_confident_crops(model: Union[CifarResNet, ResNet], device: torch.device, cluster_df: pd.DataFrame, confidence_threshold: float = 0.5, min_crops: int = 2000, batch_size: int = 128, num_workers: int = 0):
+def prune_confident_crops(model: Union[CifarResNet, ResNet], device: torch.device, cluster_df: pd.DataFrame, confidence_threshold: float = 0.1, batch_size: int = 128, num_workers: int = 0):
 
     # creating dataloader for inference
     dl = __create_dl(cluster_df=cluster_df,
@@ -39,20 +39,32 @@ def prune_confident_crops(model: Union[CifarResNet, ResNet], device: torch.devic
             preds = model(imgs)
             preds = F.softmax(preds, dim=-1)
             confs = torch.amax(preds, dim=-1)
+            # pred_labels = torch.argmax(input=preds, dim=-1)
             conf_list.append(confs)
+            # pred_list.append(pred_labels)
 
     all_conf = torch.cat(conf_list, dim=0).cpu().numpy()
 
     # creating a new dataframe for selection
     new_df = cluster_df.copy()
-    new_df.insert(loc=len(new_df.columns), column='conf_value', value=all_conf)
+    selected = ['yes' for i in range(len(new_df))]
+    new_df['conf_value'] = all_conf
+    new_df['selected'] = selected
 
-    # selecting on the basis of confidence threshold
-    select_df = new_df[new_df['conf_value'] < confidence_threshold]
+    # removing top k percentile of crops per class
 
-    # checking if it meets minimum crops criteria, else using sorting for selection
-    if (len(select_df) < min_crops):
-        new_df.sort_values(by='conf_value', ignore_index=True, inplace=True)
-        select_df = new_df.iloc[0:min_crops]
+    def remove_topk(x: pd.DataFrame):
+        n = int(confidence_threshold*len(x))
 
-    return select_df
+        x = x.sort_values(by='conf_value', ascending=False)
+        x.iloc[0:n, x.columns.get_loc('selected')] = 'no'
+
+        return x
+
+    new_df = new_df.groupby(by='pred', group_keys=False).apply(remove_topk)
+
+    new_df = new_df[new_df['selected'] == 'yes']
+    new_df.drop('selected', axis=1, inplace=True)
+    new_df.sort_index(inplace=True)
+
+    return new_df

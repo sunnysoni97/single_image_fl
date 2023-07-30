@@ -47,8 +47,7 @@ KMEANS_N_CLUSTERS=50
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
 
-CONFIDENCE_THRESHOLD=0.9
-CONFIDENCE_MIN_CROPS=2500
+CONFIDENCE_THRESHOLD=0.1
 
 CLIPPING_FACTOR=2.5
 
@@ -118,7 +117,6 @@ echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
 echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
 
 echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
-echo "CONFIDENCE_MIN_CROPS:$CONFIDENCE_MIN_CROPS"
 
 echo "CLIPPING_FACTOR:$CLIPPING_FACTOR"
 
@@ -134,13 +132,13 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
-then
-    echo "---------"
-    echo "Generating crops for FedDF"
-    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
-    echo "---------"
-fi
+# if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+# then
+#     echo "---------"
+#     echo "Generating crops for FedDF"
+#     python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
+#     echo "---------"
+# fi
     
 echo "Simulating $STRATEGY training"
 
@@ -155,7 +153,7 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
-    --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_min_crops $CONFIDENCE_MIN_CROPS --clipping_factor $CLIPPING_FACTOR\
+    --confidence_threshold $CONFIDENCE_THRESHOLD --clipping_factor $CLIPPING_FACTOR\
     --fedprox_factor $FEDPROX_FACTOR --fedprox_adaptive $FEDPROX_ADAPTIVE\
     --out_dir $OUT_DIR --debug $DEBUG\
     --use_clipping $USE_CLIPPING --use_kmeans $USE_KMEANS --use_entropy $USE_ENTROPY --use_fedprox $USE_FEDPROX

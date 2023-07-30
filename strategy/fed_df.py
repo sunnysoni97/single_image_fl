@@ -146,7 +146,6 @@ class FedDF_strategy(Strategy):
         # configuration for conf_threshold selection
 
         self.confidence_threshold = confidence_threshold
-        self.confidence_min_crops = confidence_min_crops
 
         # configuration for fedprox enable/disable
 
@@ -225,7 +224,7 @@ class FedDF_strategy(Strategy):
 
         if (self.use_entropy):
             pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
-                                                    confidence_threshold=self.confidence_threshold, min_crops=self.confidence_min_crops, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+                                                    confidence_threshold=self.confidence_threshold, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
 
         log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 
