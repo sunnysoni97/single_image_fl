@@ -66,8 +66,8 @@ class FedDF_strategy(Strategy):
                  kmeans_n_clusters: int = 10,
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
+                 kmeans_balancing: float = 0.5,
                  confidence_threshold: float = 0.5,
-                 confidence_min_crops: int = 1000,
                  fedprox_factor: float = 1.0,
                  fedprox_adaptive: bool = False,
                  batch_size: int = 512,
@@ -136,6 +136,7 @@ class FedDF_strategy(Strategy):
         self.kmeans_n_clusters = kmeans_n_clusters
         self.kmeans_heuristics = kmeans_heuristics
         self.kmeans_mixed_factor = kmeans_mixed_factor
+        self.kmeans_balancing = kmeans_balancing
         self.kmeans_random_seed = 1
         if (seed is not None):
             self.kmeans_random_seed = seed
@@ -233,7 +234,7 @@ class FedDF_strategy(Strategy):
         if (self.use_kmeans):
             print(f'Cluster score for round {server_round} = {cluster_score}')
             pruned_clusters = clustering.prune_clusters(
-                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
+                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor, kmeans_balancing=self.kmeans_balancing)
 
         # doing selection on the basis of confidence
 

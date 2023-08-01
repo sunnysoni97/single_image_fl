@@ -11,7 +11,7 @@ STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=10
-NUM_ROUNDS=7
+NUM_ROUNDS=3
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
@@ -46,6 +46,7 @@ WARM_START_INTERVAL=1
 KMEANS_N_CLUSTERS=50
 KMEANS_HEURISTICS=easy
 KMEANS_MIXED_FACTOR="50-50"
+KMEANS_BALANCING=0.5
 
 CONFIDENCE_THRESHOLD=0.1
 
@@ -115,6 +116,7 @@ echo "WARM_START_INTERVAL:$WARM_START_INTERVAL"
 echo "KMEANS_N_CLUSTER:$KMEANS_N_CLUSTERS"
 echo "KMEANS_HEURISTICS:$KMEANS_HEURISTICS"
 echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
+echo "KMEANS_BALANCING:$KMEANS_BALANCING"
 
 echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
 
@@ -152,7 +154,7 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
-    --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR\
+    --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR --kmeans_balancing $KMEANS_BALANCING\
     --confidence_threshold $CONFIDENCE_THRESHOLD --clipping_factor $CLIPPING_FACTOR\
     --fedprox_factor $FEDPROX_FACTOR --fedprox_adaptive $FEDPROX_ADAPTIVE\
     --out_dir $OUT_DIR --debug $DEBUG\

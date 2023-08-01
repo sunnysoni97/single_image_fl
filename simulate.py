@@ -104,6 +104,7 @@ if __name__ == "__main__":
     KMEANS_N_CLUSTERS = args.kmeans_n_clusters
     KMEANS_HEURISTICS = args.kmeans_heuristics
     KMEANS_MIXED_FACTOR = args.kmeans_mixed_factor
+    KMEANS_BALANCING = args.kmeans_balancing
 
     CONFIDENCE_THRESHOLD = args.confidence_threshold
 
@@ -293,6 +294,7 @@ if __name__ == "__main__":
                 kmeans_n_clusters=KMEANS_N_CLUSTERS,
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
+                kmeans_balancing=KMEANS_BALANCING,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
                 fedprox_factor=FEDPROX_FACTOR,
                 fedprox_adaptive=FEDPROX_ADAPTIVE,
