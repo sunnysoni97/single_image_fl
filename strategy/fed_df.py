@@ -152,6 +152,10 @@ class FedDF_strategy(Strategy):
         self.fedprox_factor = fedprox_factor
         self.fedprox_adaptive = fedprox_adaptive
 
+        # storage of past results
+
+        self.hist_server_acc = []
+
         # storage for kmean selection from last round
 
         self.kmeans_last_crops = None
@@ -202,6 +206,17 @@ class FedDF_strategy(Strategy):
         config = {}
         if self.on_fit_config_fn_client is not None:
             # Custom fit config function provided
+            if (self.fedprox_adaptive and len(self.hist_server_acc) > 3 and ((server_round-1) % 3 == 0)):
+                delta = self.hist_server_acc[-1] - self.hist_server_acc[-3]
+                if (delta < 0):
+                    self.fedprox_factor += 0.1
+                else:
+                    self.fedprox_factor -= 0.1
+
+            if (self.debug):
+                log(INFO,
+                    f"Fedprox factor for next round : {self.fedprox_factor}")
+
             config = self.on_fit_config_fn_client(
                 use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
 
@@ -384,6 +399,7 @@ class FedDF_strategy(Strategy):
         """Evaluate model parameters using an evaluation function."""
         if self.evaluate_fn is None:
             # No evaluation function provided
+            self.hist_server_acc.append(0.0)
             return None
         parameters_ndarrays = parameters_to_ndarrays(parameters)
         eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
@@ -393,6 +409,8 @@ class FedDF_strategy(Strategy):
         loss, metrics = eval_res
         if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics, "evaluate", "server")
+
+        self.hist_server_acc.append(metrics['server_test_acc'])
         return loss, metrics
 
     @staticmethod
