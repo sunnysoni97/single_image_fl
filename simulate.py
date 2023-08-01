@@ -107,6 +107,8 @@ if __name__ == "__main__":
     KMEANS_BALANCING = args.kmeans_balancing
 
     CONFIDENCE_THRESHOLD = args.confidence_threshold
+    CONFIDENCE_ADAPTIVE = args.confidence_adaptive
+    CONFIDENCE_MAX_THRESH = args.confidence_max_thresh
 
     OUT_DIR = args.out_dir
 
@@ -267,6 +269,7 @@ if __name__ == "__main__":
             num_clients=NUM_CLIENTS,
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=FedDF_strategy(
+                num_rounds=NUM_ROUNDS,
                 fraction_fit=FRACTION_FIT,
                 fraction_evaluate=FRACTION_EVALUATE,
                 distillation_dataloader=distill_dataloader,
@@ -296,6 +299,8 @@ if __name__ == "__main__":
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
                 kmeans_balancing=KMEANS_BALANCING,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
+                confidence_adaptive=CONFIDENCE_ADAPTIVE,
+                confidence_max_thresh=CONFIDENCE_MAX_THRESH,
                 fedprox_factor=FEDPROX_FACTOR,
                 fedprox_adaptive=FEDPROX_ADAPTIVE,
                 batch_size=DISTILL_BATCH_SIZE,

@@ -24,6 +24,7 @@ from common import test_model
 import strategy.tools.clustering as clustering
 from strategy.tools.confidence_select import prune_confident_crops
 from strategy.tools.clipping import clip_logits
+from strategy.common import cosine_annealing_round
 
 from flwr.common.logger import log
 from logging import WARNING, INFO
@@ -39,6 +40,7 @@ import random
 
 class FedDF_strategy(Strategy):
     def __init__(self,
+                 num_rounds: int,
                  distillation_dataloader: DataLoader,
                  evaluation_dataloader: DataLoader,
                  val_dataloader: DataLoader,
@@ -67,7 +69,9 @@ class FedDF_strategy(Strategy):
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
                  kmeans_balancing: float = 0.5,
-                 confidence_threshold: float = 0.5,
+                 confidence_threshold: float = 0.1,
+                 confidence_adaptive: bool = False,
+                 confidence_max_thresh: float = 0.5,
                  fedprox_factor: float = 1.0,
                  fedprox_adaptive: bool = False,
                  batch_size: int = 512,
@@ -80,6 +84,8 @@ class FedDF_strategy(Strategy):
                  cuda_deterministic: bool = False,
                  ) -> None:
         super().__init__()
+
+        self.num_rounds = num_rounds
 
         # DataLoader for distillation, valuation and evaluation set
         self.distillation_dataloader = distillation_dataloader
@@ -147,6 +153,8 @@ class FedDF_strategy(Strategy):
         # configuration for conf_threshold selection
 
         self.confidence_threshold = confidence_threshold
+        self.confidence_adaptive = confidence_adaptive
+        self.confidence_max_thresh = confidence_max_thresh
 
         # configuration for fedprox enable/disable
 
@@ -239,8 +247,15 @@ class FedDF_strategy(Strategy):
         # doing selection on the basis of confidence
 
         if (self.use_entropy):
+            confidence_threshold = self.confidence_threshold
+            if (self.confidence_adaptive):
+                confidence_threshold = 1 - cosine_annealing_round(max_lr=(1-self.confidence_threshold), min_lr=(
+                    1-self.confidence_max_thresh), max_rounds=(self.num_rounds-1), curr_round=(server_round-1))
+
+            log(INFO,
+                f'Current entropy removal threshold : {confidence_threshold}')
             pruned_clusters = prune_confident_crops(
-                cluster_df=pruned_clusters, confidence_threshold=self.confidence_threshold)
+                cluster_df=pruned_clusters, confidence_threshold=confidence_threshold)
 
         log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 

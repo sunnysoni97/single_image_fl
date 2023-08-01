@@ -64,6 +64,8 @@ parser.add_argument("--kmeans_balancing", type=float, default=0.5)
 parser.add_argument("--use_kmeans", type=parse_bool, default=True)
 
 parser.add_argument("--confidence_threshold", type=float, default=0.1)
+parser.add_argument("--confidence_adaptive", type=parse_bool, default=False)
+parser.add_argument("--confidence_max_thresh", type=float, default=0.5)
 parser.add_argument("--use_entropy", type=parse_bool, default=True)
 
 parser.add_argument("--clipping_factor", type=float, default=1.0)
