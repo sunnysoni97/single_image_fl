@@ -74,30 +74,30 @@ if __name__ == "__main__":
     if (len(file_list) < 1):
         raise IOError("No log files exist in the folder!")
 
+    if (seed_count == None):
+        print(f'Enter number of seeds per setup (mandatory): ')
+        seed_count = int(input())
+
     if (criteria == ""):
-        print(f'Enter the criteria you want to compare : ')
+        print(f'Enter the criteria you want to compare (optional): ')
         criteria = input()
 
     if ',' in criteria:
         criteria = criteria.split(sep=',')
         criteria = [criteria[i].strip() for i in range(len(criteria))]
 
-        if (criteria_labels == ""):
-            print(f'Enter labels for each configuration (optional) : ')
-            criteria_labels = input()
+    if (criteria_labels == ""):
+        print(f'Enter labels for each configuration (optional) : ')
+        criteria_labels = input()
 
-        if (criteria_labels != ""):
-            criteria_labels = criteria_labels.split(sep=',')
-            criteria_labels = [criteria_labels[i].strip()
-                               for i in range(len(criteria_labels))]
-        else:
-            criteria_labels = []
+    if (criteria_labels != ""):
+        criteria_labels = criteria_labels.split(sep=',')
+        criteria_labels = [criteria_labels[i].strip()
+                           for i in range(len(criteria_labels))]
+    else:
+        criteria_labels = []
 
-    if (seed_count == None):
-        print(f'Enter number of seeds for each experiment : ')
-        seed_count = int(input())
-
-    if (criteria_labels):
+    if (criteria_labels or criteria == ""):
         legend_title = "Setup"
     else:
         if (type(criteria) == type([])):

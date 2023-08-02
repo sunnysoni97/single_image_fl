@@ -80,18 +80,23 @@ def combine_seeds(n_seeds: int, dir_path: Path, criteria: Union[List, str], crit
                 for sub_criteria in criteria:
                     c_val = _extract_criteria(criteria=sub_criteria, file=f)
                     c_value += f'-{c_val}'
-            else:
+            elif (criteria != ""):
                 c_value = _extract_criteria(criteria=criteria, file=f)
+            else:
+                c_value = "Generic Criteria"
         c_value = c_value.strip('-')
         c_values.append(c_value)
 
-    assert (_verify_same_criteria(c_values=c_values, n_seeds=n_seeds)
-            ), f"{n_seeds} consecutive files donot have same {criteria} values!"
+    if (criteria != ""):
+        assert (_verify_same_criteria(c_values=c_values, n_seeds=n_seeds)
+                ), f"{n_seeds} consecutive files donot have same {criteria} values!"
 
     if (criteria_labels):
         keys = criteria_labels
-    else:
+    elif (criteria != ""):
         keys = np.unique(np.array(c_values)).tolist()
+    else:
+        keys = [f'Line {int(i/2)}' for i in range(0, len(file_list), n_seeds)]
 
     acc_list = []
     for file in file_list:
