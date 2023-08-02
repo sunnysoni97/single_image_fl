@@ -285,7 +285,7 @@ if __name__ == "__main__":
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
-                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
                     server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
                 evaluate_fn=fed_df_fn.evaluate_fn,

@@ -42,6 +42,10 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
 
+    if (config['use_adaptive_lr']):
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=config['epochs'])
+
     model.train()
     model.to(DEVICE)
 
@@ -73,6 +77,9 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
             total += labels.size(0)
             correct += (torch.max(outputs.detach(), 1)
                         [1] == labels).sum().item()
+
+        if (config['use_adaptive_lr']):
+            scheduler.step()
 
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)

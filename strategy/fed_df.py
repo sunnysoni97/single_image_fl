@@ -222,7 +222,7 @@ class FedDF_strategy(Strategy):
                 else:
                     self.fedprox_factor -= 0.1
 
-            if (self.debug):
+            if (self.use_fedprox and self.debug):
                 log(INFO,
                     f"Fedprox factor for next round : {self.fedprox_factor}")
 
@@ -240,7 +240,9 @@ class FedDF_strategy(Strategy):
         pruned_clusters = clusters
 
         if (self.use_kmeans):
-            print(f'Cluster score for round {server_round} = {cluster_score}')
+            if (self.debug):
+                log(INFO,
+                    f'Cluster score for round {server_round} = {cluster_score}')
             pruned_clusters = clustering.prune_clusters(
                 raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor, kmeans_balancing=self.kmeans_balancing)
 
@@ -250,14 +252,16 @@ class FedDF_strategy(Strategy):
             confidence_threshold = self.confidence_threshold
             if (self.confidence_adaptive):
                 confidence_threshold = 1 - cosine_annealing_round(max_lr=(1-self.confidence_threshold), min_lr=(
-                    1-self.confidence_max_thresh), max_rounds=(self.num_rounds-1), curr_round=(server_round-1))
+                    1-self.confidence_max_thresh), max_rounds=self.num_rounds, curr_round=server_round)
 
-            log(INFO,
-                f'Current entropy removal threshold : {confidence_threshold}')
+            if (self.debug):
+                log(INFO,
+                    f'Current entropy removal threshold : {confidence_threshold}')
             pruned_clusters = prune_confident_crops(
                 cluster_df=pruned_clusters, confidence_threshold=confidence_threshold)
 
-        log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
+        if (self.debug):
+            log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 
         # preparing for transport
 
@@ -344,7 +348,7 @@ class FedDF_strategy(Strategy):
         # Aggregating new parameters for warm start using averaging
 
         if (warm_start and ((server_round <= self.warm_start_rounds) or (server_round % self.warm_start_interval == 0))):
-            print(f'Warm start at round {server_round}')
+            log(INFO, f'Warm start at round {server_round}')
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results
@@ -432,7 +436,7 @@ class FedDF_strategy(Strategy):
     @staticmethod
     def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, dataset_name: str, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
-        print("Performing server side distillation training...")
+        log(INFO, f'Performing server side distillation training...')
         net = init_model(dataset_name, model_type)
         set_parameters(net, global_parameters)
         criterion = nn.KLDivLoss(reduction='batchmean')
@@ -506,16 +510,17 @@ class FedDF_strategy(Strategy):
 
                 cur_step += 1
                 if (cur_step % log_interval == 0 and enable_step_logging):
-                    print(f"step {cur_step}, val_acc : {total_step_acc[-1]}")
+                    log(INFO,
+                        f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
-        print(f'Distillation training stopped at step number : {cur_step}')
+        log(INFO, f'Distillation training stopped at step number : {cur_step}')
 
         new_parameters = best_val_param
 
         train_res = {'fusion_loss': np.mean(
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
-        print(
+        log(INFO,
             f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}, best val accuracy : {best_val_acc}')
 
         return (new_parameters, train_res)
@@ -525,7 +530,7 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_lr: bool = True) -> Callable:
         def on_fit_config_fn_client(use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
@@ -534,6 +539,7 @@ class fed_df_fn:
                 'use_clipping': use_clipping,
                 'use_fedprox': use_fedprox,
                 'fedprox_factor': fedprox_factor,
+                'use_adaptive_lr': use_adaptive_lr
             }
             return config
         return on_fit_config_fn_client
