@@ -43,15 +43,18 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
         for imgs, _ in dataloader:
             imgs = imgs.to(device)
             output = model.forward_avgpool(imgs)
-            preds = torch.argmax(input=F.softmax(
-                input=model(imgs), dim=-1), dim=-1).cpu().numpy().tolist()
+            preds_softmax = F.softmax(input=model(imgs), dim=-1)
+            preds = torch.argmax(input=preds_softmax,
+                                 dim=-1).cpu().numpy().tolist()
+            confs = torch.amax(input=preds_softmax, dim=-
+                               1).cpu().numpy().tolist()
             imgs = imgs.cpu().numpy()
             output = output.cpu().numpy()
             imgs_list = np.split(imgs, imgs.shape[0], axis=0)
             embedding_list = np.split(
                 output, output.shape[0], axis=0)
             new_data = pd.DataFrame(
-                data={'img': imgs_list, 'embedding': embedding_list, 'pred': preds})
+                data={'img': imgs_list, 'embedding': embedding_list, 'pred': preds, 'conf': confs})
             df = pd.concat([df, new_data], ignore_index=True)
 
     # initialising cluster model
@@ -96,12 +99,12 @@ def cluster_embeddings(dataloader: DataLoader, model: Union[CifarResNet, ResNet]
 # supported heuristics : easy / hard / mixed
 # heuristic percentage : easy-hard
 
-def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: str = "mixed", heuristic_percentage: str = "50-50") -> pd.DataFrame:
+def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: str = "mixed", heuristic_percentage: str = "50-50", kmeans_balancing: float = 0.5) -> pd.DataFrame:
     df = raw_dataframe.copy(True)
     df.insert(len(df.columns), "selected", "no")
-    n_clusters = len(df['cluster'].value_counts().index)
-    balance_percent = 0/100
-    min_n_crops = int(n_crops/n_clusters * balance_percent)
+    n_classes = len(df['pred'].value_counts().index)
+    balance_percent = kmeans_balancing
+    min_n_crops = int(n_crops/n_classes * balance_percent)
 
     if (heuristic == 'easy'):
         percent_easy = 100
@@ -143,7 +146,7 @@ def prune_clusters(raw_dataframe: pd.DataFrame, n_crops: int = 2250, heuristic: 
 
         return x
 
-    df = df.groupby(by='cluster', group_keys=False).apply(select_minimum)
+    df = df.groupby(by='pred', group_keys=False).apply(select_minimum)
 
     out_df = df[df['selected'] == 'yes']
 

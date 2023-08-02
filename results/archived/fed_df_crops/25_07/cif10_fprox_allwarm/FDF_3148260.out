@@ -1,0 +1,967 @@
+-----BEGIN-----
+-----SETTINGS-----
+STRATEGY:feddf
+MODEL_NAME:resnet8
+NUM_CLIENTS:20
+NUM_ROUNDS:30
+FRACTION_FIT:0.4
+FRACTION_EVALUATE:0.0
+DATASET_NAME:cifar10
+PARTITION_ALPHA:10.0
+PARTITION_VAL_RATIO:0.1
+BATCH_SIZE:512
+LOCAL_EPOCHS:40
+LOCAL_LR:0.05
+DISTILL_BATCH_SIZE:512
+SERVER_LR:0.005
+SERVER_STEPS:500
+SERVER_EARLY_STEPS:1000
+USE_EARLY_STOPPING:False
+USE_ADAPTIVE_LR:False
+SEED:42
+CUDA_DETERMINISTIC:False
+USE_CROPS:True
+IMG_NAME:ameyoko.jpg
+DISTILL_DATASET:cifar100
+DISTILL_ALPHA:1.0
+NUM_DISTILL_IMAGES:10000
+DISTILL_TRANSFORMS:v0
+WARM_START:True
+WARM_START_ROUNDS:1
+WARM_START_INTERVAL:1
+KMEANS_N_CLUSTER:50
+KMEANS_HEURISTICS:easy
+KMEANS_MIXED_FACTOR:50-50
+CONFIDENCE_THRESHOLD:0.9
+CONFIDENCE_MIN_CROPS:2500
+CLIPPING_FACTOR:2.5
+FEDPROX_FACTOR:1.0
+FEDPROX_ADAPTIVE:False
+USE_CLIPPING:True
+USE_ENTROPY:True
+USE_KMEANS:True
+USE_FEDPROX:True
+-----SETTINGS END-----
+-----EXPERIMENT BEGINS-----
+---------
+Generating crops for FedDF
+Namespace(img_size=32, batch_size=32, num_imgs=100000, threads=18, vflip=False, deg=30, shear=30, cropfirst=True, initcrop=0.5, scale=[500, 1], randinterp=False, debug=False, imgpath='./static/single_images/ameyoko.jpg', targetpath='/scratch-local/sunnys.3148260/1690337023_989932011', seed=42, img_per_thread=5555)
+will save 100000 patches in /scratch-local/sunnys.3148260/1690337023_989932011/single_img_crops/crops
+100000 took 0.61min with 18 threads
+---------
+Simulating feddf training
+INFO simulate 2023-07-26 04:04:35,018 | simulate.py:50 | Python script started : simulate.py
+DEBUG simulate 2023-07-26 04:04:35,019 | simulate.py:55 | Reading args from argument parser
+Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to /scratch-local/sunnys.3148260/1690337023_989932011/cifar-10-python.tar.gz
+Extracting /scratch-local/sunnys.3148260/1690337023_989932011/cifar-10-python.tar.gz to /scratch-local/sunnys.3148260/1690337023_989932011
+Generating unified cifar10 dataset
+Class histogram for 0-th partition (alpha=10.0, 10 classes): [259 271 116 269 240 311 223 239 284 288]
+INFO flwr 2023-07-26 04:06:48,468 | app.py:145 | Starting Flower simulation, config: ServerConfig(num_rounds=30, round_timeout=None)
+2023-07-26 04:06:51,207	INFO worker.py:1529 -- Started a local Ray instance. View the dashboard at [1m[32m127.0.0.1:8265 [39m[22m
+INFO flwr 2023-07-26 04:06:52,243 | app.py:179 | Flower VCE: Ray initialized with resources: {'accelerator_type:A100': 1.0, 'CPU': 18.0, 'memory': 103079215104.0, 'node:145.136.62.5': 1.0, 'object_store_memory': 61847529062.0, 'GPU': 1.0}
+INFO flwr 2023-07-26 04:06:52,243 | server.py:86 | Initializing global parameters
+INFO flwr 2023-07-26 04:06:52,243 | server.py:266 | Using initial parameters provided by strategy
+INFO flwr 2023-07-26 04:06:52,243 | server.py:88 | Evaluating initial parameters
+INFO flwr 2023-07-26 04:07:01,096 | server.py:91 | initial parameters (loss, other metrics): 2.3234217651367186, {'server_test_acc': 0.108}
+INFO flwr 2023-07-26 04:07:01,096 | server.py:101 | FL starting
+Cluster score for round 1 = 20032.779296875
+INFO flwr 2023-07-26 04:07:08,504 | fed_df.py:217 | Number of selected crops : 10000
+DEBUG flwr 2023-07-26 04:07:11,282 | server.py:215 | fit_round 1: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2399777)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399781)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399782)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399779)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399783)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:08:33,843 | server.py:229 | fit_round 1 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2399778)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2399779)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2399783)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2399780)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2399777)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2399781)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2399782)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=2399784)[0m Fitting Client 3
+Warm start at round 1
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2399780)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399778)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2399784)[0m double free or corruption (fasttop)
+E0726 04:08:38.404628110 2492779 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 60000ms
+E0726 04:08:38.404815868 2492779 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 60000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.39883774203062056, val accuracy : 0.39456, best val accuracy : 0.4258
+Average local training loss : 8.671032708510756
+Average local training accuracy : 0.3988055555555556
+INFO flwr 2023-07-26 04:09:34,547 | server.py:116 | fit progress: (1, 1.913954217529297, {'server_test_acc': 0.4198}, 153.45093299797736)
+INFO flwr 2023-07-26 04:09:34,547 | server.py:163 | evaluate_round 1: no clients selected, cancel
+Cluster score for round 2 = 113232.15625
+INFO flwr 2023-07-26 04:09:42,531 | fed_df.py:217 | Number of selected crops : 6428
+DEBUG flwr 2023-07-26 04:09:44,657 | server.py:215 | fit_round 2: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-07-26 04:11:03,607 | server.py:229 | fit_round 2 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2540298)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540298)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2540303)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2540299)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2540302)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=2540305)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=2540304)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2540300)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2540306)[0m Fitting Client 15
+Warm start at round 2
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2540304)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540302)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540306)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2540300)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540305)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540303)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2540299)[0m malloc_consolidate(): invalid chunk size
+E0726 04:11:06.457741922 2494579 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 120000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.07126012051105499, val accuracy : 0.51654, best val accuracy : 0.5362
+Average local training loss : 6.738894050754608
+Average local training accuracy : 0.5956222222222222
+INFO flwr 2023-07-26 04:12:27,153 | server.py:116 | fit progress: (2, 1.4544705902099608, {'server_test_acc': 0.5472}, 326.057215946028)
+INFO flwr 2023-07-26 04:12:27,154 | server.py:163 | evaluate_round 2: no clients selected, cancel
+Cluster score for round 3 = 45133.359375
+INFO flwr 2023-07-26 04:12:35,334 | fed_df.py:217 | Number of selected crops : 7421
+DEBUG flwr 2023-07-26 04:12:37,644 | server.py:215 | fit_round 3: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2698390)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2698388)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2698391)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:13:56,918 | server.py:229 | fit_round 3 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2698384)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2698389)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2698388)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2698390)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=2698391)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2698392)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2698394)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=2698393)[0m Fitting Client 1
+Warm start at round 3
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2698384)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2698392)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2698394)[0m double free or corruption (fasttop)
+E0726 04:13:58.075736994 2633590 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 240000ms
+[2m[36m(launch_and_fit pid=2698389)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2698393)[0m malloc_consolidate(): invalid chunk size
+E0726 04:14:42.904500069 2790368 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 480000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.024750911776907743, val accuracy : 0.63362, best val accuracy : 0.6396
+Average local training loss : 5.4164824856445195
+Average local training accuracy : 0.7384055555555555
+INFO flwr 2023-07-26 04:15:14,010 | server.py:116 | fit progress: (3, 1.2835807769775391, {'server_test_acc': 0.6434}, 492.9134833640419)
+INFO flwr 2023-07-26 04:15:14,010 | server.py:163 | evaluate_round 3: no clients selected, cancel
+Cluster score for round 4 = 16225.9833984375
+INFO flwr 2023-07-26 04:15:22,155 | fed_df.py:217 | Number of selected crops : 8379
+DEBUG flwr 2023-07-26 04:15:24,604 | server.py:215 | fit_round 4: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2850304)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2850302)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:16:42,930 | server.py:229 | fit_round 4 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2850302)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2850304)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2850391)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2850501)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2850500)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2850499)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2850519)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=2850520)[0m Fitting Client 11
+Warm start at round 4
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2850501)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2850500)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2850520)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2850519)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2850499)[0m malloc_consolidate(): invalid chunk size
+E0726 04:16:45.326294783 2825416 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 960000ms
+[2m[36m(launch_and_fit pid=2850391)[0m malloc_consolidate(): invalid chunk size
+E0726 04:17:12.917616515 2963862 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 1920000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0216684162793681, val accuracy : 0.6660400000000001, best val accuracy : 0.6776
+Average local training loss : 4.827707289531826
+Average local training accuracy : 0.8051402777777777
+INFO flwr 2023-07-26 04:17:54,122 | server.py:116 | fit progress: (4, 1.229346014404297, {'server_test_acc': 0.6747}, 653.0257993090199)
+INFO flwr 2023-07-26 04:17:54,122 | server.py:163 | evaluate_round 4: no clients selected, cancel
+Cluster score for round 5 = 10547.765625
+INFO flwr 2023-07-26 04:18:02,340 | fed_df.py:217 | Number of selected crops : 8901
+DEBUG flwr 2023-07-26 04:18:04,908 | server.py:215 | fit_round 5: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2997521)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2997522)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2997524)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2997527)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:19:24,625 | server.py:229 | fit_round 5 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2997521)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=2997520)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2997522)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2997526)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=2997524)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2997525)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2997527)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2997528)[0m Fitting Client 4
+Warm start at round 5
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2997526)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2997525)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2997520)[0m malloc_consolidate(): invalid chunk size
+E0726 04:19:26.091364363 2964400 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 3840000ms
+E0726 04:19:26.091495606 2964400 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 3840000ms
+[2m[36m(launch_and_fit pid=2997528)[0m malloc_consolidate(): invalid chunk size
+E0726 04:20:33.904278001 3112047 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 7680000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.02580187600851059, val accuracy : 0.68638, best val accuracy : 0.6976
+Average local training loss : 4.343321968987584
+Average local training accuracy : 0.855823611111111
+INFO flwr 2023-07-26 04:20:35,411 | server.py:116 | fit progress: (5, 1.207885952758789, {'server_test_acc': 0.6965}, 814.314693403081)
+INFO flwr 2023-07-26 04:20:35,411 | server.py:163 | evaluate_round 5: no clients selected, cancel
+Cluster score for round 6 = 7531.91015625
+INFO flwr 2023-07-26 04:20:43,590 | fed_df.py:217 | Number of selected crops : 8909
+DEBUG flwr 2023-07-26 04:20:46,124 | server.py:215 | fit_round 6: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=3177692)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3177701)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3177698)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3177699)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:22:05,691 | server.py:229 | fit_round 6 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3177692)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=3177697)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3177696)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3177698)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3177699)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=3177700)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=3177702)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=3177701)[0m Fitting Client 9
+Warm start at round 6
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3177697)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3177700)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3177702)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3177696)[0m malloc_consolidate(): invalid chunk size
+E0726 04:22:07.263821213 3174953 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 15360000ms
+E0726 04:22:49.007563400 3270154 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 30720000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.024152093870565296, val accuracy : 0.70248, best val accuracy : 0.7126
+Average local training loss : 4.08672987446189
+Average local training accuracy : 0.8801638888888887
+INFO flwr 2023-07-26 04:23:16,103 | server.py:116 | fit progress: (6, 1.182362158203125, {'server_test_acc': 0.7066}, 975.0071649670135)
+INFO flwr 2023-07-26 04:23:16,104 | server.py:163 | evaluate_round 6: no clients selected, cancel
+Cluster score for round 7 = 6063.09521484375
+INFO flwr 2023-07-26 04:23:24,248 | fed_df.py:217 | Number of selected crops : 8659
+DEBUG flwr 2023-07-26 04:23:26,730 | server.py:215 | fit_round 7: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=3322207)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322206)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322204)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:24:45,641 | server.py:229 | fit_round 7 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3322207)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=3322204)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=3322208)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3322210)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=3322212)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=3322206)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=3322209)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=3322211)[0m Fitting Client 0
+Warm start at round 7
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3322210)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322212)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322209)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322211)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3322208)[0m malloc_consolidate(): invalid chunk size
+E0726 04:24:48.096275408 3300273 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 61440000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.02239059333782643, val accuracy : 0.70862, best val accuracy : 0.7218
+Average local training loss : 3.991017659567296
+Average local training accuracy : 0.8901819444444443
+INFO flwr 2023-07-26 04:25:59,608 | server.py:116 | fit progress: (7, 1.1943830322265625, {'server_test_acc': 0.7208}, 1138.5119601020124)
+INFO flwr 2023-07-26 04:25:59,609 | server.py:163 | evaluate_round 7: no clients selected, cancel
+Cluster score for round 8 = 4743.30712890625
+INFO flwr 2023-07-26 04:26:07,777 | fed_df.py:217 | Number of selected crops : 8816
+DEBUG flwr 2023-07-26 04:26:10,296 | server.py:215 | fit_round 8: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-07-26 04:27:29,390 | server.py:229 | fit_round 8 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3468927)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3468924)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3468921)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3468919)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3468921)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=3468928)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=3468923)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=3468924)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=3468925)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=3468927)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=3468926)[0m Fitting Client 6
+Warm start at round 8
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3468923)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3468919)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3468926)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3468928)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3468925)[0m double free or corruption (fasttop)
+E0726 04:27:34.435126276 3414888 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 122880000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0349719139225781, val accuracy : 0.72866, best val accuracy : 0.7348
+Average local training loss : 3.9166477851569654
+Average local training accuracy : 0.8975652777777777
+INFO flwr 2023-07-26 04:28:39,869 | server.py:116 | fit progress: (8, 1.0768929901123048, {'server_test_acc': 0.7284}, 1298.772941137082)
+INFO flwr 2023-07-26 04:28:39,869 | server.py:163 | evaluate_round 8: no clients selected, cancel
+Cluster score for round 9 = 8255.845703125
+INFO flwr 2023-07-26 04:28:48,137 | fed_df.py:217 | Number of selected crops : 8277
+DEBUG flwr 2023-07-26 04:28:50,616 | server.py:215 | fit_round 9: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=3612905)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:30:09,875 | server.py:229 | fit_round 9 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3612904)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3612900)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3612901)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3612899)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3612903)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=3612902)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3612904)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=3612901)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=3612905)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=3612900)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3612898)[0m Fitting Client 14
+Warm start at round 9
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3612902)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3612898)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=3612903)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3612899)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.023906016982160508, val accuracy : 0.71824, best val accuracy : 0.7314
+Average local training loss : 3.740451200865209
+Average local training accuracy : 0.9113305555555554
+INFO flwr 2023-07-26 04:31:23,177 | server.py:116 | fit progress: (9, 1.2105335662841796, {'server_test_acc': 0.726}, 1462.0806425660849)
+INFO flwr 2023-07-26 04:31:23,177 | server.py:163 | evaluate_round 9: no clients selected, cancel
+Cluster score for round 10 = 4176.37744140625
+INFO flwr 2023-07-26 04:31:31,529 | fed_df.py:217 | Number of selected crops : 8359
+DEBUG flwr 2023-07-26 04:31:34,003 | server.py:215 | fit_round 10: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-07-26 04:32:53,331 | server.py:229 | fit_round 10 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3760323)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760321)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=3760323)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3760324)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3760326)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=3760325)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=3760327)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=3760328)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=3760329)[0m Fitting Client 7
+Warm start at round 10
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3760321)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760328)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760325)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760324)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760327)[0m malloc_consolidate(): invalid chunk size
+E0726 04:32:55.004234291 3563635 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 245760000ms
+[2m[36m(launch_and_fit pid=3760329)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3760326)[0m double free or corruption (fasttop)
+E0726 04:33:25.607267967 3874749 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 491520000ms
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.031758715292438865, val accuracy : 0.7242999999999999, best val accuracy : 0.7354
+Average local training loss : 3.6370318545028573
+Average local training accuracy : 0.9217708333333333
+INFO flwr 2023-07-26 04:34:06,174 | server.py:116 | fit progress: (10, 1.0963541564941406, {'server_test_acc': 0.7295}, 1625.0781969950767)
+INFO flwr 2023-07-26 04:34:06,175 | server.py:163 | evaluate_round 10: no clients selected, cancel
+Cluster score for round 11 = 4500.65478515625
+INFO flwr 2023-07-26 04:34:14,463 | fed_df.py:217 | Number of selected crops : 7978
+DEBUG flwr 2023-07-26 04:34:16,824 | server.py:215 | fit_round 11: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=3907115)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3907109)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 04:35:36,209 | server.py:229 | fit_round 11 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=3907109)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=3907111)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=3907115)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=3907110)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=3907112)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=3907113)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=3907108)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=3907114)[0m Fitting Client 10
+Warm start at round 11
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=3907110)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3907113)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3907112)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3907108)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=3907114)[0m double free or corruption (fasttop)
+E0726 04:35:37.990276953 3875370 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 983040000ms
+[2m[36m(launch_and_fit pid=3907111)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04141508793458343, val accuracy : 0.72658, best val accuracy : 0.7424
+Average local training loss : 3.531385529227555
+Average local training accuracy : 0.9295972222222223
+INFO flwr 2023-07-26 04:36:52,265 | server.py:116 | fit progress: (11, 1.121910516357422, {'server_test_acc': 0.7434}, 1791.1687481129775)
+INFO flwr 2023-07-26 04:36:52,265 | server.py:163 | evaluate_round 11: no clients selected, cancel
+Cluster score for round 12 = 4721.38037109375
+INFO flwr 2023-07-26 04:37:00,500 | fed_df.py:217 | Number of selected crops : 7389
+DEBUG flwr 2023-07-26 04:37:02,811 | server.py:215 | fit_round 12: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=4092646)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 04:38:21,720 | server.py:229 | fit_round 12 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=4092649)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=4092651)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=4092646)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=4092649)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=4092651)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=4092655)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=4092663)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=4092662)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=4092650)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=4092652)[0m Fitting Client 8
+Warm start at round 12
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=4092650)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=4092663)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=4092655)[0m malloc_consolidate(): invalid chunk size
+E0726 04:38:23.312581264 4027728 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): 1966080000ms
+[2m[36m(launch_and_fit pid=4092652)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=4092662)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.02438442647084594, val accuracy : 0.7416800000000001, best val accuracy : 0.7586
+Average local training loss : 3.563968395069242
+Average local training accuracy : 0.9268930555555556
+INFO flwr 2023-07-26 04:39:40,746 | server.py:116 | fit progress: (12, 1.0146624053955078, {'server_test_acc': 0.7453}, 1959.6495602059877)
+INFO flwr 2023-07-26 04:39:40,746 | server.py:163 | evaluate_round 12: no clients selected, cancel
+Cluster score for round 13 = 5706.47412109375
+INFO flwr 2023-07-26 04:39:48,927 | fed_df.py:217 | Number of selected crops : 8078
+DEBUG flwr 2023-07-26 04:39:51,344 | server.py:215 | fit_round 13: strategy sampled 8 clients (out of 20)
+DEBUG flwr 2023-07-26 04:41:10,034 | server.py:229 | fit_round 13 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=51054)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=51059)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=51056)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=51058)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=51060)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=51061)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=51057)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=51062)[0m Fitting Client 3
+Warm start at round 13
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=51054)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51061)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51060)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51057)[0m corrupted size vs. prev_size in fastbins
+[2m[36m(launch_and_fit pid=51058)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51062)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51059)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=51056)[0m malloc_consolidate(): invalid chunk size
+E0726 04:41:16.850942203 4184870 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.032428819598630074, val accuracy : 0.73074, best val accuracy : 0.747
+Average local training loss : 3.4223149728029965
+Average local training accuracy : 0.9359527777777779
+INFO flwr 2023-07-26 04:42:25,436 | server.py:116 | fit progress: (13, 1.1279435913085938, {'server_test_acc': 0.7372}, 2124.3397699380293)
+INFO flwr 2023-07-26 04:42:25,436 | server.py:163 | evaluate_round 13: no clients selected, cancel
+Cluster score for round 14 = 3748.080322265625
+INFO flwr 2023-07-26 04:42:33,728 | fed_df.py:217 | Number of selected crops : 7752
+DEBUG flwr 2023-07-26 04:42:36,043 | server.py:215 | fit_round 14: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=200398)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:43:54,419 | server.py:229 | fit_round 14 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=200398)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=200400)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=200405)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=200402)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=200406)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=200407)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=200396)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=200404)[0m Fitting Client 2
+Warm start at round 14
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=200396)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=200400)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=200402)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=200406)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=200405)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=200404)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=200407)[0m double free or corruption (fasttop)
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03731266905553639, val accuracy : 0.7424799999999999, best val accuracy : 0.762
+Average local training loss : 3.4556069526821376
+Average local training accuracy : 0.9325180555555556
+INFO flwr 2023-07-26 04:45:09,617 | server.py:116 | fit progress: (14, 0.9937129852294921, {'server_test_acc': 0.761}, 2288.520551920985)
+INFO flwr 2023-07-26 04:45:09,617 | server.py:163 | evaluate_round 14: no clients selected, cancel
+Cluster score for round 15 = 4810.6513671875
+INFO flwr 2023-07-26 04:45:17,788 | fed_df.py:217 | Number of selected crops : 7520
+DEBUG flwr 2023-07-26 04:45:20,053 | server.py:215 | fit_round 15: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=349640)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=349642)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=349646)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=349638)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=349645)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=349643)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 04:46:39,435 | server.py:229 | fit_round 15 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=349644)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=349638)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=349640)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=349642)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=349645)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=349643)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=349644)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=349646)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=349647)[0m Fitting Client 16
+Warm start at round 15
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=349647)[0m double free or corruption (fasttop)
+E0726 04:46:43.857469291  147618 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03119685867242515, val accuracy : 0.7395800000000001, best val accuracy : 0.7564
+Average local training loss : 3.309713634289801
+Average local training accuracy : 0.9450041666666668
+INFO flwr 2023-07-26 04:47:57,703 | server.py:116 | fit progress: (15, 1.0572525207519532, {'server_test_acc': 0.7471}, 2456.606751909014)
+INFO flwr 2023-07-26 04:47:57,703 | server.py:163 | evaluate_round 15: no clients selected, cancel
+Cluster score for round 16 = 3903.25048828125
+INFO flwr 2023-07-26 04:48:05,874 | fed_df.py:217 | Number of selected crops : 7443
+DEBUG flwr 2023-07-26 04:48:08,185 | server.py:215 | fit_round 16: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=501537)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=501546)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 04:49:27,300 | server.py:229 | fit_round 16 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=501537)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=501540)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=501546)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=501545)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=501543)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=501542)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=501544)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=501547)[0m Fitting Client 18
+Warm start at round 16
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=501543)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=501540)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=501545)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=501542)[0m malloc_consolidate(): invalid chunk size
+E0726 04:49:28.513908886  444349 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+[2m[36m(launch_and_fit pid=501544)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=501547)[0m double free or corruption (fasttop)
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03857998648844659, val accuracy : 0.7285600000000001, best val accuracy : 0.7348
+Average local training loss : 3.2688067039474844
+Average local training accuracy : 0.9473930555555555
+INFO flwr 2023-07-26 04:50:45,925 | server.py:116 | fit progress: (16, 1.049603939819336, {'server_test_acc': 0.7345}, 2624.828930010088)
+INFO flwr 2023-07-26 04:50:45,926 | server.py:163 | evaluate_round 16: no clients selected, cancel
+Cluster score for round 17 = 4676.80517578125
+INFO flwr 2023-07-26 04:50:54,163 | fed_df.py:217 | Number of selected crops : 7023
+DEBUG flwr 2023-07-26 04:50:56,476 | server.py:215 | fit_round 17: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=681523)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=681522)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=681672)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:52:15,780 | server.py:229 | fit_round 17 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=681622)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=681523)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=681522)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=681622)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=681671)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=681672)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=681673)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=681763)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=681764)[0m Fitting Client 17
+Warm start at round 17
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=681764)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=681763)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=681673)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=681671)[0m malloc_consolidate(): invalid chunk size
+E0726 04:52:18.771742771  593652 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03351931862346828, val accuracy : 0.75178, best val accuracy : 0.768
+Average local training loss : 3.3435796631500123
+Average local training accuracy : 0.941326388888889
+INFO flwr 2023-07-26 04:53:36,649 | server.py:116 | fit progress: (17, 0.97946689453125, {'server_test_acc': 0.7663}, 2795.5525129489833)
+INFO flwr 2023-07-26 04:53:36,649 | server.py:163 | evaluate_round 17: no clients selected, cancel
+Cluster score for round 18 = 3652.977783203125
+INFO flwr 2023-07-26 04:53:44,937 | fed_df.py:217 | Number of selected crops : 7306
+DEBUG flwr 2023-07-26 04:53:47,205 | server.py:215 | fit_round 18: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=843391)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:55:06,205 | server.py:229 | fit_round 18 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=843388)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=843392)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=843390)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=843391)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=843393)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=843395)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=843396)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=843394)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=843388)[0m Fitting Client 0
+Warm start at round 18
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=843392)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=843390)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=843394)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=843396)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=843393)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=843395)[0m malloc_consolidate(): invalid chunk size
+E0726 04:55:09.476736495  936366 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04231254895403981, val accuracy : 0.74834, best val accuracy : 0.7614
+Average local training loss : 3.262366017326712
+Average local training accuracy : 0.9480833333333333
+INFO flwr 2023-07-26 04:56:24,942 | server.py:116 | fit progress: (18, 1.0407391967773438, {'server_test_acc': 0.7558}, 2963.845440634992)
+INFO flwr 2023-07-26 04:56:24,942 | server.py:163 | evaluate_round 18: no clients selected, cancel
+Cluster score for round 19 = 2524.787353515625
+INFO flwr 2023-07-26 04:56:33,242 | fed_df.py:217 | Number of selected crops : 6873
+DEBUG flwr 2023-07-26 04:56:35,395 | server.py:215 | fit_round 19: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=995290)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 04:57:54,039 | server.py:229 | fit_round 19 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=995300)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=995290)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=995302)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=995301)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=995298)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=995300)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=995299)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=995303)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=995304)[0m Fitting Client 3
+Warm start at round 19
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=995304)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=995301)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=995298)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=995303)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=995299)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=995302)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0417866738140583, val accuracy : 0.7439200000000001, best val accuracy : 0.7548
+Average local training loss : 3.2752164084464312
+Average local training accuracy : 0.9465708333333334
+INFO flwr 2023-07-26 04:59:15,000 | server.py:116 | fit progress: (19, 1.076676821899414, {'server_test_acc': 0.7554}, 3133.903348391992)
+INFO flwr 2023-07-26 04:59:15,000 | server.py:163 | evaluate_round 19: no clients selected, cancel
+Cluster score for round 20 = 2087.271484375
+INFO flwr 2023-07-26 04:59:23,289 | fed_df.py:217 | Number of selected crops : 6723
+DEBUG flwr 2023-07-26 04:59:25,457 | server.py:215 | fit_round 20: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1149589)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1149591)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:00:44,407 | server.py:229 | fit_round 20 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1149590)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1149589)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=1149586)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=1149587)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1149590)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1149591)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1149592)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=1149593)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1149594)[0m Fitting Client 12
+Warm start at round 20
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1149592)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1149593)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1149587)[0m malloc_consolidate(): invalid chunk size
+E0726 05:00:45.687947254  937176 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+[2m[36m(launch_and_fit pid=1149586)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1149594)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03351087867282331, val accuracy : 0.7531399999999999, best val accuracy : 0.7694
+Average local training loss : 3.311067075654864
+Average local training accuracy : 0.9439166666666666
+INFO flwr 2023-07-26 05:02:05,692 | server.py:116 | fit progress: (20, 1.0281638946533203, {'server_test_acc': 0.7619}, 3304.5955113860546)
+INFO flwr 2023-07-26 05:02:05,692 | server.py:163 | evaluate_round 20: no clients selected, cancel
+Cluster score for round 21 = 1346.4656982421875
+INFO flwr 2023-07-26 05:02:13,957 | fed_df.py:217 | Number of selected crops : 7352
+DEBUG flwr 2023-07-26 05:02:16,250 | server.py:215 | fit_round 21: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1303801)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:03:35,458 | server.py:229 | fit_round 21 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1303799)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=1303801)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=1303802)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=1303803)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1303800)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1303805)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=1303806)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=1303804)[0m Fitting Client 18
+Warm start at round 21
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1303802)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1303799)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1303800)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1303803)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1303805)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1303806)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1303804)[0m malloc_consolidate(): invalid chunk size
+E0726 05:03:40.508741148 1398367 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+E0726 05:03:40.508836142 1398367 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03916140478104353, val accuracy : 0.74102, best val accuracy : 0.7518
+Average local training loss : 3.2012493304908274
+Average local training accuracy : 0.951748611111111
+INFO flwr 2023-07-26 05:04:53,599 | server.py:116 | fit progress: (21, 1.049621517944336, {'server_test_acc': 0.7511}, 3472.5024836870143)
+INFO flwr 2023-07-26 05:04:53,599 | server.py:163 | evaluate_round 21: no clients selected, cancel
+Cluster score for round 22 = 1592.23681640625
+INFO flwr 2023-07-26 05:05:02,012 | fed_df.py:217 | Number of selected crops : 7247
+DEBUG flwr 2023-07-26 05:05:04,275 | server.py:215 | fit_round 22: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1455428)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1455427)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 05:06:24,084 | server.py:229 | fit_round 22 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1455421)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1455428)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=1455426)[0m Fitting Client 11
+[2m[36m(launch_and_fit pid=1455425)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=1455427)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=1455424)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1455420)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1455423)[0m Fitting Client 1
+Warm start at round 22
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1455421)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1455425)[0m double free or corruption (fasttop)
+E0726 05:06:25.202834561 1398975 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+[2m[36m(launch_and_fit pid=1455420)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1455424)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1455423)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1455426)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.036358037577942016, val accuracy : 0.75554, best val accuracy : 0.7684
+Average local training loss : 3.2613460278138517
+Average local training accuracy : 0.9477027777777778
+INFO flwr 2023-07-26 05:07:43,276 | server.py:116 | fit progress: (22, 0.9941642974853515, {'server_test_acc': 0.7676}, 3642.1798576370347)
+INFO flwr 2023-07-26 05:07:43,276 | server.py:163 | evaluate_round 22: no clients selected, cancel
+Cluster score for round 23 = 1815.8341064453125
+INFO flwr 2023-07-26 05:07:51,465 | fed_df.py:217 | Number of selected crops : 7354
+DEBUG flwr 2023-07-26 05:07:53,824 | server.py:215 | fit_round 23: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1643006)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1643004)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 05:09:12,919 | server.py:229 | fit_round 23 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1643009)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1643005)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=1643007)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1643004)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1643006)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=1643008)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1643010)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=1643009)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=1643011)[0m Fitting Client 15
+Warm start at round 23
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1643007)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1643010)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1643011)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1643005)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1643008)[0m malloc_consolidate(): invalid chunk size
+E0726 05:09:16.366173057 1736127 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03514268084056676, val accuracy : 0.77034, best val accuracy : 0.785
+Average local training loss : 3.246548837609589
+Average local training accuracy : 0.9487930555555557
+INFO flwr 2023-07-26 05:10:32,095 | server.py:116 | fit progress: (23, 0.9560636413574218, {'server_test_acc': 0.7791}, 3810.9987808890874)
+INFO flwr 2023-07-26 05:10:32,095 | server.py:163 | evaluate_round 23: no clients selected, cancel
+Cluster score for round 24 = 1991.503662109375
+INFO flwr 2023-07-26 05:10:40,270 | fed_df.py:217 | Number of selected crops : 7380
+DEBUG flwr 2023-07-26 05:10:42,614 | server.py:215 | fit_round 24: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1794904)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794909)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794905)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:12:01,889 | server.py:229 | fit_round 24 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1794911)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794914)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794904)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=1794905)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1794910)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=1794909)[0m Fitting Client 7
+[2m[36m(launch_and_fit pid=1794911)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=1794913)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1794914)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=1794912)[0m Fitting Client 19
+Warm start at round 24
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1794912)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794913)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=1794910)[0m malloc_consolidate(): invalid chunk size
+E0726 05:12:04.582663468 1887637 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05216584135591984, val accuracy : 0.7485, best val accuracy : 0.7606
+Average local training loss : 3.1803393948823215
+Average local training accuracy : 0.9528708333333334
+INFO flwr 2023-07-26 05:13:20,684 | server.py:116 | fit progress: (24, 1.0064212646484374, {'server_test_acc': 0.7568}, 3979.5874498720514)
+INFO flwr 2023-07-26 05:13:20,684 | server.py:163 | evaluate_round 24: no clients selected, cancel
+Cluster score for round 25 = 2550.252197265625
+INFO flwr 2023-07-26 05:13:29,046 | fed_df.py:217 | Number of selected crops : 6539
+DEBUG flwr 2023-07-26 05:13:31,211 | server.py:215 | fit_round 25: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=1946860)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946862)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:14:50,709 | server.py:229 | fit_round 25 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=1946859)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946862)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=1946860)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=1946854)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=1946859)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=1946861)[0m Fitting Client 12
+[2m[36m(launch_and_fit pid=1946857)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=1946858)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=1946855)[0m Fitting Client 3
+Warm start at round 25
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=1946855)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946854)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946857)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946861)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=1946858)[0m malloc_consolidate(): invalid chunk size
+E0726 05:14:52.453217505 1888261 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03166098107583821, val accuracy : 0.7531399999999999, best val accuracy : 0.765
+Average local training loss : 3.2009796261787415
+Average local training accuracy : 0.9508402777777777
+INFO flwr 2023-07-26 05:16:16,785 | server.py:116 | fit progress: (25, 0.9903984466552734, {'server_test_acc': 0.7636}, 4155.688608048018)
+INFO flwr 2023-07-26 05:16:16,785 | server.py:163 | evaluate_round 25: no clients selected, cancel
+Cluster score for round 26 = 1772.918212890625
+INFO flwr 2023-07-26 05:16:25,119 | fed_df.py:217 | Number of selected crops : 7644
+DEBUG flwr 2023-07-26 05:16:27,513 | server.py:215 | fit_round 26: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2105115)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2105118)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 05:17:47,130 | server.py:229 | fit_round 26 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2105117)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2105115)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2105119)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=2105117)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=2105121)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2105118)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2105122)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2105120)[0m Fitting Client 6
+[2m[36m(launch_and_fit pid=2105123)[0m Fitting Client 0
+Warm start at round 26
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2105120)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2105123)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2105119)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2105122)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2105121)[0m double free or corruption (fasttop)
+E0726 05:17:49.963345728 2197721 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.042475443612784144, val accuracy : 0.7626999999999999, best val accuracy : 0.7794
+Average local training loss : 3.1798333052545784
+Average local training accuracy : 0.9524236111111112
+INFO flwr 2023-07-26 05:19:05,653 | server.py:116 | fit progress: (26, 0.9259826385498047, {'server_test_acc': 0.7787}, 4324.55663840007)
+INFO flwr 2023-07-26 05:19:05,653 | server.py:163 | evaluate_round 26: no clients selected, cancel
+Cluster score for round 27 = 2076.214599609375
+INFO flwr 2023-07-26 05:19:13,853 | fed_df.py:217 | Number of selected crops : 7075
+DEBUG flwr 2023-07-26 05:19:16,085 | server.py:215 | fit_round 27: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2256783)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2256782)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2256787)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2256780)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:20:35,270 | server.py:229 | fit_round 27 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2256783)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=2256782)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=2256787)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2256780)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2256789)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2256788)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2256786)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2256784)[0m Fitting Client 12
+Warm start at round 27
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2256789)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2256784)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2256786)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2256788)[0m malloc_consolidate(): invalid chunk size
+E0726 05:20:37.737609845 2198334 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.04326660503074527, val accuracy : 0.7684200000000001, best val accuracy : 0.7792
+Average local training loss : 3.1664453053846953
+Average local training accuracy : 0.9543777777777779
+INFO flwr 2023-07-26 05:21:57,291 | server.py:116 | fit progress: (27, 0.947010757446289, {'server_test_acc': 0.7728}, 4496.194392959005)
+INFO flwr 2023-07-26 05:21:57,291 | server.py:163 | evaluate_round 27: no clients selected, cancel
+Cluster score for round 28 = 1875.4169921875
+INFO flwr 2023-07-26 05:22:05,709 | fed_df.py:217 | Number of selected crops : 6971
+DEBUG flwr 2023-07-26 05:22:07,932 | server.py:215 | fit_round 28: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2439779)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:23:26,749 | server.py:229 | fit_round 28 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2439780)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2439775)[0m Fitting Client 9
+[2m[36m(launch_and_fit pid=2439778)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2439779)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=2439777)[0m Fitting Client 13
+[2m[36m(launch_and_fit pid=2439783)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2439780)[0m Fitting Client 4
+[2m[36m(launch_and_fit pid=2439782)[0m Fitting Client 3
+[2m[36m(launch_and_fit pid=2439781)[0m Fitting Client 19
+Warm start at round 28
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2439777)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2439783)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2439781)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2439775)[0m malloc_consolidate(): invalid chunk size
+E0726 05:23:28.510285770 2349969 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+[2m[36m(launch_and_fit pid=2439778)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2439782)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.05600583249330521, val accuracy : 0.76308, best val accuracy : 0.7726
+Average local training loss : 3.177806561999023
+Average local training accuracy : 0.9529097222222223
+INFO flwr 2023-07-26 05:24:48,717 | server.py:116 | fit progress: (28, 0.9911872161865234, {'server_test_acc': 0.7688}, 4667.621239665081)
+INFO flwr 2023-07-26 05:24:48,718 | server.py:163 | evaluate_round 28: no clients selected, cancel
+Cluster score for round 29 = 1737.614501953125
+INFO flwr 2023-07-26 05:24:57,191 | fed_df.py:217 | Number of selected crops : 6407
+DEBUG flwr 2023-07-26 05:24:59,301 | server.py:215 | fit_round 29: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2602387)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2602389)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2602392)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2602390)[0m malloc_consolidate(): invalid chunk size
+DEBUG flwr 2023-07-26 05:26:18,975 | server.py:229 | fit_round 29 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2602391)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2602387)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=2602389)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=2602391)[0m Fitting Client 10
+[2m[36m(launch_and_fit pid=2602390)[0m Fitting Client 19
+[2m[36m(launch_and_fit pid=2602393)[0m Fitting Client 0
+[2m[36m(launch_and_fit pid=2602394)[0m Fitting Client 14
+[2m[36m(launch_and_fit pid=2602392)[0m Fitting Client 17
+[2m[36m(launch_and_fit pid=2602395)[0m Fitting Client 9
+Warm start at round 29
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2602394)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2602393)[0m malloc_consolidate(): invalid chunk size
+E0726 05:26:20.581016337 2694129 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+E0726 05:26:20.581135337 2694129 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+[2m[36m(launch_and_fit pid=2602395)[0m malloc_consolidate(): invalid chunk size
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.03495818387717008, val accuracy : 0.73846, best val accuracy : 0.7462
+Average local training loss : 3.115832050330937
+Average local training accuracy : 0.9570750000000001
+INFO flwr 2023-07-26 05:27:45,123 | server.py:116 | fit progress: (29, 1.08797587890625, {'server_test_acc': 0.7467}, 4844.027136245044)
+INFO flwr 2023-07-26 05:27:45,124 | server.py:163 | evaluate_round 29: no clients selected, cancel
+Cluster score for round 30 = 1082.3685302734375
+INFO flwr 2023-07-26 05:27:53,376 | fed_df.py:217 | Number of selected crops : 6992
+DEBUG flwr 2023-07-26 05:27:55,693 | server.py:215 | fit_round 30: strategy sampled 8 clients (out of 20)
+[2m[36m(launch_and_fit pid=2760609)[0m double free or corruption (fasttop)
+DEBUG flwr 2023-07-26 05:29:14,931 | server.py:229 | fit_round 30 received 8 results and 0 failures
+[2m[36m(launch_and_fit pid=2760623)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2760609)[0m Fitting Client 15
+[2m[36m(launch_and_fit pid=2760623)[0m Fitting Client 1
+[2m[36m(launch_and_fit pid=2760621)[0m Fitting Client 5
+[2m[36m(launch_and_fit pid=2760622)[0m Fitting Client 16
+[2m[36m(launch_and_fit pid=2760620)[0m Fitting Client 18
+[2m[36m(launch_and_fit pid=2760624)[0m Fitting Client 2
+[2m[36m(launch_and_fit pid=2760625)[0m Fitting Client 8
+[2m[36m(launch_and_fit pid=2760626)[0m Fitting Client 19
+Warm start at round 30
+Performing server side distillation training...
+[2m[36m(launch_and_fit pid=2760622)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2760624)[0m double free or corruption (fasttop)
+[2m[36m(launch_and_fit pid=2760621)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2760625)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2760620)[0m malloc_consolidate(): invalid chunk size
+[2m[36m(launch_and_fit pid=2760626)[0m malloc_consolidate(): invalid chunk size
+E0726 05:29:17.913709563 2694802 chttp2_transport.cc:1079]             ipv4:145.136.62.5:44139: Received a GOAWAY with error code ENHANCE_YOUR_CALM and debug data equal to "too_many_pings". Current keepalive time (before throttling): ∞
+Distillation training stopped at step number : 500
+Average fusion training loss : 0.0531081698089838, val accuracy : 0.75908, best val accuracy : 0.7704
+Average local training loss : 3.119590209424495
+Average local training accuracy : 0.9564319444444446
+INFO flwr 2023-07-26 05:30:37,684 | server.py:116 | fit progress: (30, 0.9868408874511718, {'server_test_acc': 0.7656}, 5016.587869810988)
+INFO flwr 2023-07-26 05:30:37,684 | server.py:163 | evaluate_round 30: no clients selected, cancel
+INFO flwr 2023-07-26 05:30:37,684 | server.py:144 | FL finished in 5016.588260277989
+INFO flwr 2023-07-26 05:30:37,685 | app.py:202 | app_fit: losses_distributed []
+INFO flwr 2023-07-26 05:30:37,686 | app.py:203 | app_fit: metrics_distributed {}
+INFO flwr 2023-07-26 05:30:37,686 | app.py:204 | app_fit: losses_centralized [(0, 2.3234217651367186), (1, 1.913954217529297), (2, 1.4544705902099608), (3, 1.2835807769775391), (4, 1.229346014404297), (5, 1.207885952758789), (6, 1.182362158203125), (7, 1.1943830322265625), (8, 1.0768929901123048), (9, 1.2105335662841796), (10, 1.0963541564941406), (11, 1.121910516357422), (12, 1.0146624053955078), (13, 1.1279435913085938), (14, 0.9937129852294921), (15, 1.0572525207519532), (16, 1.049603939819336), (17, 0.97946689453125), (18, 1.0407391967773438), (19, 1.076676821899414), (20, 1.0281638946533203), (21, 1.049621517944336), (22, 0.9941642974853515), (23, 0.9560636413574218), (24, 1.0064212646484374), (25, 0.9903984466552734), (26, 0.9259826385498047), (27, 0.947010757446289), (28, 0.9911872161865234), (29, 1.08797587890625), (30, 0.9868408874511718)]
+INFO flwr 2023-07-26 05:30:37,686 | app.py:205 | app_fit: metrics_centralized {'server_test_acc': [(0, 0.108), (1, 0.4198), (2, 0.5472), (3, 0.6434), (4, 0.6747), (5, 0.6965), (6, 0.7066), (7, 0.7208), (8, 0.7284), (9, 0.726), (10, 0.7295), (11, 0.7434), (12, 0.7453), (13, 0.7372), (14, 0.761), (15, 0.7471), (16, 0.7345), (17, 0.7663), (18, 0.7558), (19, 0.7554), (20, 0.7619), (21, 0.7511), (22, 0.7676), (23, 0.7791), (24, 0.7568), (25, 0.7636), (26, 0.7787), (27, 0.7728), (28, 0.7688), (29, 0.7467), (30, 0.7656)]}
+double free or corruption (fasttop)
+srun: error: gcn5: task 0: Aborted
+srun: Terminating StepId=3148260.1
+-----EXPERIMENT ENDS-----
+-----CLEANING UP DISK------
+-----END-----
+
+JOB STATISTICS
+==============
+Job ID: 3148260
+Cluster: snellius
+User/Group: sunnys/sunnys
+State: COMPLETED (exit code 0)
+Nodes: 1
+Cores per node: 18
+CPU Utilized: 03:00:57
+CPU Efficiency: 11.44% of 1-02:22:12 core-walltime
+Job Wall-clock time: 01:27:54
+Memory Utilized: 57.62 GB
+Memory Efficiency: 48.01% of 120.00 GB

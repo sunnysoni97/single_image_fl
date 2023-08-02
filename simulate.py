@@ -104,18 +104,25 @@ if __name__ == "__main__":
     KMEANS_N_CLUSTERS = args.kmeans_n_clusters
     KMEANS_HEURISTICS = args.kmeans_heuristics
     KMEANS_MIXED_FACTOR = args.kmeans_mixed_factor
+    KMEANS_BALANCING = args.kmeans_balancing
 
     CONFIDENCE_THRESHOLD = args.confidence_threshold
+    CONFIDENCE_ADAPTIVE = args.confidence_adaptive
+    CONFIDENCE_MAX_THRESH = args.confidence_max_thresh
 
     OUT_DIR = args.out_dir
 
     CLIPPING_FACTOR = args.clipping_factor
+
+    FEDPROX_FACTOR = args.fedprox_factor
+    FEDPROX_ADAPTIVE = args.fedprox_adaptive
 
     DEBUG = args.debug
 
     USE_KMEANS = args.use_kmeans
     USE_ENTROPY = args.use_entropy
     USE_CLIPPING = args.use_clipping
+    USE_FEDPROX = args.use_fedprox
 
     log(DEBUG, "Arguments read")
 
@@ -211,7 +218,7 @@ if __name__ == "__main__":
             dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG)
+            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
@@ -262,6 +269,7 @@ if __name__ == "__main__":
             num_clients=NUM_CLIENTS,
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=FedDF_strategy(
+                num_rounds=NUM_ROUNDS,
                 fraction_fit=FRACTION_FIT,
                 fraction_evaluate=FRACTION_EVALUATE,
                 distillation_dataloader=distill_dataloader,
@@ -277,7 +285,7 @@ if __name__ == "__main__":
                 fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
                 evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
-                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
                     server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
                 evaluate_fn=fed_df_fn.evaluate_fn,
@@ -287,14 +295,21 @@ if __name__ == "__main__":
                 kmeans_output_folder=out_kmeans_folder,
                 kmeans_n_crops=NUM_DISTILL_IMAGES,
                 kmeans_n_clusters=KMEANS_N_CLUSTERS,
-                kmeans_random_seed=SEED,
                 kmeans_heuristics=KMEANS_HEURISTICS,
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
+                kmeans_balancing=KMEANS_BALANCING,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
+                confidence_adaptive=CONFIDENCE_ADAPTIVE,
+                confidence_max_thresh=CONFIDENCE_MAX_THRESH,
+                fedprox_factor=FEDPROX_FACTOR,
+                fedprox_adaptive=FEDPROX_ADAPTIVE,
                 batch_size=DISTILL_BATCH_SIZE,
                 num_cpu_workers=SERVER_CPUS,
                 use_kmeans=USE_KMEANS,
-                use_entropy=USE_ENTROPY
+                use_entropy=USE_ENTROPY,
+                use_fedprox=USE_FEDPROX,
+                seed=SEED,
+                cuda_deterministic=CUDA_DETERMINISTIC,
             ),
             ray_init_args=ray_init_args,
             client_resources=client_resources,

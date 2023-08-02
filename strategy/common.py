@@ -51,5 +51,6 @@ class common_functions:
 def cosine_annealing_round(max_lr: float, min_lr: float, max_rounds: int, curr_round: int) -> float:
     min = min_lr
     max = max_lr
-    lr = min + (1/2)*(max-min)*(1+math.cos(curr_round/max_rounds*math.pi))
+    lr = min + (1/2)*(max-min) * \
+        (1+math.cos((curr_round-1)/(max_rounds-1)*math.pi))
     return lr

@@ -24,6 +24,7 @@ from common import test_model
 import strategy.tools.clustering as clustering
 from strategy.tools.confidence_select import prune_confident_crops
 from strategy.tools.clipping import clip_logits
+from strategy.common import cosine_annealing_round
 
 from flwr.common.logger import log
 from logging import WARNING, INFO
@@ -34,10 +35,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pathlib
+import random
 
 
 class FedDF_strategy(Strategy):
     def __init__(self,
+                 num_rounds: int,
                  distillation_dataloader: DataLoader,
                  evaluation_dataloader: DataLoader,
                  val_dataloader: DataLoader,
@@ -63,17 +66,26 @@ class FedDF_strategy(Strategy):
                  warm_start_interval: int = 30,
                  kmeans_n_crops: int = 2250,
                  kmeans_n_clusters: int = 10,
-                 kmeans_random_seed: int = 1,
                  kmeans_heuristics: str = "mixed",
                  kmeans_mixed_factor: str = "50-50",
-                 confidence_threshold: float = 0.5,
+                 kmeans_balancing: float = 0.5,
+                 confidence_threshold: float = 0.1,
+                 confidence_adaptive: bool = False,
+                 confidence_max_thresh: float = 0.5,
+                 fedprox_factor: float = 1.0,
+                 fedprox_adaptive: bool = False,
                  batch_size: int = 512,
                  num_cpu_workers: int = 4,
                  debug: bool = False,
                  use_kmeans: bool = True,
-                 use_entropy: bool = True
+                 use_entropy: bool = True,
+                 use_fedprox: bool = False,
+                 seed: int = None,
+                 cuda_deterministic: bool = False,
                  ) -> None:
         super().__init__()
+
+        self.num_rounds = num_rounds
 
         # DataLoader for distillation, valuation and evaluation set
         self.distillation_dataloader = distillation_dataloader
@@ -130,9 +142,10 @@ class FedDF_strategy(Strategy):
         self.kmeans_n_clusters = kmeans_n_clusters
         self.kmeans_heuristics = kmeans_heuristics
         self.kmeans_mixed_factor = kmeans_mixed_factor
+        self.kmeans_balancing = kmeans_balancing
         self.kmeans_random_seed = 1
-        if (kmeans_random_seed is not None):
-            self.kmeans_random_seed = kmeans_random_seed
+        if (seed is not None):
+            self.kmeans_random_seed = seed
 
         self.batch_size = batch_size
         self.num_cpu_workers = num_cpu_workers
@@ -140,15 +153,38 @@ class FedDF_strategy(Strategy):
         # configuration for conf_threshold selection
 
         self.confidence_threshold = confidence_threshold
+        self.confidence_adaptive = confidence_adaptive
+        self.confidence_max_thresh = confidence_max_thresh
+
+        # configuration for fedprox enable/disable
+
+        self.fedprox_factor = fedprox_factor
+        self.fedprox_adaptive = fedprox_adaptive
+
+        # storage of past results
+
+        self.hist_server_acc = []
 
         # storage for kmean selection from last round
 
         self.kmeans_last_crops = None
 
-        # enabling/disabling new features (crop selection)
+        # enabling/disabling new features (crop selection, fedprox)
 
         self.use_kmeans = use_kmeans
         self.use_entropy = use_entropy
+        self.use_fedprox = use_fedprox
+
+        # seeding operations
+
+        if (seed is not None):
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+
+        if (cuda_deterministic):
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
 
     def __repr__(self) -> str:
         rep = f'FedDF'
@@ -179,7 +215,19 @@ class FedDF_strategy(Strategy):
         config = {}
         if self.on_fit_config_fn_client is not None:
             # Custom fit config function provided
-            config = self.on_fit_config_fn_client(server_round)
+            if (self.fedprox_adaptive and len(self.hist_server_acc) > 3 and ((server_round-1) % 3 == 0)):
+                delta = self.hist_server_acc[-1] - self.hist_server_acc[-3]
+                if (delta < 0):
+                    self.fedprox_factor += 0.1
+                else:
+                    self.fedprox_factor -= 0.1
+
+            if (self.use_fedprox and self.debug):
+                log(INFO,
+                    f"Fedprox factor for next round : {self.fedprox_factor}")
+
+            config = self.on_fit_config_fn_client(
+                use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
 
         # performing kmeans on crops
 
@@ -192,17 +240,28 @@ class FedDF_strategy(Strategy):
         pruned_clusters = clusters
 
         if (self.use_kmeans):
-            print(f'Cluster score for round {server_round} = {cluster_score}')
+            if (self.debug):
+                log(INFO,
+                    f'Cluster score for round {server_round} = {cluster_score}')
             pruned_clusters = clustering.prune_clusters(
-                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor)
+                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor, kmeans_balancing=self.kmeans_balancing)
 
         # doing selection on the basis of confidence
 
         if (self.use_entropy):
-            pruned_clusters = prune_confident_crops(model=net, device=self.device, cluster_df=pruned_clusters,
-                                                    confidence_threshold=self.confidence_threshold, min_crops=5000, batch_size=self.batch_size, num_workers=self.num_cpu_workers)
+            confidence_threshold = self.confidence_threshold
+            if (self.confidence_adaptive):
+                confidence_threshold = 1 - cosine_annealing_round(max_lr=(1-self.confidence_threshold), min_lr=(
+                    1-self.confidence_max_thresh), max_rounds=self.num_rounds, curr_round=server_round)
 
-        log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
+            if (self.debug):
+                log(INFO,
+                    f'Current entropy removal threshold : {confidence_threshold}')
+            pruned_clusters = prune_confident_crops(
+                cluster_df=pruned_clusters, confidence_threshold=confidence_threshold)
+
+        if (self.debug):
+            log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
 
         # preparing for transport
 
@@ -273,7 +332,7 @@ class FedDF_strategy(Strategy):
         warm_start = False
 
         if (self.on_fit_config_fn_server is not None):
-            config = self.on_fit_config_fn_server(server_round)
+            config = self.on_fit_config_fn_server()
             warm_start = config['warm_start']
 
         # Aggregating logits using averaging
@@ -289,7 +348,7 @@ class FedDF_strategy(Strategy):
         # Aggregating new parameters for warm start using averaging
 
         if (warm_start and ((server_round <= self.warm_start_rounds) or (server_round % self.warm_start_interval == 0))):
-            print(f'Warm start at round {server_round}')
+            log(INFO, f'Warm start at round {server_round}')
             weights_results = [
                 (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
                 for _, fit_res in results
@@ -360,6 +419,7 @@ class FedDF_strategy(Strategy):
         """Evaluate model parameters using an evaluation function."""
         if self.evaluate_fn is None:
             # No evaluation function provided
+            self.hist_server_acc.append(0.0)
             return None
         parameters_ndarrays = parameters_to_ndarrays(parameters)
         eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
@@ -369,12 +429,14 @@ class FedDF_strategy(Strategy):
         loss, metrics = eval_res
         if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics, "evaluate", "server")
+
+        self.hist_server_acc.append(metrics['server_test_acc'])
         return loss, metrics
 
     @staticmethod
     def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, dataset_name: str, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
-        print("Performing server side distillation training...")
+        log(INFO, f'Performing server side distillation training...')
         net = init_model(dataset_name, model_type)
         set_parameters(net, global_parameters)
         criterion = nn.KLDivLoss(reduction='batchmean')
@@ -448,16 +510,17 @@ class FedDF_strategy(Strategy):
 
                 cur_step += 1
                 if (cur_step % log_interval == 0 and enable_step_logging):
-                    print(f"step {cur_step}, val_acc : {total_step_acc[-1]}")
+                    log(INFO,
+                        f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
-        print(f'Distillation training stopped at step number : {cur_step}')
+        log(INFO, f'Distillation training stopped at step number : {cur_step}')
 
         new_parameters = best_val_param
 
         train_res = {'fusion_loss': np.mean(
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
-        print(
+        log(INFO,
             f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}, best val accuracy : {best_val_acc}')
 
         return (new_parameters, train_res)
@@ -467,20 +530,23 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
-        def on_fit_config_fn_client(server_round: int) -> Dict[str, float]:
+    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_lr: bool = True) -> Callable:
+        def on_fit_config_fn_client(use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
             config = {
                 'lr': client_lr,
                 'epochs': client_epochs,
                 'clipping_factor': clipping_factor,
                 'use_clipping': use_clipping,
+                'use_fedprox': use_fedprox,
+                'fedprox_factor': fedprox_factor,
+                'use_adaptive_lr': use_adaptive_lr
             }
             return config
         return on_fit_config_fn_client
 
     @staticmethod
     def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
-        def on_fit_config_fn_server(server_round: int) -> Dict[str, float]:
+        def on_fit_config_fn_server() -> Dict[str, float]:
             config = {
                 "steps": distill_steps,
                 "early_stopping_steps": early_stop_steps,

@@ -60,13 +60,20 @@ parser.add_argument("--warm_start_interval", type=int, default=1)
 parser.add_argument("--kmeans_n_clusters", type=int, default=10)
 parser.add_argument("--kmeans_heuristics", type=str, default="mixed")
 parser.add_argument("--kmeans_mixed_factor", type=str, default="50-50")
+parser.add_argument("--kmeans_balancing", type=float, default=0.5)
 parser.add_argument("--use_kmeans", type=parse_bool, default=True)
 
-parser.add_argument("--confidence_threshold", type=float, default=0.5)
+parser.add_argument("--confidence_threshold", type=float, default=0.1)
+parser.add_argument("--confidence_adaptive", type=parse_bool, default=False)
+parser.add_argument("--confidence_max_thresh", type=float, default=0.5)
 parser.add_argument("--use_entropy", type=parse_bool, default=True)
 
 parser.add_argument("--clipping_factor", type=float, default=1.0)
 parser.add_argument("--use_clipping", type=parse_bool, default=True)
+
+parser.add_argument("--fedprox_factor", type=float, default=1.0)
+parser.add_argument("--fedprox_adaptive", type=parse_bool, default=False)
+parser.add_argument("--use_fedprox", type=parse_bool, default=False)
 
 parser.add_argument("--debug", type=parse_bool, default=False)
 parser.add_argument("--out_dir", type=str, default="./out")
