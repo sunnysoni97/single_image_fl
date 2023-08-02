@@ -107,6 +107,7 @@ if __name__ == "__main__":
     KMEANS_BALANCING = args.kmeans_balancing
 
     CONFIDENCE_THRESHOLD = args.confidence_threshold
+    CONFIDENCE_STRATEGY = args.confidence_strategy
     CONFIDENCE_ADAPTIVE = args.confidence_adaptive
     CONFIDENCE_MAX_THRESH = args.confidence_max_thresh
 
@@ -127,6 +128,8 @@ if __name__ == "__main__":
     log(DEBUG, "Arguments read")
 
     TOTAL_MEM = TOTAL_MEM*(1024**3)
+
+    # checking for dataset validity for selecting classes
 
     if (DATASET_NAME == "cifar10"):
         NUM_CLASSES = 10
@@ -299,6 +302,7 @@ if __name__ == "__main__":
                 kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
                 kmeans_balancing=KMEANS_BALANCING,
                 confidence_threshold=CONFIDENCE_THRESHOLD,
+                confidence_strategy=CONFIDENCE_STRATEGY,
                 confidence_adaptive=CONFIDENCE_ADAPTIVE,
                 confidence_max_thresh=CONFIDENCE_MAX_THRESH,
                 fedprox_factor=FEDPROX_FACTOR,

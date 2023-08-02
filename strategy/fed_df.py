@@ -70,6 +70,7 @@ class FedDF_strategy(Strategy):
                  kmeans_mixed_factor: str = "50-50",
                  kmeans_balancing: float = 0.5,
                  confidence_threshold: float = 0.1,
+                 confidence_strategy: str = "top",
                  confidence_adaptive: bool = False,
                  confidence_max_thresh: float = 0.5,
                  fedprox_factor: float = 1.0,
@@ -153,6 +154,7 @@ class FedDF_strategy(Strategy):
         # configuration for conf_threshold selection
 
         self.confidence_threshold = confidence_threshold
+        self.confidence_strategy = confidence_strategy
         self.confidence_adaptive = confidence_adaptive
         self.confidence_max_thresh = confidence_max_thresh
 
@@ -258,7 +260,7 @@ class FedDF_strategy(Strategy):
                 log(INFO,
                     f'Current entropy removal threshold : {confidence_threshold}')
             pruned_clusters = prune_confident_crops(
-                cluster_df=pruned_clusters, confidence_threshold=confidence_threshold)
+                cluster_df=pruned_clusters, confidence_threshold=confidence_threshold, confidence_strategy=self.confidence_strategy)
 
         if (self.debug):
             log(INFO, f'Number of selected crops : {len(pruned_clusters)}')
