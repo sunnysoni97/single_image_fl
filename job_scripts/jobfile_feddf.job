@@ -24,13 +24,13 @@ TOTAL_CPUS=18
 TOTAL_GPUS=1
 TOTAL_MEM=120
 
-TOTAL_IMGS=10000
+TOTAL_IMGS=20000
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=20
-NUM_ROUNDS=30
+NUM_ROUNDS=3
 FRACTION_FIT=0.4
 FRACTION_EVALUATE=0.0
 
@@ -39,11 +39,11 @@ PARTITION_ALPHA=10.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=512
-LOCAL_EPOCHS=20
+LOCAL_EPOCHS=10
 LOCAL_LR=0.05
 DISTILL_BATCH_SIZE=512
 SERVER_LR=0.005
-SERVER_STEPS=250
+SERVER_STEPS=100
 SERVER_EARLY_STEPS=1000
 USE_EARLY_STOPPING=False
 USE_ADAPTIVE_LR=False
@@ -68,6 +68,7 @@ KMEANS_MIXED_FACTOR="50-50"
 KMEANS_BALANCING=0.5
 
 CONFIDENCE_THRESHOLD=0.1
+CONFIDENCE_STRATEGY=top
 CONFIDENCE_ADAPTIVE=True
 CONFIDENCE_MAX_THRESH=0.5
 
@@ -78,12 +79,12 @@ FEDPROX_ADAPTIVE=True
 
 DATA_DIR=$TMPDIR'/'`date +"%s_%N"`
 OUT_DIR=$DATA_DIR'/out'
-DEBUG=False
+DEBUG=True
 
-USE_CLIPPING=False
-USE_ENTROPY=False
-USE_KMEANS=False
-USE_FEDPROX=False
+USE_CLIPPING=True
+USE_ENTROPY=True
+USE_KMEANS=True
+USE_FEDPROX=True
 
 while getopts "l::g::c::t::s::" flag
 do
@@ -142,6 +143,7 @@ echo "KMEANS_MIXED_FACTOR:$KMEANS_MIXED_FACTOR"
 echo "KMEANS_BALANCING:$KMEANS_BALANCING"
 
 echo "CONFIDENCE_THRESHOLD:$CONFIDENCE_THRESHOLD"
+echo "CONFIDENCE_STRATEGY:$CONFIDENCE_STRATEGY"
 echo "CONFIDENCE_ADAPTIVE:$CONFIDENCE_ADAPTIVE"
 echo "CONFIDENCE_MAX_THRESH:$CONFIDENCE_MAX_THRESH"
 
@@ -177,10 +179,10 @@ srun python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
     --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
-    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
+    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR --kmeans_balancing $KMEANS_BALANCING\
-    --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_adaptive $CONFIDENCE_ADAPTIVE --confidence_max_thresh $CONFIDENCE_MAX_THRESH\
+    --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_strategy $CONFIDENCE_STRATEGY --confidence_adaptive $CONFIDENCE_ADAPTIVE --confidence_max_thresh $CONFIDENCE_MAX_THRESH\
     --clipping_factor $CLIPPING_FACTOR\
     --fedprox_factor $FEDPROX_FACTOR --fedprox_adaptive $FEDPROX_ADAPTIVE\
     --out_dir $OUT_DIR --debug $DEBUG\
