@@ -7,15 +7,17 @@ TOTAL_CPUS=12
 TOTAL_GPUS=1
 TOTAL_MEM=12
 
+TOTAL_IMGS=20000
+
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=10
-NUM_ROUNDS=2
+NUM_ROUNDS=3
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
-DATASET_NAME=pathmnist
+DATASET_NAME=cifar10
 PARTITION_ALPHA=10.0
 PARTITION_VAL_RATIO=0.1
 
@@ -33,7 +35,7 @@ SEED=42
 CUDA_DETERMINISTIC=False
 
 USE_CROPS=True
-IMG_NAME=colonpath_sample.jpg
+IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
 NUM_DISTILL_IMAGES=10000
@@ -50,7 +52,7 @@ KMEANS_BALANCING=0.5
 
 CONFIDENCE_THRESHOLD=0.1
 CONFIDENCE_STRATEGY=top
-CONFIDENCE_ADAPTIVE=False
+CONFIDENCE_ADAPTIVE=True
 CONFIDENCE_MAX_THRESH=0.5
 
 CLIPPING_FACTOR=2.5
@@ -80,6 +82,8 @@ done
 
 echo "-----BEGIN-----"
 echo "-----SETTINGS-----"
+echo "TOTAL CROPS:$TOTAL_IMGS"
+
 echo "STRATEGY:$STRATEGY"
 echo "MODEL_NAME:$MODEL_NAME"
 
@@ -140,13 +144,13 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-# if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
-# then
-#     echo "---------"
-#     echo "Generating crops for FedDF"
-#     python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs 20000 --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
-#     echo "---------"
-# fi
+if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+then
+    echo "---------"
+    echo "Generating crops for FedDF"
+    python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs $TOTAL_IMGS --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
+    echo "---------"
+fi
     
 echo "Simulating $STRATEGY training"
 
@@ -158,7 +162,7 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
     --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
-    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES\
+    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR --kmeans_balancing $KMEANS_BALANCING\
     --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_strategy $CONFIDENCE_STRATEGY --confidence_adaptive $CONFIDENCE_ADAPTIVE --confidence_max_thresh $CONFIDENCE_MAX_THRESH\

@@ -95,6 +95,7 @@ if __name__ == "__main__":
     DISTILL_DATASET = args.distill_dataset
     DISTILL_ALPHA = args.distill_alpha
     NUM_DISTILL_IMAGES = args.num_distill_images
+    NUM_TOTAL_IMAGES = args.num_total_images
     DISTILL_TRANSFORMS = args.distill_transforms
 
     WARM_START = args.warm_start
@@ -296,6 +297,7 @@ if __name__ == "__main__":
                 debug=DEBUG,
                 warm_start_interval=WARM_START_INTERVAL,
                 kmeans_output_folder=out_kmeans_folder,
+                num_total_images=NUM_TOTAL_IMAGES,
                 kmeans_n_crops=NUM_DISTILL_IMAGES,
                 kmeans_n_clusters=KMEANS_N_CLUSTERS,
                 kmeans_heuristics=KMEANS_HEURISTICS,

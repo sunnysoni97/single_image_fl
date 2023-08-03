@@ -64,6 +64,7 @@ class FedDF_strategy(Strategy):
                  logger_fn=None,
                  warm_start_rounds: int = 30,
                  warm_start_interval: int = 30,
+                 num_total_images: int = 100000,
                  kmeans_n_crops: int = 2250,
                  kmeans_n_clusters: int = 10,
                  kmeans_heuristics: str = "mixed",
@@ -139,6 +140,7 @@ class FedDF_strategy(Strategy):
 
         self.kmeans_output_folder = kmeans_output_folder
         self.evaluation_labels = evaluation_labels
+        self.num_total_images = num_total_images
         self.kmeans_n_crops = kmeans_n_crops
         self.kmeans_n_clusters = kmeans_n_clusters
         self.kmeans_heuristics = kmeans_heuristics
@@ -241,21 +243,31 @@ class FedDF_strategy(Strategy):
 
         pruned_clusters = clusters
 
+        confidence_threshold = self.confidence_threshold
+
+        if (self.confidence_adaptive):
+            confidence_threshold = 1 - cosine_annealing_round(max_lr=(1-self.confidence_threshold), min_lr=(
+                1-self.confidence_max_thresh), max_rounds=self.num_rounds, curr_round=server_round)
+
+        kmeans_n_crops = self.kmeans_n_crops
+
+        if (self.use_kmeans and self.use_entropy):
+            kmeans_factor = self.kmeans_n_crops / \
+                ((1-confidence_threshold)*self.num_total_images)
+            kmeans_n_crops = int(kmeans_factor*self.num_total_images)
+
         if (self.use_kmeans):
             if (self.debug):
                 log(INFO,
                     f'Cluster score for round {server_round} = {cluster_score}')
+                log(INFO,
+                    f'Number of KMeans Crops for this round : {kmeans_n_crops}')
             pruned_clusters = clustering.prune_clusters(
-                raw_dataframe=clusters, n_crops=self.kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor, kmeans_balancing=self.kmeans_balancing)
+                raw_dataframe=clusters, n_crops=kmeans_n_crops, heuristic=self.kmeans_heuristics, heuristic_percentage=self.kmeans_mixed_factor, kmeans_balancing=self.kmeans_balancing)
 
         # doing selection on the basis of confidence
 
         if (self.use_entropy):
-            confidence_threshold = self.confidence_threshold
-            if (self.confidence_adaptive):
-                confidence_threshold = 1 - cosine_annealing_round(max_lr=(1-self.confidence_threshold), min_lr=(
-                    1-self.confidence_max_thresh), max_rounds=self.num_rounds, curr_round=server_round)
-
             if (self.debug):
                 log(INFO,
                     f'Current entropy removal threshold : {confidence_threshold}')
