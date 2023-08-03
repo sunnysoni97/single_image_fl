@@ -438,13 +438,23 @@ class FedDF_strategy(Strategy):
         parameters_ndarrays = parameters_to_ndarrays(parameters)
         eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
                                     dataset_name=self.dataset_name, test_loader=self.evaluation_dataloader, device=self.device)
+
+        val_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
+                                   dataset_name=self.dataset_name, test_loader=self.val_dataloader, device=self.device)
+
+        if val_res is None:
+            self.hist_server_acc.append(0.0)
+
+        _, val_met = val_res
+        self.hist_server_acc.append(val_met['server_test_acc'])
+
         if eval_res is None:
             return None
+
         loss, metrics = eval_res
         if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics, "evaluate", "server")
 
-        self.hist_server_acc.append(metrics['server_test_acc'])
         return loss, metrics
 
     @staticmethod
