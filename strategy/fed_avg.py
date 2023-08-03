@@ -21,7 +21,7 @@ class fed_avg_fn:
             if (adaptive_lr_round):
                 lr = cosine_annealing_round(
                     max_lr=local_lr, min_lr=1e-3, max_rounds=max_server_rounds, curr_round=server_round)
-                log(INFO, f"Current Round LR : {lr}")
+                log(INFO, f"Current Round Client LR : {lr}")
 
             config = {
                 'lr': lr,

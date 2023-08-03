@@ -231,7 +231,7 @@ class FedDF_strategy(Strategy):
                     f"Fedprox factor for next round : {self.fedprox_factor}")
 
             config = self.on_fit_config_fn_client(
-                use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
+                server_round=server_round, use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
 
         # performing kmeans on crops
 
@@ -544,10 +544,16 @@ class FedDF_strategy(Strategy):
 
 class fed_df_fn:
     @staticmethod
-    def get_on_fit_config_fn_client(client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_lr: bool = True) -> Callable:
-        def on_fit_config_fn_client(use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
+    def get_on_fit_config_fn_client(max_rounds: int = 30, client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_lr: bool = True, use_adaptive_lr_round: bool = False) -> Callable:
+        def on_fit_config_fn_client(server_round: int, use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
+            lr = client_lr
+            if (use_adaptive_lr_round):
+                lr = cosine_annealing_round(
+                    max_lr=client_lr, min_lr=1e-3, max_rounds=max_rounds, curr_round=server_round)
+                log(INFO, f"Current Round Client LR : {lr}")
+
             config = {
-                'lr': client_lr,
+                'lr': lr,
                 'epochs': client_epochs,
                 'clipping_factor': clipping_factor,
                 'use_clipping': use_clipping,
