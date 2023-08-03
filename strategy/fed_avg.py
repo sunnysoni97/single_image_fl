@@ -1,28 +1,34 @@
 from typing import Dict, Tuple
-from common import test_model
 from torch.utils.data import DataLoader
 import torch
 from flwr.common import (
     Parameters
 )
+from flwr.common.logger import log
+from logging import INFO
+
+from common import test_model
 from strategy.common import cosine_annealing_round
 
 
 class fed_avg_fn:
     @staticmethod
-    def get_fit_config_fn(local_lr: float = 0.005, local_epochs: int = 40, adaptive_lr_round: bool = False, max_server_rounds: int = 30):
+    def get_fit_config_fn(local_lr: float = 0.005, local_epochs: int = 40, adaptive_lr: bool = False, adaptive_lr_round: bool = False, max_server_rounds: int = 30, use_fedprox: bool = False, fedprox_factor: float = 1.0):
         def on_fit_config_fn(server_round: int) -> Dict[str, float]:
 
             lr = local_lr
 
-            if(adaptive_lr_round):
+            if (adaptive_lr_round):
                 lr = cosine_annealing_round(
-                    max_lr=local_lr, min_lr=1e-5, max_rounds=max_server_rounds, curr_round=server_round)
-                print(f"Current LR : {lr}")
+                    max_lr=local_lr, min_lr=1e-3, max_rounds=max_server_rounds, curr_round=server_round)
+                log(INFO, f"Current Round LR : {lr}")
 
             config = {
                 'lr': lr,
                 'epochs': local_epochs,
+                'fedprox_factor': fedprox_factor,
+                'use_fedprox': use_fedprox,
+                'use_adaptive_lr': adaptive_lr,
             }
             return config
 

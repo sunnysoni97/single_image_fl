@@ -43,6 +43,7 @@ parser.add_argument("--server_steps", type=int, default=500)
 parser.add_argument("--server_early_steps", type=int, default=5e2)
 parser.add_argument("--use_early_stopping", type=parse_bool, default=False)
 parser.add_argument("--use_adaptive_lr", type=parse_bool, default=False)
+parser.add_argument("--use_adaptive_lr_round", type=parse_bool, default=False)
 
 parser.add_argument("--seed", type=int, default=None)
 parser.add_argument("--cuda_deterministic", type=parse_bool, default=False)

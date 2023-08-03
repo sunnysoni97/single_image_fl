@@ -87,6 +87,7 @@ if __name__ == "__main__":
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
     USE_ADAPTIVE_LR = args.use_adaptive_lr
+    USE_ADAPTIVE_LR_ROUND = args.use_adaptive_lr_round
 
     SEED = args.seed
     CUDA_DETERMINISTIC = args.cuda_deterministic
@@ -162,16 +163,18 @@ if __name__ == "__main__":
 
     # doing operations on output folder
 
-    log(DEBUG, "Creating output folder for visualisation")
+    if (FED_STRATEGY == 'feddf'):
 
-    experiment_time = f'{time.time_ns()}'
-    experiment_dir = os.path.join(OUT_DIR, experiment_time)
+        log(DEBUG, "Creating output folder for visualisation")
 
-    out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
+        experiment_time = f'{time.time_ns()}'
+        experiment_dir = os.path.join(OUT_DIR, experiment_time)
 
-    os.makedirs(out_kmeans_folder, exist_ok=True)
+        out_kmeans_folder = os.path.join(experiment_dir, 'kmean_visualisation')
 
-    log(DEBUG, "Folder created for visualisation")
+        os.makedirs(out_kmeans_folder, exist_ok=True)
+
+        log(DEBUG, "Folder created for visualisation")
 
     # setting up private datasets and test datasets
 
@@ -250,7 +253,7 @@ if __name__ == "__main__":
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=strategy.FedAvg(
                 on_fit_config_fn=fed_avg_fn.get_fit_config_fn(
-                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS),
+                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR_ROUND, adaptive_lr=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS, use_fedprox=USE_FEDPROX, fedprox_factor=FEDPROX_FACTOR),
                 on_evaluate_config_fn=fed_avg_fn.get_eval_config_fn(),
                 initial_parameters=common_functions.initialise_parameters(
                     MODEL_NAME, DATASET_NAME),

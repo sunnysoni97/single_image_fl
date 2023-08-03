@@ -9,7 +9,7 @@ TOTAL_MEM=12
 
 TOTAL_IMGS=20000
 
-STRATEGY=feddf
+STRATEGY=fedavg
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=10
@@ -30,6 +30,7 @@ SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
 USE_EARLY_STOPPING=False
 USE_ADAPTIVE_LR=False
+USE_ADAPTIVE_LR_ROUND=False
 
 SEED=42
 CUDA_DETERMINISTIC=False
@@ -67,7 +68,7 @@ DEBUG=True
 USE_CLIPPING=True
 USE_ENTROPY=True
 USE_KMEANS=True
-USE_FEDPROX=True
+USE_FEDPROX=False
 
 while getopts "l::g::c::t::s::" flag
 do
@@ -105,6 +106,7 @@ echo "SERVER_STEPS:$SERVER_STEPS"
 echo "SERVER_EARLY_STEPS:$SERVER_EARLY_STEPS"
 echo "USE_EARLY_STOPPING:$USE_EARLY_STOPPING"
 echo "USE_ADAPTIVE_LR:$USE_ADAPTIVE_LR"
+echo "USE_ADAPTIVE_LR_ROUND:$USE_ADAPTIVE_LR_ROUND"
 
 echo "SEED:$SEED"
 echo "CUDA_DETERMINISTIC:$CUDA_DETERMINISTIC"
@@ -160,7 +162,7 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --client_gpus $CLIENT_GPUS --client_cpus $CLIENT_CPUS --server_cpus $SERVER_CPUS --total_cpus $TOTAL_CPUS --total_gpus $TOTAL_GPUS --total_mem $TOTAL_MEM\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
-    --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR\
+    --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR --use_adaptive_lr_round $USE_ADAPTIVE_LR_ROUND\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
