@@ -26,6 +26,7 @@ from data_loader_scripts.create_dataloader import create_dataloader
 from common import test_model
 from strategy.tools.clustering import extract_from_transport
 from strategy.tools.clipping import clip_logits
+from client.common import fedprox_term
 
 
 def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray], train_loader: DataLoader, distill_loader: DataLoader, config: dict, DEVICE: torch.device, enable_epoch_logging: bool = False) -> Tuple[List[np.ndarray], List[np.ndarray], Dict[str, float]]:
@@ -33,12 +34,6 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
     model = init_model(dataset_name, model_name)
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
-
-    if (config['use_fedprox']):
-
-        def fedprox_term(new_wt: torch.tensor, past_wt: torch.tensor, factor: float):
-            penalty = factor/2*(torch.sum(new_wt-past_wt))**2
-            return penalty
 
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
 
