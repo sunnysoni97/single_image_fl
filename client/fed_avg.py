@@ -4,10 +4,12 @@ import torch
 from typing import Dict, List, Tuple
 import numpy as np
 import flwr as fl
-from models import get_parameters, set_parameters, init_model
-from common import test_model
 from pathlib import Path
+
+from models import get_parameters, set_parameters, init_model, params_to_tensors
+from common import test_model
 from data_loader_scripts.create_dataloader import create_dataloader
+from client.common import fedprox_term
 
 # function for training a model
 
@@ -17,8 +19,15 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
     set_parameters(model, parameters)
     criterion = nn.CrossEntropyLoss(reduction="mean")
     optimizer = torch.optim.Adam(params=model.parameters(), lr=config['lr'])
+
+    if (config['use_adaptive_lr']):
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer=optimizer, T_max=config['epochs'])
+
     model.train()
     model.to(DEVICE)
+
+    initial_parameters = params_to_tensors(model.parameters())
 
     total_epoch_loss = []
     total_epoch_acc = []
@@ -30,19 +39,27 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             outputs = model(images)
             loss = criterion(outputs, labels)
+            epoch_loss += loss.item()
+
+            if (config['use_fedprox']):
+                loss += fedprox_term(new_wt=params_to_tensors(model.parameters()),
+                                     past_wt=initial_parameters, factor=config['fedprox_factor'])
+
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
-            epoch_loss += loss.item()
             total += labels.size(0)
             correct += (torch.max(outputs.detach(), 1)
                         [1] == labels).sum().item()
 
+        if (config['use_adaptive_lr']):
+            scheduler.step()
+
         epoch_acc = correct/total
         total_epoch_loss.append(epoch_loss)
         total_epoch_acc.append(epoch_acc)
-        if((epoch+1) % 10 == 0 and enable_epoch_logging):
+        if ((epoch+1) % 10 == 0 and enable_epoch_logging):
             print(f'Epoch {epoch+1} : loss {epoch_loss}, acc {epoch_acc}')
 
     new_parameters = get_parameters(model)

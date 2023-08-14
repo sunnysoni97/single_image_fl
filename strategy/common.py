@@ -2,9 +2,12 @@ from flwr.common import (
     ndarrays_to_parameters,
     Parameters
 )
-from models import init_model, get_parameters
 from typing import Dict
 import math
+from flwr.common.logger import log
+from logging import INFO
+
+from models import init_model, get_parameters
 
 
 class common_functions:
@@ -29,8 +32,8 @@ class common_functions:
         avg_train_loss = total_train_loss/total_clients
         avg_train_acc = total_train_acc/total_clients
 
-        print(f'Average local training loss : {avg_train_loss}')
-        print(f'Average local training accuracy : {avg_train_acc}')
+        log(INFO,
+            f'Avg. local train loss : {avg_train_loss}, train acc : {avg_train_acc}')
         return {'avg_train_loss': avg_train_loss, 'avg_train_acc': avg_train_acc}
 
     @staticmethod
