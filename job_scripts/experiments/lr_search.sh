@@ -2,8 +2,8 @@
 
 echo "Queuing jobs for your hyper-parameter tuning experiments..."
 
-server_lr='0.003 0.008'
-client_lr='0.3 0.8'
+server_lr='0.005'
+client_lr='0.1 0.05 0.01 0.005 0.001'
 
 for slr in $server_lr
 do
