@@ -9,8 +9,8 @@ from multiseed_helper import combine_seeds
 def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_title: str = ""):
     dict_values = list(data_dict.values())
 
-    lines_y = [x[0] for x in dict_values]
-    lines_uncertainty = [x[1] for x in dict_values]
+    lines_y = [x[0]*100 for x in dict_values]
+    lines_uncertainty = [x[1]*100 for x in dict_values]
     lines_name = list(data_dict.keys())
 
     def get_max(x): return np.max(x)
@@ -28,7 +28,7 @@ def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_
                     linestyle="dashed", linewidth=0.75)
 
     plt.xlabel("Round")
-    plt.ylabel("Accuracy/100")
+    plt.ylabel("Accuracy (%)")
     plt.title(f'{experiment_title}')
     handles, labels = plt.gca().get_legend_handles_labels()
     handles, labels = zip(
@@ -45,7 +45,7 @@ def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_
         f.write(f'Acc. Stats for the experiment : {experiment_title}\n\n')
         for line_name, line_values, max_value, uncertainty in zip(lines_name, lines_y, max_lines_y, lines_uncertainty):
             f.write(
-                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {max_value} \nMax Round : {np.where(line_values == max_value)[0][0]} \nUncertainty : {uncertainty}\n\n')
+                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {np.round(max_value,2)} \nMax Round : {np.where(line_values == max_value)[0][0]} \nUncertainty : {uncertainty}\n\n')
 
 
 script_dir = Path(__file__).resolve().parent
@@ -61,7 +61,8 @@ parser.add_argument("--criteria", type=str, default="",
 parser.add_argument("--criteria_labels", type=str, default="")
 parser.add_argument("--seed_count", type=int, default=None)
 parser.add_argument("--experiment_name", type=str,
-                    default="Accuracy Comparison")
+                    default="")
+parser.add_argument("--legend_title", type=str, default="")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -70,6 +71,7 @@ if __name__ == "__main__":
     criteria_labels = args.criteria_labels
     seed_count = args.seed_count
     experiment_name = args.experiment_name
+    legend_title = args.legend_title
     output_dir = args.output_dir
 
     file_list = os.listdir(data_dir)
@@ -101,13 +103,15 @@ if __name__ == "__main__":
     else:
         criteria_labels = []
 
-    if (criteria_labels or criteria == ""):
-        legend_title = "Setup"
-    else:
-        if (type(criteria) == type([])):
-            legend_title = '-'.join(criteria)
-        else:
-            legend_title = criteria
+    if (legend_title == ""):
+        new_legend = input("Enter title of legend (optional) : ")
+        if (new_legend != ""):
+            legend_title = new_legend
+
+    if (experiment_name == ""):
+        new_name = input("Enter title of graph (optional) : ")
+        if (new_name != ""):
+            experiment_name = new_name
 
     lines = combine_seeds(n_seeds=seed_count, dir_path=data_dir,
                           criteria=criteria, criteria_labels=criteria_labels)
