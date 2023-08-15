@@ -45,7 +45,7 @@ def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_
         f.write(f'Acc. Stats for the experiment : {experiment_title}\n\n')
         for line_name, line_values, max_value, uncertainty in zip(lines_name, lines_y, max_lines_y, lines_uncertainty):
             f.write(
-                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {np.round(max_value,2)} \nMax Round : {np.where(line_values == max_value)[0][0]} \nUncertainty : {uncertainty}\n\n')
+                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {np.round(max_value,2)} \nMax Round : {np.where(line_values == max_value)[0][0]} \nUncertainty : {np.round(uncertainty,2)}\n\n')
 
 
 script_dir = Path(__file__).resolve().parent
