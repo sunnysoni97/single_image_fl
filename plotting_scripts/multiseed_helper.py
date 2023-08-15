@@ -94,7 +94,9 @@ def combine_seeds(n_seeds: int, dir_path: Path, criteria: Union[List, str], crit
     if (criteria_labels):
         keys = criteria_labels
     elif (criteria != ""):
-        keys = np.unique(np.array(c_values)).tolist()
+        c_values = np.array(c_values)
+        _, idx = np.unique(c_values, return_index=True)
+        keys = c_values[np.sort(idx)].tolist()
     else:
         keys = [f'Line {int(i/2)}' for i in range(0, len(file_list), n_seeds)]
 
