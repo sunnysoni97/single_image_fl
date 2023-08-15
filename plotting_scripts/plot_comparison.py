@@ -7,8 +7,12 @@ from multiseed_helper import combine_seeds
 
 
 def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_title: str = ""):
-    lines_y = list(data_dict.values())
+    dict_values = list(data_dict.values())
+
+    lines_y = [x[0] for x in dict_values]
+    lines_uncertainty = [x[1] for x in dict_values]
     lines_name = list(data_dict.keys())
+
     def get_max(x): return np.max(x)
     max_lines_y = [get_max(x) for x in lines_y]
     no_of_rounds = len(lines_y[0])
@@ -39,9 +43,9 @@ def plot_graph(data_dict: dict, legend_title: str, output_dir: Path, experiment_
 
     with open(text_file_path, 'wt') as f:
         f.write(f'Acc. Stats for the experiment : {experiment_title}\n\n')
-        for line_name, line_values, max_value in zip(lines_name, lines_y, max_lines_y):
+        for line_name, line_values, max_value, uncertainty in zip(lines_name, lines_y, max_lines_y, lines_uncertainty):
             f.write(
-                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {max_value} \nMax Round : {np.where(line_values == max_value)[0][0]}\n\n')
+                f'Line name : {line_name}\nAcc values : {line_values}\nMax Acc. : {max_value} \nMax Round : {np.where(line_values == max_value)[0][0]} \nUncertainty : {uncertainty}\n\n')
 
 
 script_dir = Path(__file__).resolve().parent
