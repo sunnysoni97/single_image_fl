@@ -11,7 +11,7 @@ seeds='42 84'
 fedprox_factors='0.0 0.5 1.0 1.5 2.0'
 
 
-for ff in $fedprox_factor
+for ff in $fedprox_factors
 do
     for seed in $seeds
     do
