@@ -180,13 +180,12 @@ if __name__ == "__main__":
 
     log(DEBUG, "Commencing dataset download")
 
-    train_data_path, test_set = download_dataset(DATA_DIR, DATASET_NAME)
+    train_data_path, test_set, test_labels = download_dataset(
+        DATA_DIR, DATASET_NAME)
     kwargs_test_loader = {"num_workers": CLIENT_CPUS,
                           "pin_memory": True, "drop_last": False}
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
-
-    test_labels = [f'class_{x}' for x in range(NUM_CLASSES)]
 
     log(DEBUG, "Dataset has been downloaded")
 
