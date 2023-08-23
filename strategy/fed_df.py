@@ -189,6 +189,7 @@ class FedDF_strategy(Strategy):
         if (cuda_deterministic):
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
+            torch.use_deterministic_algorithms(True)
 
     def __repr__(self) -> str:
         rep = f'FedDF'

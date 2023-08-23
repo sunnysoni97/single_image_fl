@@ -158,6 +158,7 @@ if __name__ == "__main__":
     if (CUDA_DETERMINISTIC):
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
+        torch.use_deterministic_algorithms(True)
 
     log(DEBUG, "RNG Seeded")
 

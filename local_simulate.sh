@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
 CLIENT_GPUS=0.5
 CLIENT_CPUS=2
 SERVER_CPUS=10
@@ -33,7 +35,7 @@ USE_ADAPTIVE_LR=False
 USE_ADAPTIVE_LR_ROUND=False
 
 SEED=42
-CUDA_DETERMINISTIC=False
+CUDA_DETERMINISTIC=True
 
 USE_CROPS=True
 IMG_NAME=ameyoko.jpg
@@ -66,8 +68,8 @@ OUT_DIR=./results/out
 DEBUG=False
 
 USE_CLIPPING=True
-USE_ENTROPY=True
-USE_KMEANS=True
+USE_ENTROPY=False
+USE_KMEANS=False
 USE_FEDPROX=False
 
 while getopts "l::g::c::k::b::t::f::s::" flag

@@ -120,6 +120,7 @@ class FlowerClient(fl.client.Client):
         if (cuda_deterministic):
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
+            torch.use_deterministic_algorithms(True)
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
         # Build and return response
