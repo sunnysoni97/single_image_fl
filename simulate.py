@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
     if (FED_STRATEGY == "fedavg"):
         def client_fn(cid) -> client.fed_avg.FlowerClient:
-            return client.fed_avg.FlowerClient(cid, MODEL_NAME, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE)
+            return client.fed_avg.FlowerClient(cid, MODEL_NAME, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
 
     elif (FED_STRATEGY == "feddf"):
         if (USE_CROPS):
@@ -253,7 +253,7 @@ if __name__ == "__main__":
             config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
             strategy=strategy.FedAvg(
                 on_fit_config_fn=fed_avg_fn.get_fit_config_fn(
-                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR_ROUND, adaptive_lr=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS, use_fedprox=USE_FEDPROX, fedprox_factor=FEDPROX_FACTOR),
+                    local_lr=LOCAL_LR, local_epochs=LOCAL_EPOCHS, adaptive_lr_round=USE_ADAPTIVE_LR_ROUND, adaptive_lr=USE_ADAPTIVE_LR, max_server_rounds=NUM_ROUNDS, use_fedprox=USE_FEDPROX, fedprox_factor=FEDPROX_FACTOR, use_clipping=USE_CLIPPING, clipping_factor=CLIPPING_FACTOR),
                 on_evaluate_config_fn=fed_avg_fn.get_eval_config_fn(),
                 initial_parameters=common_functions.initialise_parameters(
                     MODEL_NAME, DATASET_NAME),

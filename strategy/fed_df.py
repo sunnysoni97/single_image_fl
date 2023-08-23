@@ -494,10 +494,13 @@ class FedDF_strategy(Strategy):
                     break
 
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                outputs = net(images)
                 if (config['use_clipping']):
+                    outputs_temp = net(images)
                     outputs = clip_logits(
-                        outputs=outputs, scaling_factor=config['clipping_factor'])
+                        outputs=outputs_temp, scaling_factor=config['clipping_factor'])
+                else:
+                    outputs = net(images)
+
                 outputs = F.log_softmax(outputs/temperature, dim=1)
                 labels = F.softmax(labels/temperature, dim=1)
                 loss = criterion(outputs, labels)

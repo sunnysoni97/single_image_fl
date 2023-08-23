@@ -15,8 +15,6 @@ module purge
 module load 2022
 module load Anaconda3/2022.05
 
-export CUBLAS_WORKSPACE_CONFIG=:4096:8
-
 source activate single_image_fl
 
 CLIENT_GPUS=0.125
@@ -174,6 +172,11 @@ then
     echo "Generating crops for FedDF"
     srun python ./make_single_img_dataset.py --targetpath $DATA_DIR --num_imgs $TOTAL_IMGS --seed $SEED --imgpath "./static/single_images/$IMG_NAME" --threads $TOTAL_CPUS
     echo "---------"
+fi
+
+if [ $CUDA_DETERMINISTIC == "True" ]
+then
+    export CUBLAS_WORKSPACE_CONFIG=:16:8
 fi
     
 echo "Simulating $STRATEGY training"
