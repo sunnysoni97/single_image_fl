@@ -44,7 +44,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
     model.train()
     model.to(DEVICE)
 
-    initial_parameters = params_to_tensors(model.parameters())
+    initial_parameters = params_to_tensors(model.parameters()).detach()
 
     total_epoch_loss = []
     total_epoch_acc = []
@@ -54,16 +54,24 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
         for images, labels in train_loader:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
-            outputs = model(images)
+
             if (config['use_clipping']):
+                outputs_temp = model(images)
                 outputs = clip_logits(
-                    outputs=outputs, scaling_factor=config['clipping_factor'])
-            loss = criterion(outputs, labels)
-            epoch_loss += loss.item()
+                    outputs=outputs_temp, scaling_factor=config['clipping_factor'])
+            else:
+                outputs = outputs_temp
 
             if (config['use_fedprox']):
-                loss += fedprox_term(new_wt=params_to_tensors(model.parameters()),
-                                     past_wt=initial_parameters, factor=config['fedprox_factor'])
+                loss_temp = criterion(outputs, labels)
+                epoch_loss += loss_temp.item()
+                penalty = fedprox_term(new_wt=params_to_tensors(model.parameters()),
+                                       past_wt=initial_parameters, factor=config['fedprox_factor'])
+                loss = loss_temp + penalty
+
+            else:
+                loss = criterion(outputs, labels)
+                epoch_loss += loss.item()
 
             loss.backward()
             optimizer.step()
@@ -120,6 +128,7 @@ class FlowerClient(fl.client.Client):
         if (cuda_deterministic):
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
+            torch.use_deterministic_algorithms(True)
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
         # Build and return response

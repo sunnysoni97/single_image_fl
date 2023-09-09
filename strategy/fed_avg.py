@@ -13,7 +13,7 @@ from strategy.common import cosine_annealing_round
 
 class fed_avg_fn:
     @staticmethod
-    def get_fit_config_fn(local_lr: float = 0.005, local_epochs: int = 40, adaptive_lr: bool = False, adaptive_lr_round: bool = False, max_server_rounds: int = 30, use_fedprox: bool = False, fedprox_factor: float = 1.0):
+    def get_fit_config_fn(local_lr: float = 0.005, local_epochs: int = 40, adaptive_lr: bool = False, adaptive_lr_round: bool = False, max_server_rounds: int = 30, use_fedprox: bool = False, fedprox_factor: float = 1.0, use_clipping: bool = False, clipping_factor: float = 2.5):
         def on_fit_config_fn(server_round: int) -> Dict[str, float]:
 
             lr = local_lr
@@ -29,6 +29,8 @@ class fed_avg_fn:
                 'fedprox_factor': fedprox_factor,
                 'use_fedprox': use_fedprox,
                 'use_adaptive_lr': adaptive_lr,
+                'use_clipping': use_clipping,
+                'clipping_factor': clipping_factor
             }
             return config
 

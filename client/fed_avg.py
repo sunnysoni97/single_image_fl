@@ -5,11 +5,13 @@ from typing import Dict, List, Tuple
 import numpy as np
 import flwr as fl
 from pathlib import Path
+import random
 
 from models import get_parameters, set_parameters, init_model, params_to_tensors
 from common import test_model
 from data_loader_scripts.create_dataloader import create_dataloader
 from client.common import fedprox_term
+from strategy.tools.clipping import clip_logits
 
 # function for training a model
 
@@ -27,7 +29,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
     model.train()
     model.to(DEVICE)
 
-    initial_parameters = params_to_tensors(model.parameters())
+    initial_parameters = params_to_tensors(model.parameters()).detach()
 
     total_epoch_loss = []
     total_epoch_acc = []
@@ -37,13 +39,23 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
         for images, labels in train_loader:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            epoch_loss += loss.item()
+            if (config['use_clipping']):
+                outputs_temp = model(images)
+                outputs = clip_logits(
+                    outputs=outputs_temp, scaling_factor=config['clipping_factor'])
+            else:
+                outputs = model(images)
 
             if (config['use_fedprox']):
-                loss += fedprox_term(new_wt=params_to_tensors(model.parameters()),
-                                     past_wt=initial_parameters, factor=config['fedprox_factor'])
+                loss_temp = criterion(outputs, labels)
+                epoch_loss += loss_temp.item()
+                penalty = fedprox_term(new_wt=params_to_tensors(model.parameters()),
+                                       past_wt=initial_parameters, factor=config['fedprox_factor'])
+                loss = loss_temp + penalty
+
+            else:
+                loss = criterion(outputs, labels)
+                epoch_loss += loss.item()
 
             loss.backward()
             optimizer.step()
@@ -69,7 +81,7 @@ def train_model(model_name: str, dataset_name: str, parameters: List[np.ndarray]
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device) -> None:
+    def __init__(self, cid: str, model_name: str, dataset_name: str, fed_dir: Path, batch_size: int, num_cpu_workers: int, device: torch.device, seed: int = None, cuda_deterministic: bool = False) -> None:
         self.cid = cid
         self.model_name = model_name
         self.dataset_name = dataset_name
@@ -78,6 +90,16 @@ class FlowerClient(fl.client.NumPyClient):
         self.num_cpu_workers = num_cpu_workers
         self.device = device
         self.parameters = None
+
+        if (seed is not None):
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+
+        if (cuda_deterministic):
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+            torch.use_deterministic_algorithms(True)
 
     def get_parameters(self, config) -> List[np.ndarray]:
         return self.parameters

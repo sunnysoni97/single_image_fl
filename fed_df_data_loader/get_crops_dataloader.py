@@ -4,12 +4,13 @@ import numpy as np
 from torch.utils.data import DataLoader
 import multiprocessing as mp
 from joblib import Parallel, delayed, parallel_backend
+from typing import Tuple
 
 from data_loader_scripts.create_dataloader import TorchVision_FL
 from fed_df_data_loader.common import get_distill_transforms
 
 
-def __fetch_files(file_list: list) -> list:
+def __fetch_files(file_list: list, thread_no: int) -> Tuple[list, int]:
     im_list = []
 
     for file_name in file_list:
@@ -17,14 +18,14 @@ def __fetch_files(file_list: list) -> list:
             im = file.copy()
         im_list.append(im)
 
-    return im_list
+    return im_list, thread_no
 
 
 def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar10", batch_size: int = 32, num_workers: int = 0, distill_transforms: str = "v0") -> DataLoader:
 
     path = path_to_crops
-    files = [os.path.join(path, f) for f in os.listdir(
-        path) if os.path.isfile(os.path.join(path, f))]
+    files = [os.path.join(path, f) for f in sorted(os.listdir(
+        path)) if os.path.isfile(os.path.join(path, f))]
 
     no_threads = num_workers
     if (num_workers == 0):
@@ -34,10 +35,12 @@ def get_distill_imgloader(path_to_crops: os.PathLike, dataset_name: str = "cifar
 
     with parallel_backend(backend='multiprocessing', n_jobs=no_threads):
         images_split = Parallel()(delayed(__fetch_files)(
-            files_split[i]) for i in range(no_threads))
+            files_split[i], i) for i in range(no_threads))
+
+    images_split = sorted(images_split, key=lambda x: x[1])
 
     image_list = []
-    for img_list_thread in images_split:
+    for img_list_thread, _ in images_split:
         image_list.extend(img_list_thread)
 
     no_of_images = len(image_list)

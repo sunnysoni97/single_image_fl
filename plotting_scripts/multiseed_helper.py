@@ -94,7 +94,9 @@ def combine_seeds(n_seeds: int, dir_path: Path, criteria: Union[List, str], crit
     if (criteria_labels):
         keys = criteria_labels
     elif (criteria != ""):
-        keys = np.unique(np.array(c_values)).tolist()
+        c_values = np.array(c_values)
+        _, idx = np.unique(c_values, return_index=True)
+        keys = c_values[np.sort(idx)].tolist()
     else:
         keys = [f'Line {int(i/2)}' for i in range(0, len(file_list), n_seeds)]
 
@@ -109,12 +111,30 @@ def combine_seeds(n_seeds: int, dir_path: Path, criteria: Union[List, str], crit
                         indices_or_sections=n_sections)
 
     new_acc = []
+    uncertainty = []
     for split_view in acc_list:
         avg_acc = np.mean(a=split_view, axis=0)
+        best_avg = np.max(avg_acc)
+        best_all_seeds = []
+
+        for line in split_view:
+            best_val = np.max(line)
+            best_all_seeds.append(best_val)
+
+        min = np.min(best_all_seeds)
+        max = np.max(best_all_seeds)
+
+        uncer_val = (best_avg-min) if (best_avg -
+                                       min) > (max-best_avg) else (max-best_avg)
+
         new_acc.append(avg_acc)
+        uncertainty.append(uncer_val)
+
+    max_mean = np.max(avg_acc)
+    max_min = np.min([np.max(x) for x in split_view])
 
     data_dict = {}
-    for key, line in zip(keys, new_acc):
-        data_dict[key] = line
+    for key, line, uncer_val in zip(keys, new_acc, uncertainty):
+        data_dict[key] = (line, uncer_val)
 
     return data_dict

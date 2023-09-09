@@ -1,30 +1,32 @@
 #!/bin/bash
 
+export CUBLAS_WORKSPACE_CONFIG=:16:8
+
 CLIENT_GPUS=0.5
 CLIENT_CPUS=2
-SERVER_CPUS=12
+SERVER_CPUS=10
 TOTAL_CPUS=12
 TOTAL_GPUS=1
 TOTAL_MEM=12
 
-TOTAL_IMGS=20000
+TOTAL_IMGS=1000
 
 STRATEGY=feddf
 MODEL_NAME=resnet8
 
 NUM_CLIENTS=10
-NUM_ROUNDS=4
+NUM_ROUNDS=2
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
 DATASET_NAME=cifar10
-PARTITION_ALPHA=10.0
+PARTITION_ALPHA=100.0
 PARTITION_VAL_RATIO=0.1
 
-BATCH_SIZE=512
+BATCH_SIZE=256
 LOCAL_EPOCHS=5
-LOCAL_LR=0.05
-DISTILL_BATCH_SIZE=512
+LOCAL_LR=0.01
+DISTILL_BATCH_SIZE=256
 SERVER_LR=0.005
 SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
@@ -33,50 +35,53 @@ USE_ADAPTIVE_LR=False
 USE_ADAPTIVE_LR_ROUND=False
 
 SEED=42
-CUDA_DETERMINISTIC=False
+CUDA_DETERMINISTIC=True
 
 USE_CROPS=True
 IMG_NAME=ameyoko.jpg
-DISTILL_DATASET=cifar100
+DISTILL_DATASET=organamnist
 DISTILL_ALPHA=1.0
-NUM_DISTILL_IMAGES=10000
+NUM_DISTILL_IMAGES=500
 DISTILL_TRANSFORMS=v0
 
-WARM_START=False
+WARM_START=True
 WARM_START_ROUNDS=1
 WARM_START_INTERVAL=1
 
-KMEANS_N_CLUSTERS=50
-KMEANS_HEURISTICS=easy
+KMEANS_N_CLUSTERS=1000
+KMEANS_HEURISTICS=hard
 KMEANS_MIXED_FACTOR="50-50"
-KMEANS_BALANCING=0.5
+KMEANS_BALANCING=1.0
 
-CONFIDENCE_THRESHOLD=0.1
+CONFIDENCE_THRESHOLD=0.9
 CONFIDENCE_STRATEGY=top
-CONFIDENCE_ADAPTIVE=True
+CONFIDENCE_ADAPTIVE=False
 CONFIDENCE_MAX_THRESH=0.5
 
 CLIPPING_FACTOR=2.5
 
 FEDPROX_FACTOR=1.0
-FEDPROX_ADAPTIVE=True
+FEDPROX_ADAPTIVE=False
 
-DATA_DIR='./data'
-OUT_DIR='./results/out'
-DEBUG=True
+DATA_DIR=./data
+OUT_DIR=./results/out
+DEBUG=False
 
 USE_CLIPPING=True
 USE_ENTROPY=True
 USE_KMEANS=True
 USE_FEDPROX=True
 
-while getopts "l::g::c::t::s::" flag
+while getopts "l::g::c::k::b::t::f::s::" flag
 do
     case "${flag}" in
         l) LOCAL_LR=${OPTARG};;
         g) SERVER_LR=${OPTARG};;
         c) CLIPPING_FACTOR=${OPTARG};;
+        k) KMEANS_N_CLUSTERS=${OPTARG};;
+        b) KMEANS_BALANCING=${OPTARG};;
         t) CONFIDENCE_THRESHOLD=${OPTARG};;
+        f) FEDPROX_FACTOR=${OPTARG};;
         s) SEED=${OPTARG};;
     esac
 done
@@ -161,10 +166,10 @@ python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
     --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS --client_cpus $CLIENT_CPUS --server_cpus $SERVER_CPUS --total_cpus $TOTAL_CPUS --total_gpus $TOTAL_GPUS --total_mem $TOTAL_MEM\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
-    --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS --distill_transforms $DISTILL_TRANSFORMS\
+    --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS\
     --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR --use_adaptive_lr_round $USE_ADAPTIVE_LR_ROUND\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
-    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS\
+    --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS --distill_transforms $DISTILL_TRANSFORMS\
     --warm_start $WARM_START --warm_start_rounds $WARM_START_ROUNDS --warm_start_interval $WARM_START_INTERVAL\
     --kmeans_n_clusters $KMEANS_N_CLUSTERS --kmeans_heuristics $KMEANS_HEURISTICS --kmeans_mixed_factor $KMEANS_MIXED_FACTOR --kmeans_balancing $KMEANS_BALANCING\
     --confidence_threshold $CONFIDENCE_THRESHOLD --confidence_strategy $CONFIDENCE_STRATEGY --confidence_adaptive $CONFIDENCE_ADAPTIVE --confidence_max_thresh $CONFIDENCE_MAX_THRESH\

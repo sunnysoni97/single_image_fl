@@ -296,7 +296,7 @@ def visualise_tsne(tsne_df: pd.DataFrame, out_file: BufferedWriter, n_classes: i
         c_idx = int(labels[i]) if not label_metadata else label_metadata.index(
             labels[i])
         plt.scatter(x=x_vals[i], y=y_vals[i], s=10, c=[cmap(colors[c_idx]) for _ in x_vals[i]], label=str(
-            labels[i]), alpha=0.6, linewidths=0, edgecolors='none')
+            labels[i]), alpha=0.8, linewidths=0, edgecolors='none')
 
     bbox = (1.05, 0.5)
     handles, labels = plt.gca().get_legend_handles_labels()
