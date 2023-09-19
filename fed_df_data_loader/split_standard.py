@@ -1,11 +1,13 @@
 from torch.utils.data import DataLoader
 from typing import List
-from data_loader_scripts.dl_common import create_lda_partitions
 import torch
 import numpy as np
-from fed_df_data_loader.common import DistillDataset, get_distill_transforms
 from torchvision.datasets import CIFAR100, CIFAR10
 from pathlib import Path
+
+from data_loader_scripts.dl_common import create_lda_partitions
+from data_loader_scripts.create_dataloader import TorchVision_FL
+from fed_df_data_loader.common import DistillDataset, get_distill_transforms
 
 
 def split_standard(dataloader: DataLoader, n_splits: int = 2, alpha: float = 1000, batch_size: int = 32, n_workers: int = 0, seed: int = None) -> List[DataLoader]:
@@ -43,10 +45,10 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
 
     if (dataset_name == "cifar100"):
         full_dataset = CIFAR100(
-            root=storage_path, train=True, transform=transform, download=True)
+            root=storage_path, train=True, download=True)
     elif (dataset_name == "cifar10"):
         full_dataset = CIFAR10(
-            root=storage_path, train=True, transform=transform, download=True)
+            root=storage_path, train=True, download=True)
     else:
         raise ValueError("Dataset not implemented yet!")
 
@@ -58,6 +60,7 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
         all_labels = []
         for idx in indices:
             all_labels.append(full_dataset[idx][1])
+        all_labels = np.array(all_labels, dtype=np.int8)
 
     else:
         temp_dataloader = DataLoader(
@@ -80,8 +83,13 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
     all_imgs = []
     for index in indices:
         all_imgs.append(full_dataset[index][0])
-    new_dataset = DistillDataset(root=None, data=all_imgs, targets=all_labels)
-    new_dataloader = DataLoader(new_dataset, batch_size=batch_size,
-                                num_workers=n_workers, pin_memory=False, shuffle=False)
+    new_dataset = TorchVision_FL(
+        data=all_imgs, targets=all_labels, transform=transform)
+    kwargs = {"batch_size": batch_size, "drop_last": False,
+              "num_workers": n_workers, "pin_memory": True, "shuffle": False}
+    new_dataloader = DataLoader(new_dataset, **kwargs)
+    # new_dataset = DistillDataset(root=None, data=all_imgs, targets=all_labels)
+    # new_dataloader = DataLoader(new_dataset, batch_size=batch_size,
+    #                             num_workers=n_workers, pin_memory=False, shuffle=False)
 
     return new_dataloader
