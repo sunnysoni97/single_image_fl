@@ -57,10 +57,6 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
 
     if (select_random):
         indices = np.random.choice(a=X, size=n_images, replace=False)
-        all_labels = []
-        for idx in indices:
-            all_labels.append(full_dataset[idx][1])
-        all_labels = np.array(all_labels, dtype=np.int8)
 
     else:
         temp_dataloader = DataLoader(
@@ -78,18 +74,15 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
             temp_dataset, num_partitions=n_partitions, concentration=alpha, accept_imbalanced=True, seed=seed)
 
         indices = partitions[0][0][0]
-        all_labels = partitions[0][0][1]
 
     all_imgs = []
     for index in indices:
         all_imgs.append(full_dataset[index][0])
+    dummy_targets = np.zeros((n_images, 1))
     new_dataset = TorchVision_FL(
-        data=all_imgs, targets=all_labels, transform=transform)
+        data=all_imgs, targets=dummy_targets, transform=transform)
     kwargs = {"batch_size": batch_size, "drop_last": False,
               "num_workers": n_workers, "pin_memory": True, "shuffle": False}
     new_dataloader = DataLoader(new_dataset, **kwargs)
-    # new_dataset = DistillDataset(root=None, data=all_imgs, targets=all_labels)
-    # new_dataloader = DataLoader(new_dataset, batch_size=batch_size,
-    #                             num_workers=n_workers, pin_memory=False, shuffle=False)
 
     return new_dataloader
