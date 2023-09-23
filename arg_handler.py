@@ -11,11 +11,18 @@ def parse_bool(inp_str: str) -> bool:
             f"{inp_str} is not a valid boolean value! Check passed arguments again.")
 
 
+def parse_dict(inp_str: str) -> dict:
+    res = eval(inp_str)
+    return res
+
+
 parser = argparse.ArgumentParser(
     description="FedAvg/FedDF Simulation using Flower")
 
 parser.add_argument("--fed_strategy", type=str, default="feddf")
 parser.add_argument("--model_name", type=str, default="resnet8")
+parser.add_argument("--model_list", type=parse_dict,
+                    default="{'resnet8':10,'resnet18':10}")
 
 parser.add_argument("--num_clients", type=int, default=20)
 parser.add_argument("--num_rounds", type=int, default=30)

@@ -11,11 +11,12 @@ TOTAL_MEM=12
 
 TOTAL_IMGS=1000
 
-STRATEGY=feddf
+STRATEGY=feddf_hetero
 MODEL_NAME=resnet8
+MODEL_LIST="{'resnet8':5,'resnet20':5}"
 
 NUM_CLIENTS=10
-NUM_ROUNDS=2
+NUM_ROUNDS=5
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
@@ -92,6 +93,7 @@ echo "TOTAL CROPS:$TOTAL_IMGS"
 
 echo "STRATEGY:$STRATEGY"
 echo "MODEL_NAME:$MODEL_NAME"
+echo "MODEL_LIST:$MODEL_LIST"
 
 echo "NUM_CLIENTS:$NUM_CLIENTS"
 echo "NUM_ROUNDS:$NUM_ROUNDS"
@@ -161,7 +163,7 @@ fi
     
 echo "Simulating $STRATEGY training"
 
-python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
+python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME --model_list $MODEL_LIST\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
     --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS --client_cpus $CLIENT_CPUS --server_cpus $SERVER_CPUS --total_cpus $TOTAL_CPUS --total_gpus $TOTAL_GPUS --total_mem $TOTAL_MEM\
