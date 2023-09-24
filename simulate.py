@@ -192,7 +192,7 @@ if __name__ == "__main__":
 
     train_data_path, test_set, test_labels = download_dataset(
         DATA_DIR, DATASET_NAME)
-    kwargs_test_loader = {"num_workers": CLIENT_CPUS,
+    kwargs_test_loader = {"num_workers": 1,
                           "pin_memory": True, "drop_last": False}
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     if (DISTILL_DATASET == DATASET_NAME):
         print(f"Same dataset for distillation and private training, splitting up test set into half...")
         split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
-            'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
+            'inf'), batch_size=BATCH_SIZE, n_workers=1, seed=SEED)
         test_loader = split_test_loaders[0]
         distill_dataloader = split_test_loaders[1]
 
@@ -224,17 +224,14 @@ if __name__ == "__main__":
     elif (FED_STRATEGY == "feddf" or FED_STRATEGY == "feddf_hetero"):
         if (USE_CROPS):
             distill_dataloader = get_distill_imgloader(
-                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=SERVER_CPUS, distill_transforms=DISTILL_TRANSFORMS)
+                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=1, distill_transforms=DISTILL_TRANSFORMS)
         else:
             if (DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
-                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_TOTAL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, select_random=True, alpha=DISTILL_ALPHA, distill_transforms=DISTILL_TRANSFORMS)
-            else:
-                raise ValueError(
-                    f'Both distillation and private training set are same.')
+                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_TOTAL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=1, seed=SEED, select_random=True, alpha=DISTILL_ALPHA, distill_transforms=DISTILL_TRANSFORMS)
 
         val_dataloader = combine_val_loaders(
-            dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
+            dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=1)
 
         model_init_list = []
 

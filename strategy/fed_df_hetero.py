@@ -433,7 +433,7 @@ class FedDF_hetero_strategy(Strategy):
 
         log(INFO, f'Performing server side distillation training in parallel')
 
-        with parallel_backend(backend="threading"):
+        with parallel_backend(backend="threading", n_jobs=4):
             fusion_metrics_list = Parallel()((delayed(self.__fuse_models)(
                 self.server_models[model_name]['model'], self.kmeans_last_crops, self.batch_size, logits_aggregated, config, self.val_dataloader, self.device, self.debug) for model_name in self.server_models.keys()))
 
@@ -490,7 +490,7 @@ class FedDF_hetero_strategy(Strategy):
             self.hist_server_acc.append(0.0)
             return None
 
-        with parallel_backend(backend='threading'):
+        with parallel_backend(backend='threading', n_jobs=4):
             eval_res_list = Parallel()((delayed(self.evaluate_fn)(**{'model_params': get_parameters(
                 self.server_models[model_name]['model']), 'model_name': model_name, 'dataset_name': self.dataset_name, 'test_loader': self.evaluation_dataloader, 'device': self.device}) for model_name in self.server_models.keys()))
 
@@ -526,9 +526,9 @@ class FedDF_hetero_strategy(Strategy):
     @staticmethod
     def __fuse_models(net, img_bytes: bytes, distill_batch_size: int, preds: NDArray, config: Dict[str, float], val_dataloader: DataLoader, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
-        log(INFO, "Performing KD training on server model")
+        log(INFO, "Training server model")
         dataloader = clustering.extract_from_transport(
-            img_bytes=img_bytes, batch_size=distill_batch_size, n_workers=2)
+            img_bytes=img_bytes, batch_size=distill_batch_size, n_workers=1)
         criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
@@ -613,6 +613,6 @@ class FedDF_hetero_strategy(Strategy):
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
         net.to('cpu')
-        log(INFO, "Finished KD training on server model")
+        log(INFO, "Training server model finished")
 
         return train_res

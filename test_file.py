@@ -1,9 +1,21 @@
-from strategy.common import cosine_annealing_round
+from models import init_model
+import torch
+
 
 if __name__ == "__main__":
-    max_rounds = 10
-    max = 0.5
-    min = 0.1
-    for i in range(0,max_rounds+1):
-        no = cosine_annealing_round(max_lr=max, min_lr=min,max_rounds=(max_rounds-1),curr_round=(i-1))
-        print(f'{i} = {no}')
+    print("Testing shape")
+    dataset_name = "cifar10"
+    model_name = "wresnet16-4"
+    # model_name = "resnet8"
+
+    a = init_model(dataset_name=dataset_name, model_name=model_name)
+
+    t = torch.randn((1, 3, 32, 32))
+
+    feats = a.forward_avgpool(t)
+    cls = a.forward(t)
+
+    print(feats.size())
+    print(cls.size())
+
+    print("Success")

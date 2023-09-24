@@ -13,10 +13,10 @@ TOTAL_IMGS=1000
 
 STRATEGY=feddf_hetero
 MODEL_NAME=resnet8
-MODEL_LIST="{'resnet8':5,'resnet20':5}"
+MODEL_LIST="{'resnet8':5,'wresnet-16-4':5}"
 
 NUM_CLIENTS=10
-NUM_ROUNDS=5
+NUM_ROUNDS=2
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
@@ -38,7 +38,7 @@ USE_ADAPTIVE_LR_ROUND=False
 SEED=42
 CUDA_DETERMINISTIC=False
 
-USE_CROPS=False
+USE_CROPS=True
 IMG_NAME=ameyoko.jpg
 DISTILL_DATASET=cifar100
 DISTILL_ALPHA=1.0
@@ -69,8 +69,8 @@ OUT_DIR=./results/out
 DEBUG=False
 
 USE_CLIPPING=True
-USE_ENTROPY=False
-USE_KMEANS=False
+USE_ENTROPY=True
+USE_KMEANS=True
 USE_FEDPROX=False
 
 while getopts "l::g::c::k::b::t::f::s::" flag
@@ -153,7 +153,7 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+if [[ $USE_CROPS == "True" && ($STRATEGY == "feddf" || $STRATEGY == "feddf_hetero")]] 
 then
     echo "---------"
     echo "Generating crops for FedDF"
