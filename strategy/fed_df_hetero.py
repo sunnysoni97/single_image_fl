@@ -381,7 +381,8 @@ class FedDF_hetero_strategy(Strategy):
         warm_start = False
 
         if (self.on_fit_config_fn_server is not None):
-            config = self.on_fit_config_fn_server()
+            config = self.on_fit_config_fn_server(
+                total_rounds=self.num_rounds, current_round=server_round)
             warm_start = config['warm_start']
 
         # Aggregating logits using averaging
@@ -577,7 +578,7 @@ class FedDF_hetero_strategy(Strategy):
 
                 plateau_step += 1
 
-                if ((cur_step+1) % val_interval == 0):
+                if ((cur_step+1) % val_interval == 0 or cur_step == (config['steps']-1) or cur_step == 0):
                     total = 0
                     correct = 0
                     net.eval()

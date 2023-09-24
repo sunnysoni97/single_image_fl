@@ -347,7 +347,8 @@ class FedDF_strategy(Strategy):
         warm_start = False
 
         if (self.on_fit_config_fn_server is not None):
-            config = self.on_fit_config_fn_server()
+            config = self.on_fit_config_fn_server(
+                total_rounds=self.num_rounds, current_round=server_round)
             warm_start = config['warm_start']
 
         # Aggregating logits using averaging
@@ -512,7 +513,7 @@ class FedDF_strategy(Strategy):
 
                 plateau_step += 1
 
-                if ((cur_step+1) % val_interval == 0):
+                if ((cur_step+1) % val_interval == 0 or cur_step == (config['steps']-1) or cur_step == 0):
                     total = 0
                     correct = 0
                     net.eval()
@@ -579,10 +580,16 @@ class fed_df_fn:
         return on_fit_config_fn_client
 
     @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True) -> Callable:
-        def on_fit_config_fn_server() -> Dict[str, float]:
+    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_steps: bool = False, adaptive_steps_min: int = 50, adaptive_steps_interval: int = 5) -> Callable:
+        def on_fit_config_fn_server(total_rounds: int, current_round: int) -> Dict[str, float]:
+            if (use_adaptive_steps):
+                steps = int(cosine_annealing_round(max_lr=distill_steps, min_lr=adaptive_steps_min, max_rounds=total_rounds,
+                            curr_round=current_round, enable_restart=True, restart_round=adaptive_steps_interval))
+                log(INFO, f'Current number of distill steps : {steps}')
+            else:
+                steps = distill_steps
             config = {
-                "steps": distill_steps,
+                "steps": steps,
                 "early_stopping_steps": early_stop_steps,
                 "use_early_stopping": use_early_stopping,
                 "use_adaptive_lr": use_adaptive_lr,

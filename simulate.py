@@ -86,6 +86,9 @@ if __name__ == "__main__":
     DISTILL_BATCH_SIZE = args.distill_batch_size
     SERVER_LR = args.server_lr
     SERVER_STEPS = args.server_steps
+    SERVER_STEPS_ADAPTIVE = args.server_steps_adaptive
+    SERVER_STEPS_ADAPTIVE_MIN = args.server_steps_adaptive_min
+    SERVER_STEPS_ADAPTIVE_INTERVAL = args.server_steps_adaptive_interval
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
     USE_ADAPTIVE_LR = args.use_adaptive_lr
@@ -314,7 +317,7 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR, max_rounds=NUM_ROUNDS, use_adaptive_lr_round=USE_ADAPTIVE_LR_ROUND),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_steps=SERVER_STEPS_ADAPTIVE, adaptive_steps_min=SERVER_STEPS_ADAPTIVE_MIN, adaptive_steps_interval=SERVER_STEPS_ADAPTIVE_INTERVAL),
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,
@@ -367,7 +370,7 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR, max_rounds=NUM_ROUNDS, use_adaptive_lr_round=USE_ADAPTIVE_LR_ROUND),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_steps=SERVER_STEPS_ADAPTIVE, adaptive_steps_min=SERVER_STEPS_ADAPTIVE_MIN, adaptive_steps_interval=SERVER_STEPS_ADAPTIVE_INTERVAL),
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,
