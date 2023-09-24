@@ -245,8 +245,6 @@ class FedDF_hetero_strategy(Strategy):
                 raise ValueError(
                     f'Incorrect key for fetching client property!')
 
-        log(INFO, f'Client-Model Pairs : {client_model_pairs}')
-
         # initialising config settings for training
 
         config = {}
@@ -413,8 +411,6 @@ class FedDF_hetero_strategy(Strategy):
                     client_model_idx[model_name].append(i)
 
                 i += 1
-
-            log(INFO, f'Model Client Indices : {client_model_idx}')
 
             for model_name in client_model_idx.keys():
                 if (len(client_model_idx[model_name]) > 0):
