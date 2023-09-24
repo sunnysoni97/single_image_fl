@@ -242,8 +242,6 @@ if __name__ == "__main__":
             for i in range(MODEL_LIST[model_name]):
                 model_init_list.append(model_name)
 
-        log(INFO, f'Model_init_list = {model_init_list}')
-
         def client_fn(cid) -> client.fed_df.FlowerClient:
             if (FED_STRATEGY == "feddf"):
                 return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)

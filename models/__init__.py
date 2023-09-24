@@ -1,11 +1,10 @@
 from torchvision.models import resnet18, resnet34, resnet50
 from torchvision.models import ResNet
-import torch.nn as nn
 import numpy as np
 from typing import List, Union
 import torch
-import torch.nn as nn
 import re
+
 from models.cifar_resnet import cifar_resnet, CifarResNet
 
 # helper functions
