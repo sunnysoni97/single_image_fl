@@ -82,7 +82,7 @@ def create_std_distill_loader(dataset_name: str, storage_path: Path, n_images: i
     new_dataset = TorchVision_FL(
         data=all_imgs, targets=dummy_targets, transform=transform)
     kwargs = {"batch_size": batch_size, "drop_last": False,
-              "num_workers": n_workers, "pin_memory": True, "shuffle": False}
+              "num_workers": n_workers, "pin_memory": False, "shuffle": False}
     new_dataloader = DataLoader(new_dataset, **kwargs)
 
     return new_dataloader

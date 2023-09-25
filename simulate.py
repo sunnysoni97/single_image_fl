@@ -196,7 +196,7 @@ if __name__ == "__main__":
     train_data_path, test_set, test_labels = download_dataset(
         DATA_DIR, DATASET_NAME)
     kwargs_test_loader = {"num_workers": 1,
-                          "pin_memory": True, "drop_last": False}
+                          "pin_memory": False, "drop_last": False}
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 

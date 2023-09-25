@@ -98,5 +98,5 @@ def combine_val_loaders(dataset_name: str, path_to_data: str, n_clients: int, ba
         data=val_data, targets=val_targets, transform=transformF)
 
     kwargs = {"num_workers": workers, "batch_size": batch_size,
-              "pin_memory": True, "drop_last": False}
+              "pin_memory": False, "drop_last": False}
     return DataLoader(dataset, **kwargs)

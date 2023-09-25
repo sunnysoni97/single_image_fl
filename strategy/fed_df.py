@@ -604,10 +604,8 @@ class fed_df_fn:
 
     @staticmethod
     def evaluate_fn(model_params: NDArray, model_name: str, dataset_name: str, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
-        log(INFO, "Evaluating server model")
         test_res = test_model(model_name, dataset_name,
                               model_params, test_loader, device)
         test_loss = test_res['test_loss']
         test_acc = test_res['test_acc']
-        log(INFO, "Evaluating server model finished")
         return test_loss, {'server_test_acc': test_acc}

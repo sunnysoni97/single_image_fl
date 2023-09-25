@@ -37,7 +37,6 @@ import numpy as np
 import pathlib
 import random
 from joblib import Parallel, delayed, parallel_backend
-import multiprocessing as mp
 
 
 class FedDF_hetero_strategy(Strategy):
@@ -491,9 +490,12 @@ class FedDF_hetero_strategy(Strategy):
             self.hist_server_acc.append(0.0)
             return None
 
-        with parallel_backend(backend='threading', n_jobs=4):
-            eval_res_list = Parallel()((delayed(self.evaluate_fn)(**{'model_params': get_parameters(
-                self.server_models[model_name]['model']), 'model_name': model_name, 'dataset_name': self.dataset_name, 'test_loader': self.evaluation_dataloader, 'device': self.device}) for model_name in self.server_models.keys()))
+        eval_res_list = []
+
+        for model_name in self.server_models.keys():
+            new_res = self.evaluate_fn(**{'model_params': get_parameters(
+                self.server_models[model_name]['model']), 'model_name': model_name, 'dataset_name': self.dataset_name, 'test_loader': self.evaluation_dataloader, 'device': self.device})
+            eval_res_list.append(new_res)
 
         eval_loss = np.mean(a=[x for x, _ in eval_res_list])
         eval_metrics = {'server_test_acc': np.mean(
@@ -527,7 +529,6 @@ class FedDF_hetero_strategy(Strategy):
     @staticmethod
     def __fuse_models(net, img_bytes: bytes, distill_batch_size: int, preds: NDArray, config: Dict[str, float], val_dataloader: DataLoader, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
-        log(INFO, "Training server model")
         dataloader = clustering.extract_from_transport(
             img_bytes=img_bytes, batch_size=distill_batch_size, n_workers=1)
         criterion = nn.KLDivLoss(reduction='batchmean')
@@ -614,6 +615,5 @@ class FedDF_hetero_strategy(Strategy):
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
         net.to('cpu')
-        log(INFO, "Training server model finished")
 
         return train_res
