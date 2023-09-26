@@ -9,7 +9,8 @@ from flwr.common import (
     parameters_to_ndarrays,
     bytes_to_ndarray,
     NDArray,
-    NDArrays
+    GetPropertiesIns,
+    Code
 )
 
 from typing import Optional, Tuple, List, Union, Dict, Callable
@@ -20,7 +21,6 @@ from flwr.server.client_proxy import ClientProxy
 
 from models import init_model, get_parameters, set_parameters
 from fed_df_data_loader.common import make_data_loader
-from common import test_model
 import strategy.tools.clustering as clustering
 from strategy.tools.confidence_select import prune_confident_crops
 from strategy.tools.clipping import clip_logits
@@ -36,15 +36,16 @@ import torch.nn.functional as F
 import numpy as np
 import pathlib
 import random
+from joblib import Parallel, delayed, parallel_backend
 
 
-class FedDF_strategy(Strategy):
+class FedDF_hetero_strategy(Strategy):
     def __init__(self,
                  num_rounds: int,
                  distillation_dataloader: DataLoader,
                  evaluation_dataloader: DataLoader,
                  val_dataloader: DataLoader,
-                 model_type: str,
+                 model_list: list,
                  dataset_name: str,
                  num_classes: int,
                  device: torch.device,
@@ -55,7 +56,6 @@ class FedDF_strategy(Strategy):
                  min_fit_clients: int = 2,
                  min_evaluate_clients: int = 2,
                  min_available_clients: int = 2,
-                 initial_parameters: Optional[Parameters] = None,
                  fit_metrics_aggregation_fn=None,
                  evaluate_metrics_aggregation_fn=None,
                  on_fit_config_fn_client=None,
@@ -95,7 +95,7 @@ class FedDF_strategy(Strategy):
         self.val_dataloader = val_dataloader
 
         # Neural Net specifications
-        self.model_type = model_type
+        self.model_list = model_list
         self.dataset_name = dataset_name
         self.num_classes = num_classes
 
@@ -106,11 +106,8 @@ class FedDF_strategy(Strategy):
         self.min_fit_clients = min_fit_clients
         self.min_evaluate_clients = min_evaluate_clients
 
-        # initial parameters
-        self.initial_parameters = initial_parameters
-
         # last round parameters
-        self.last_parameters = initial_parameters
+        self.last_parameters = None
 
         # metrics aggregation functions
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
@@ -191,6 +188,15 @@ class FedDF_strategy(Strategy):
             torch.backends.cudnn.deterministic = True
             torch.use_deterministic_algorithms(True)
 
+        # initialising server side models
+
+        log(INFO, f'Models in the server : {self.model_list}')
+        self.server_models = {}
+        for model_name in self.model_list:
+            self.server_models[model_name] = {'model': init_model(
+                dataset_name=self.dataset_name, model_name=model_name), 'acc': 0.0}
+        log(INFO, f'Server Models initialised')
+
     def __repr__(self) -> str:
         rep = f'FedDF'
         return rep
@@ -211,12 +217,35 @@ class FedDF_strategy(Strategy):
     # FUNCTIONS FOR OUR FEDDF STRATEGY
 
     def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
-        initial_parameters = self.initial_parameters
-        self.initialize_parameters = None
-        return initial_parameters
+        return None
 
     def configure_fit(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
+
+        # Sample clients
+
+        sample_size, min_num_clients = self.num_fit_clients(
+            client_manager.num_available()
+        )
+        clients = client_manager.sample(
+            num_clients=sample_size, min_num_clients=min_num_clients
+        )
+
+        client_model_pairs = []
+
+        for client in clients:
+            properties = client.get_properties(
+                GetPropertiesIns(config={'cid': 0, 'model_name': 0}), timeout=None)
+            if (properties.status == 200):
+                client_model_pairs.append(
+                    (properties.properties["cid"], properties.properties["model_name"]))
+
+            else:
+                raise ValueError(
+                    f'Incorrect key for fetching client property!')
+
+        # initialising config settings for training
+
         config = {}
         if self.on_fit_config_fn_client is not None:
             # Custom fit config function provided
@@ -234,10 +263,15 @@ class FedDF_strategy(Strategy):
             config = self.on_fit_config_fn_client(
                 server_round=server_round, use_fedprox=self.use_fedprox, fedprox_factor=self.fedprox_factor)
 
+        # selecting best model for selection mechanism
+
+        best_model_name = max(self.server_models,
+                              key=lambda x: self.server_models[x]['acc'])
+        log(INFO, f'Best Server Model Name : {best_model_name}')
+
         # performing kmeans on crops
 
-        net = init_model(self.dataset_name, self.model_type)
-        set_parameters(net, parameters_to_ndarrays(parameters))
+        net = self.server_models[best_model_name]['model']
 
         clusters, cluster_score = clustering.cluster_embeddings(
             dataloader=self.distillation_dataloader, model=net, device=self.device, n_clusters=self.kmeans_n_clusters, seed=self.kmeans_random_seed)
@@ -303,18 +337,17 @@ class FedDF_strategy(Strategy):
             clustering.visualise_tsne(
                 tsne_df=tsne_clusters, out_file=f, round_no=(server_round-1), label_metadata=self.evaluation_labels, n_classes=self.num_classes)
 
-        # Sample clients
-        sample_size, min_num_clients = self.num_fit_clients(
-            client_manager.num_available()
-        )
-        clients = client_manager.sample(
-            num_clients=sample_size, min_num_clients=min_num_clients
-        )
+        net.to('cpu')
 
-        # adding crops to clients
-        config_list = [{**config, 'distill_crops': clustering.prepare_for_transport(
-            pruned_clusters)} for client in clients]
-        fit_ins_list = [FitIns(parameters, config) for config in config_list]
+        # adding crops to clients and appropriate parameters
+        config = {**config, 'distill_crops': clustering.prepare_for_transport(
+            pruned_clusters)}
+        fit_ins_list = []
+
+        for _, model_name in client_model_pairs:
+            parameters = ndarrays_to_parameters(
+                get_parameters(self.server_models[model_name]['model']))
+            fit_ins_list.append(FitIns(parameters, config))
 
         # Return client/config pairs
         return [(client, fit_ins) for (client, fit_ins) in zip(clients, fit_ins_list)]
@@ -365,22 +398,46 @@ class FedDF_strategy(Strategy):
 
         if (warm_start and ((server_round <= self.warm_start_rounds) or (server_round % self.warm_start_interval == 0))):
             log(INFO, f'Warm start at round {server_round}')
-            weights_results = [
-                (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-                for _, fit_res in results
-            ]
-            old_parameters = aggregate(weights_results)
+            client_model_idx = {}
+            for key in self.server_models.keys():
+                client_model_idx[key] = []
 
-        else:
-            old_parameters = parameters_to_ndarrays(self.last_parameters)
+            i = 0
+            for client, res in results:
+                if (res.status.code == Code.OK):
+                    client_properties = client.get_properties(
+                        GetPropertiesIns(config={'model_name': 0}), timeout=None).properties
+                    model_name = client_properties['model_name']
+                    client_model_idx[model_name].append(i)
 
-        # Distilling student model using Average Logits
+                i += 1
 
-        distill_dataloader = clustering.extract_from_transport(
-            img_bytes=self.kmeans_last_crops, batch_size=self.batch_size, n_workers=self.num_cpu_workers)
+            for model_name in client_model_idx.keys():
+                if (len(client_model_idx[model_name]) > 0):
+                    trimmed_results = []
+                    for idx in client_model_idx[model_name]:
+                        trimmed_results.append(results[idx])
 
-        parameters_aggregated, fusion_metrics = self.__fuse_models(global_parameters=old_parameters, preds=logits_aggregated,
-                                                                   config=config, dataloader=distill_dataloader, val_dataloader=self.val_dataloader, model_type=self.model_type, dataset_name=self.dataset_name, DEVICE=self.device, enable_step_logging=self.debug)
+                    weights_results = [
+                        (parameters_to_ndarrays(
+                            fit_res.parameters), fit_res.num_examples)
+                        for _, fit_res in trimmed_results
+                    ]
+
+                    fusion_parameters = aggregate(weights_results)
+                    set_parameters(
+                        model=self.server_models[model_name]['model'], parameters=fusion_parameters)
+                    log(INFO, f'{model_name} server model initialised for fusion')
+
+        # Distilling all student model using Average Logits
+
+        log(INFO, f'Performing server side distillation training in parallel')
+
+        with parallel_backend(backend="threading", n_jobs=4):
+            fusion_metrics_list = Parallel()((delayed(self.__fuse_models)(
+                self.server_models[model_name]['model'], self.kmeans_last_crops, self.batch_size, logits_aggregated, config, self.val_dataloader, self.device, self.debug) for model_name in self.server_models.keys()))
+
+        log(INFO, f'Fusion results for all models : {fusion_metrics_list}')
 
         # Aggregate custom metrics if aggregation fn was provided
 
@@ -394,14 +451,9 @@ class FedDF_strategy(Strategy):
 
         if (self.logger_fn is not None):
             self.logger_fn(server_round, metrics_aggregated, "fit", "client")
-            self.logger_fn(server_round, fusion_metrics, "fit", "server")
+            self.logger_fn(server_round, fusion_metrics_list, "fit", "server")
 
-        parameters_aggregated = ndarrays_to_parameters(parameters_aggregated)
-
-        # storing the parameters in the server for next round of fusion
-        self.last_parameters = parameters_aggregated
-
-        return parameters_aggregated, {}
+        return None, metrics_aggregated
 
     def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
         if not results:
@@ -437,18 +489,33 @@ class FedDF_strategy(Strategy):
             # No evaluation function provided
             self.hist_server_acc.append(0.0)
             return None
-        parameters_ndarrays = parameters_to_ndarrays(parameters)
-        eval_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
-                                    dataset_name=self.dataset_name, test_loader=self.evaluation_dataloader, device=self.device)
 
-        val_res = self.evaluate_fn(model_params=parameters_ndarrays, model_name=self.model_type,
+        eval_res_list = []
+
+        for model_name in self.server_models.keys():
+            new_res = self.evaluate_fn(**{'model_params': get_parameters(
+                self.server_models[model_name]['model']), 'model_name': model_name, 'dataset_name': self.dataset_name, 'test_loader': self.evaluation_dataloader, 'device': self.device})
+            eval_res_list.append(new_res)
+
+        eval_loss = np.mean(a=[x for x, _ in eval_res_list])
+        eval_metrics = {'server_test_acc': np.mean(
+            a=[x['server_test_acc'] for _, x in eval_res_list])}
+        eval_res = (eval_loss, eval_metrics)
+
+        for model_name, eval_res in zip(self.server_models.keys(), eval_res_list):
+            self.server_models[model_name]['acc'] = eval_res[1]['server_test_acc']
+
+        best_model_name = max(self.server_models,
+                              key=lambda x: self.server_models[x]['acc'])
+
+        val_res = self.evaluate_fn(model_params=get_parameters(self.server_models[best_model_name]['model']), model_name=best_model_name,
                                    dataset_name=self.dataset_name, test_loader=self.val_dataloader, device=self.device)
 
         if val_res is None:
             self.hist_server_acc.append(0.0)
-
-        _, val_met = val_res
-        self.hist_server_acc.append(val_met['server_test_acc'])
+        else:
+            _, val_met = val_res
+            self.hist_server_acc.append(val_met['server_test_acc'])
 
         if eval_res is None:
             return None
@@ -460,11 +527,10 @@ class FedDF_strategy(Strategy):
         return loss, metrics
 
     @staticmethod
-    def __fuse_models(global_parameters: NDArrays, preds: NDArray, config: Dict[str, float], dataloader: DataLoader, val_dataloader: DataLoader, model_type: str, dataset_name: str, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
+    def __fuse_models(net, img_bytes: bytes, distill_batch_size: int, preds: NDArray, config: Dict[str, float], val_dataloader: DataLoader, DEVICE: torch.device, enable_step_logging: bool = False) -> Parameters:
 
-        log(INFO, f'Performing server side distillation training...')
-        net = init_model(dataset_name, model_type)
-        set_parameters(net, global_parameters)
+        dataloader = clustering.extract_from_transport(
+            img_bytes=img_bytes, batch_size=distill_batch_size, n_workers=1)
         criterion = nn.KLDivLoss(reduction='batchmean')
         temperature = config['temperature']
         optimizer = torch.optim.Adam(params=net.parameters(), lr=config['lr'])
@@ -542,70 +608,12 @@ class FedDF_strategy(Strategy):
                     log(INFO,
                         f"step {cur_step}, val_acc : {total_step_acc[-1]}")
 
-        log(INFO, f'Distillation training stopped at step number : {cur_step}')
-
-        new_parameters = best_val_param
+        if (best_val_param != None):
+            set_parameters(net, parameters=best_val_param)
 
         train_res = {'fusion_loss': np.mean(
             total_step_loss), 'fusion_acc': np.mean(total_step_acc)}
 
-        log(INFO,
-            f'Average fusion training loss : {train_res["fusion_loss"]}, val accuracy : {train_res["fusion_acc"]}, best val accuracy : {best_val_acc}')
+        net.to('cpu')
 
-        return (new_parameters, train_res)
-
-
-# callback functions for fed df
-
-class fed_df_fn:
-    @staticmethod
-    def get_on_fit_config_fn_client(max_rounds: int = 30, client_epochs: int = 20, client_lr: float = 0.1, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_lr: bool = True, use_adaptive_lr_round: bool = False) -> Callable:
-        def on_fit_config_fn_client(server_round: int, use_fedprox: bool, fedprox_factor: float) -> Dict[str, float]:
-            lr = client_lr
-            if (use_adaptive_lr_round):
-                lr = cosine_annealing_round(
-                    max_lr=client_lr, min_lr=1e-3, max_rounds=max_rounds, curr_round=server_round)
-                log(INFO, f"Current Round Client LR : {lr}")
-
-            config = {
-                'lr': lr,
-                'epochs': client_epochs,
-                'clipping_factor': clipping_factor,
-                'use_clipping': use_clipping,
-                'use_fedprox': use_fedprox,
-                'fedprox_factor': fedprox_factor,
-                'use_adaptive_lr': use_adaptive_lr
-            }
-            return config
-        return on_fit_config_fn_client
-
-    @staticmethod
-    def get_on_fit_config_fn_server(distill_steps: int, use_early_stopping: bool, early_stop_steps: int, use_adaptive_lr: bool = True, server_lr: float = 1e-3, warm_start: bool = False, clipping_factor: float = 1.0, use_clipping: bool = True, use_adaptive_steps: bool = False, adaptive_steps_min: int = 50, adaptive_steps_interval: int = 5) -> Callable:
-        def on_fit_config_fn_server(total_rounds: int, current_round: int) -> Dict[str, float]:
-            if (use_adaptive_steps):
-                steps = int(cosine_annealing_round(max_lr=distill_steps, min_lr=adaptive_steps_min, max_rounds=total_rounds,
-                            curr_round=current_round, enable_restart=True, restart_round=adaptive_steps_interval))
-                log(INFO, f'Current number of distill steps : {steps}')
-            else:
-                steps = distill_steps
-            config = {
-                "steps": steps,
-                "early_stopping_steps": early_stop_steps,
-                "use_early_stopping": use_early_stopping,
-                "use_adaptive_lr": use_adaptive_lr,
-                "lr": server_lr,
-                "temperature": 1,
-                "warm_start": warm_start,
-                "clipping_factor": clipping_factor,
-                "use_clipping": use_clipping,
-            }
-            return config
-        return on_fit_config_fn_server
-
-    @staticmethod
-    def evaluate_fn(model_params: NDArray, model_name: str, dataset_name: str, test_loader: DataLoader, device: torch.device) -> Tuple[float, Dict[str, float]]:
-        test_res = test_model(model_name, dataset_name,
-                              model_params, test_loader, device)
-        test_loss = test_res['test_loss']
-        test_acc = test_res['test_acc']
-        return test_loss, {'server_test_acc': test_acc}
+        return train_res

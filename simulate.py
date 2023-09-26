@@ -18,6 +18,7 @@ from fed_df_data_loader.get_crops_dataloader import get_distill_imgloader
 from strategy.common import common_functions
 from strategy.fed_avg import fed_avg_fn
 from strategy.fed_df import FedDF_strategy, fed_df_fn
+from strategy.fed_df_hetero import FedDF_hetero_strategy
 
 import client.fed_avg
 import client.fed_df
@@ -58,6 +59,7 @@ if __name__ == "__main__":
 
     FED_STRATEGY = args.fed_strategy
     MODEL_NAME = args.model_name
+    MODEL_LIST = args.model_list
 
     NUM_CLIENTS = args.num_clients
     NUM_ROUNDS = args.num_rounds
@@ -84,6 +86,9 @@ if __name__ == "__main__":
     DISTILL_BATCH_SIZE = args.distill_batch_size
     SERVER_LR = args.server_lr
     SERVER_STEPS = args.server_steps
+    SERVER_STEPS_ADAPTIVE = args.server_steps_adaptive
+    SERVER_STEPS_ADAPTIVE_MIN = args.server_steps_adaptive_min
+    SERVER_STEPS_ADAPTIVE_INTERVAL = args.server_steps_adaptive_interval
     SERVER_EARLY_STEPS = args.server_early_steps
     USE_EARLY_STOPPING = args.use_early_stopping
     USE_ADAPTIVE_LR = args.use_adaptive_lr
@@ -146,6 +151,13 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"{DATASET_NAME} has not been implemented yet!")
 
+    # checking client distribuition validity for feddf hetero
+
+    num_client_dict = np.sum(list(MODEL_LIST.values()))
+    if (num_client_dict != NUM_CLIENTS):
+        raise ValueError(
+            f'Incompatible number of clients in model list w.r.t total number of clients')
+
     # seeding everything
 
     log(DEBUG, "Seeding RNG")
@@ -164,7 +176,7 @@ if __name__ == "__main__":
 
     # doing operations on output folder
 
-    if (FED_STRATEGY == 'feddf'):
+    if (FED_STRATEGY == 'feddf' or FED_STRATEGY == 'feddf_hetero'):
 
         log(DEBUG, "Creating output folder for visualisation")
 
@@ -183,8 +195,8 @@ if __name__ == "__main__":
 
     train_data_path, test_set, test_labels = download_dataset(
         DATA_DIR, DATASET_NAME)
-    kwargs_test_loader = {"num_workers": CLIENT_CPUS,
-                          "pin_memory": True, "drop_last": False}
+    kwargs_test_loader = {"num_workers": 1,
+                          "pin_memory": False, "drop_last": False}
     test_loader = DataLoader(
         test_set, batch_size=BATCH_SIZE, **kwargs_test_loader)
 
@@ -195,7 +207,7 @@ if __name__ == "__main__":
     if (DISTILL_DATASET == DATASET_NAME):
         print(f"Same dataset for distillation and private training, splitting up test set into half...")
         split_test_loaders = split_standard(dataloader=test_loader, alpha=float(
-            'inf'), batch_size=BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED)
+            'inf'), batch_size=BATCH_SIZE, n_workers=1, seed=SEED)
         test_loader = split_test_loaders[0]
         distill_dataloader = split_test_loaders[1]
 
@@ -212,23 +224,34 @@ if __name__ == "__main__":
         def client_fn(cid) -> client.fed_avg.FlowerClient:
             return client.fed_avg.FlowerClient(cid, MODEL_NAME, DATASET_NAME, fed_dir, BATCH_SIZE, CLIENT_CPUS, DEVICE, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
 
-    elif (FED_STRATEGY == "feddf"):
+    elif (FED_STRATEGY == "feddf" or FED_STRATEGY == "feddf_hetero"):
         if (USE_CROPS):
             distill_dataloader = get_distill_imgloader(
-                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=SERVER_CPUS, distill_transforms=DISTILL_TRANSFORMS)
+                f'{DATA_DIR}/single_img_crops/crops', dataset_name=DATASET_NAME, batch_size=DISTILL_BATCH_SIZE, num_workers=1, distill_transforms=DISTILL_TRANSFORMS)
         else:
             if (DISTILL_DATASET != DATASET_NAME):
                 distill_dataloader = create_std_distill_loader(
-                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_TOTAL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=SERVER_CPUS, seed=SEED, select_random=True, alpha=DISTILL_ALPHA, distill_transforms=DISTILL_TRANSFORMS)
+                    dataset_name=DISTILL_DATASET, transforms_name=DATASET_NAME, storage_path=DATA_DIR, n_images=NUM_TOTAL_IMAGES, batch_size=DISTILL_BATCH_SIZE, n_workers=1, seed=SEED, select_random=True, alpha=DISTILL_ALPHA, distill_transforms=DISTILL_TRANSFORMS)
 
         val_dataloader = combine_val_loaders(
-            dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=SERVER_CPUS)
+            dataset_name=DATASET_NAME, path_to_data=fed_dir, n_clients=NUM_CLIENTS, batch_size=BATCH_SIZE, workers=1)
+
+        model_init_list = []
+
+        for model_name in MODEL_LIST.keys():
+            for i in range(MODEL_LIST[model_name]):
+                model_init_list.append(model_name)
 
         def client_fn(cid) -> client.fed_df.FlowerClient:
-            return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
+            if (FED_STRATEGY == "feddf"):
+                return client.fed_df.FlowerClient(cid=cid, model_name=MODEL_NAME, dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
+            else:
+                return client.fed_df.FlowerClient(cid=cid, model_name=model_init_list[int(cid)], dataset_name=DATASET_NAME, fed_dir=fed_dir, batch_size=BATCH_SIZE, num_cpu_workers=CLIENT_CPUS, device=DEVICE, debug=DEBUG, seed=SEED, cuda_deterministic=CUDA_DETERMINISTIC)
 
     else:
         raise ValueError(f'{FED_STRATEGY} has not been implemented!')
+
+    model_list = list(MODEL_LIST.keys())
 
     # starting central server with simulation start
 
@@ -294,7 +317,60 @@ if __name__ == "__main__":
                 on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
                     client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR, max_rounds=NUM_ROUNDS, use_adaptive_lr_round=USE_ADAPTIVE_LR_ROUND),
                 on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
-                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING),
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_steps=SERVER_STEPS_ADAPTIVE, adaptive_steps_min=SERVER_STEPS_ADAPTIVE_MIN, adaptive_steps_interval=SERVER_STEPS_ADAPTIVE_INTERVAL),
+                evaluate_fn=fed_df_fn.evaluate_fn,
+                warm_start_rounds=WARM_START_ROUNDS,
+                debug=DEBUG,
+                warm_start_interval=WARM_START_INTERVAL,
+                kmeans_output_folder=out_kmeans_folder,
+                num_total_images=NUM_TOTAL_IMAGES,
+                kmeans_n_crops=NUM_DISTILL_IMAGES,
+                kmeans_n_clusters=KMEANS_N_CLUSTERS,
+                kmeans_heuristics=KMEANS_HEURISTICS,
+                kmeans_mixed_factor=KMEANS_MIXED_FACTOR,
+                kmeans_balancing=KMEANS_BALANCING,
+                confidence_threshold=CONFIDENCE_THRESHOLD,
+                confidence_strategy=CONFIDENCE_STRATEGY,
+                confidence_adaptive=CONFIDENCE_ADAPTIVE,
+                confidence_max_thresh=CONFIDENCE_MAX_THRESH,
+                fedprox_factor=FEDPROX_FACTOR,
+                fedprox_adaptive=FEDPROX_ADAPTIVE,
+                batch_size=DISTILL_BATCH_SIZE,
+                num_cpu_workers=SERVER_CPUS,
+                use_kmeans=USE_KMEANS,
+                use_entropy=USE_ENTROPY,
+                use_fedprox=USE_FEDPROX,
+                seed=SEED,
+                cuda_deterministic=CUDA_DETERMINISTIC,
+            ),
+            ray_init_args=ray_init_args,
+            client_resources=client_resources,
+        )
+
+    elif (FED_STRATEGY == "feddf_hetero"):
+        # FedDF Hetero
+        fl.simulation.start_simulation(
+            client_fn=client_fn,
+            num_clients=NUM_CLIENTS,
+            config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
+            strategy=FedDF_hetero_strategy(
+                num_rounds=NUM_ROUNDS,
+                fraction_fit=FRACTION_FIT,
+                fraction_evaluate=FRACTION_EVALUATE,
+                distillation_dataloader=distill_dataloader,
+                evaluation_dataloader=test_loader,
+                evaluation_labels=test_labels,
+                val_dataloader=val_dataloader,
+                model_list=model_list,
+                dataset_name=DATASET_NAME,
+                num_classes=NUM_CLASSES,
+                device=DEVICE,
+                fit_metrics_aggregation_fn=common_functions.fit_metrics_aggregation_fn,
+                evaluate_metrics_aggregation_fn=common_functions.evaluate_metrics_aggregation_fn,
+                on_fit_config_fn_client=fed_df_fn.get_on_fit_config_fn_client(
+                    client_epochs=LOCAL_EPOCHS, client_lr=LOCAL_LR, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_lr=USE_ADAPTIVE_LR, max_rounds=NUM_ROUNDS, use_adaptive_lr_round=USE_ADAPTIVE_LR_ROUND),
+                on_fit_config_fn_server=fed_df_fn.get_on_fit_config_fn_server(
+                    server_lr=SERVER_LR, distill_steps=SERVER_STEPS, use_early_stopping=USE_EARLY_STOPPING, early_stop_steps=SERVER_EARLY_STEPS, use_adaptive_lr=USE_ADAPTIVE_LR, warm_start=WARM_START, clipping_factor=CLIPPING_FACTOR, use_clipping=USE_CLIPPING, use_adaptive_steps=SERVER_STEPS_ADAPTIVE, adaptive_steps_min=SERVER_STEPS_ADAPTIVE_MIN, adaptive_steps_interval=SERVER_STEPS_ADAPTIVE_INTERVAL),
                 evaluate_fn=fed_df_fn.evaluate_fn,
                 warm_start_rounds=WARM_START_ROUNDS,
                 debug=DEBUG,

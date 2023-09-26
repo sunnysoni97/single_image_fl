@@ -11,11 +11,12 @@ TOTAL_MEM=12
 
 TOTAL_IMGS=1000
 
-STRATEGY=feddf
+STRATEGY=feddf_hetero
 MODEL_NAME=resnet8
+MODEL_LIST="{'resnet8':5,'wresnet-16-4':5}"
 
 NUM_CLIENTS=10
-NUM_ROUNDS=2
+NUM_ROUNDS=6
 FRACTION_FIT=0.2
 FRACTION_EVALUATE=0.0
 
@@ -24,15 +25,19 @@ PARTITION_ALPHA=1.0
 PARTITION_VAL_RATIO=0.1
 
 BATCH_SIZE=256
-LOCAL_EPOCHS=5
+LOCAL_EPOCHS=1
 LOCAL_LR=0.01
 DISTILL_BATCH_SIZE=256
 SERVER_LR=0.005
+USE_ADAPTIVE_LR=False
+USE_ADAPTIVE_LR_ROUND=False
+
 SERVER_STEPS=50
 SERVER_EARLY_STEPS=1000
 USE_EARLY_STOPPING=False
-USE_ADAPTIVE_LR=False
-USE_ADAPTIVE_LR_ROUND=False
+SERVER_STEPS_ADAPTIVE=True
+SERVER_STEPS_ADAPTIVE_MIN=10
+SERVER_STEPS_ADAPTIVE_INTERVAL=3
 
 SEED=42
 CUDA_DETERMINISTIC=False
@@ -68,8 +73,8 @@ OUT_DIR=./results/out
 DEBUG=False
 
 USE_CLIPPING=True
-USE_ENTROPY=False
-USE_KMEANS=False
+USE_ENTROPY=True
+USE_KMEANS=True
 USE_FEDPROX=False
 
 while getopts "l::g::c::k::b::t::f::s::" flag
@@ -92,6 +97,7 @@ echo "TOTAL CROPS:$TOTAL_IMGS"
 
 echo "STRATEGY:$STRATEGY"
 echo "MODEL_NAME:$MODEL_NAME"
+echo "MODEL_LIST:$MODEL_LIST"
 
 echo "NUM_CLIENTS:$NUM_CLIENTS"
 echo "NUM_ROUNDS:$NUM_ROUNDS"
@@ -107,11 +113,15 @@ echo "LOCAL_EPOCHS:$LOCAL_EPOCHS"
 echo "LOCAL_LR:$LOCAL_LR"
 echo "DISTILL_BATCH_SIZE:$DISTILL_BATCH_SIZE"
 echo "SERVER_LR:$SERVER_LR"
+echo "USE_ADAPTIVE_LR:$USE_ADAPTIVE_LR"
+echo "USE_ADAPTIVE_LR_ROUND:$USE_ADAPTIVE_LR_ROUND"
+
 echo "SERVER_STEPS:$SERVER_STEPS"
 echo "SERVER_EARLY_STEPS:$SERVER_EARLY_STEPS"
 echo "USE_EARLY_STOPPING:$USE_EARLY_STOPPING"
-echo "USE_ADAPTIVE_LR:$USE_ADAPTIVE_LR"
-echo "USE_ADAPTIVE_LR_ROUND:$USE_ADAPTIVE_LR_ROUND"
+echo "SERVER_STEPS_ADAPTIVE:$SERVER_STEPS_ADAPTIVE"
+echo "SERVER_STEPS_ADAPTIVE_MIN:$SERVER_STEPS_ADAPTIVE_MIN"
+echo "SERVER_STEPS_ADAPTIVE_INTERVAL:$SERVER_STEPS_ADAPTIVE_INTERVAL"
 
 echo "SEED:$SEED"
 echo "CUDA_DETERMINISTIC:$CUDA_DETERMINISTIC"
@@ -151,7 +161,7 @@ echo "-----SETTINGS END-----"
 
 echo "-----EXPERIMENT BEGINS-----"
 
-if [ $USE_CROPS == "True" -a $STRATEGY == "feddf" ] 
+if [[ $USE_CROPS == "True" && ($STRATEGY == "feddf" || $STRATEGY == "feddf_hetero")]] 
 then
     echo "---------"
     echo "Generating crops for FedDF"
@@ -161,12 +171,13 @@ fi
     
 echo "Simulating $STRATEGY training"
 
-python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME\
+python ./simulate.py --fed_strategy $STRATEGY --model_name $MODEL_NAME --model_list $MODEL_LIST\
     --num_clients $NUM_CLIENTS --num_rounds $NUM_ROUNDS --fraction_fit $FRACTION_FIT --fraction_evaluate $FRACTION_EVALUATE\
     --dataset_name $DATASET_NAME --data_dir $DATA_DIR --partition_alpha $PARTITION_ALPHA --partition_val_ratio $PARTITION_VAL_RATIO\
     --client_gpus $CLIENT_GPUS --client_cpus $CLIENT_CPUS --server_cpus $SERVER_CPUS --total_cpus $TOTAL_CPUS --total_gpus $TOTAL_GPUS --total_mem $TOTAL_MEM\
     --batch_size $BATCH_SIZE --local_epochs $LOCAL_EPOCHS --local_lr $LOCAL_LR\
     --distill_batch_size $DISTILL_BATCH_SIZE --server_lr $SERVER_LR --server_steps $SERVER_STEPS --server_early_steps $SERVER_EARLY_STEPS\
+    --server_steps_adaptive $SERVER_STEPS_ADAPTIVE --server_steps_adaptive_min $SERVER_STEPS_ADAPTIVE_MIN --server_steps_adaptive_interval $SERVER_STEPS_ADAPTIVE_INTERVAL\
     --use_early_stopping $USE_EARLY_STOPPING --use_adaptive_lr $USE_ADAPTIVE_LR --use_adaptive_lr_round $USE_ADAPTIVE_LR_ROUND\
     --seed $SEED --cuda_deterministic $CUDA_DETERMINISTIC\
     --use_crops $USE_CROPS --distill_dataset $DISTILL_DATASET --distill_alpha $DISTILL_ALPHA --num_distill_images $NUM_DISTILL_IMAGES --num_total_images $TOTAL_IMGS --distill_transforms $DISTILL_TRANSFORMS\

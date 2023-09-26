@@ -6,6 +6,8 @@ from flwr.common import (
     FitRes,
     GetParametersIns,
     GetParametersRes,
+    GetPropertiesIns,
+    GetPropertiesRes,
     Status,
     parameters_to_ndarrays,
     ndarray_to_bytes,
@@ -129,6 +131,19 @@ class FlowerClient(fl.client.Client):
             torch.backends.cudnn.benchmark = False
             torch.backends.cudnn.deterministic = True
             torch.use_deterministic_algorithms(True)
+
+    def get_properties(self, ins: GetPropertiesIns) -> GetPropertiesRes:
+        result_dict = {}
+        status_code = 404
+        for key in ins.config.keys():
+            if (hasattr(self, key)):
+                result_dict[key] = getattr(self, key)
+                status_code = 200
+            else:
+                result_dict[key] = "None"
+
+        res = GetPropertiesRes(status=status_code, properties=result_dict)
+        return res
 
     def get_parameters(self, ins: GetParametersIns) -> GetParametersRes:
         # Build and return response

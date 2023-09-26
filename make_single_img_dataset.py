@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
     time.sleep(1)
     t0 = time.time()
-    q = Parallel(n_jobs=args.threads)(
+    q = Parallel(n_jobs=args.threads, backend='threading')(
         delayed(make_)(i)
         for i in range(args.threads)
     )
