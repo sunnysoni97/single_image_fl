@@ -249,7 +249,11 @@ if __name__ == "__main__":
         for i in os.listdir(path):
             p = Image.open(path+"/"+i)
             tensors.append(tfs.ToTensor()(p))
-        save_image(tensors, path.replace('/dummy', '.png'), nrow=8, padding=3)
+
+        path = os.path.join(path,'dummy.png')
+        with open(file=path,mode='wb') as f:
+            save_image(tensors, fp=f, nrow=8, padding=3)
+            # save_image(tensors, fp=f, nrow=8, padding=3)
 
     ############################ 10 imagenet images ########################################
     # chosen = ['n04443257/n04443257_36457.JPEG',
