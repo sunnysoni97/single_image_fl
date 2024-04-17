@@ -1,6 +1,6 @@
 # Federated Learning with a Single Shared Image
 
-(Original paper under publication at CVPR'24 Workshop [[LIMIT](https://hirokatsukataoka16.github.io/CVPR-2024-LIMIT/)] )
+(Original paper accepted in CVPR'24 [[LIMIT](https://hirokatsukataoka16.github.io/CVPR-2024-LIMIT/)] workshop proceedings)
 
 ![Schematic figure of Federated Learning with a Single Shared Image](splash_fig.png)
 
@@ -33,3 +33,13 @@ Using `environment.yml` , a new conda environment can be created with all the re
 1. Find the `ray_client_proxy.py` in your local pkg installation directory of python packages under the folder `"flwr/simulation/ray_transport/"`.
 2. Replace `@ray.remote()` before `'launch_and_XXX'` methods to `@ray.remote(max_calls=1)`
 3. Save the file and execute the main simulation python script of our project as usual from now on.
+
+## Reference 
+```
+@inproceedings{soni2024federated,
+  title={Federated Learning with a Single Shared Image},
+  author={Sunny Soni and Aaqib Saeed and Yuki M. Asano},
+  booktitle={CVPR Workshop Proceedings},
+  year={2024},
+}
+```
