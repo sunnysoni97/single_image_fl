@@ -26,6 +26,10 @@ To conduct our research and experimentation, we have made use of [Flower Framewo
 
 There's a large list of associated arguments which can be passed to setup your experiment the way you want to. The description and their usage has been integrated in the argument parser itself, which can be accessed with `python simulate.py --help`
 
+<details>
+
+<summary> <b>Complete Snippet of simulate.py Usage</b> </summary>
+
 ```
 usage: simulate.py [-h] [--fed_strategy FED_STRATEGY] [--model_name MODEL_NAME] [--model_list MODEL_LIST] [--num_clients NUM_CLIENTS] [--num_rounds NUM_ROUNDS] [--fraction_fit FRACTION_FIT] [--fraction_evaluate FRACTION_EVALUATE]
                    [--dataset_name DATASET_NAME] [--data_dir DATA_DIR] [--partition_alpha PARTITION_ALPHA] [--partition_val_ratio PARTITION_VAL_RATIO] [--client_cpus CLIENT_CPUS] [--client_gpus CLIENT_GPUS] [--server_cpus SERVER_CPUS]
@@ -156,6 +160,7 @@ options:
   --out_dir OUT_DIR     Relative directory location for outputting results of the experiment.
 ```
 
+</details><br/>
 Alternatively, have a look at `local_simulate.sh` bash script for an example on how to conduct an experiment using our code.
 
 ### Setting up the environment and Running experiments
