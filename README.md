@@ -1,7 +1,6 @@
 # Federated Learning with a Single Shared Image
 
-(Original paper accepted in CVPR'24 [[LIMIT](https://hirokatsukataoka16.github.io/CVPR-2024-LIMIT/)] workshop proceedings)
-[[Link to Paper](https://openaccess.thecvf.com/content/CVPR2024W/LIMIT/html/Soni_Federated_Learning_with_a_Single_Shared_Image_CVPRW_2024_paper.html)]
+Original work, published in CVPR'24 Workshop Proceedings [[Paper](https://arxiv.org/abs/2406.12658)]
 
 ![Schematic figure of Federated Learning with a Single Shared Image](splash_fig.png)
 
